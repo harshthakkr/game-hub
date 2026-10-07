@@ -80,16 +80,16 @@ export function ReviewCard({
         <Avatar author={review.author} size={38} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-[15px] font-semibold text-ov-white">
+            <span className="text-body font-semibold text-ov-white">
               {displayName(review.author)}
             </span>
             {review.isMine && (
-              <span className="text-[9px] tracking-[1.5px] text-ov-teal">
+              <span className="text-micro tracking-hud-wide text-ov-teal">
                 YOUR REVIEW
               </span>
             )}
           </div>
-          <div className="mt-0.5 text-[11px] tracking-wide text-ov-muted">
+          <div className="mt-0.5 text-label tracking-wide text-ov-muted">
             {relativeTime(review.createdAt)}
             {review.updatedAt !== review.createdAt && " · edited"}
             {" · "}
@@ -101,7 +101,7 @@ export function ReviewCard({
 
       <div className="relative mt-3.5">
         <p
-          className={`whitespace-pre-wrap text-[14px] leading-[1.85] text-ov-text ${
+          className={`whitespace-pre-wrap text-sm leading-[1.85] text-ov-text ${
             clamped ? (veiled ? "line-clamp-3" : "line-clamp-[7]") : ""
           } ${veiled ? "select-none blur-[5px]" : ""}`}
         >
@@ -109,14 +109,14 @@ export function ReviewCard({
         </p>
 
         {veiled && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[rgba(5,7,14,0.5)]">
-            <div className="flex items-center gap-2 text-[10px] tracking-[1.5px] text-ov-rose">
-              <OvIcon name="spoiler" className="text-[10px]" />
+          <div className="absolute inset-0 flex items-center justify-center bg-ov-bg/50">
+            <div className="flex items-center gap-2 text-micro tracking-hud-wide text-ov-rose">
+              <OvIcon name="spoiler" className="text-micro" />
               SPOILERS
               <button
                 type="button"
                 onClick={() => setRevealed(true)}
-                className="border-b border-ov-rose/60 pb-px text-[10px] tracking-[1px] text-ov-rose transition-colors duration-150 hover:border-ov-rose hover:text-ov-white"
+                className="border-b border-ov-rose/60 pb-px text-micro tracking-hud text-ov-rose transition-colors duration-150 hover:border-ov-rose hover:text-ov-white"
               >
                 REVEAL
               </button>
@@ -129,9 +129,10 @@ export function ReviewCard({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-2 text-[11px] tracking-[1px] text-ov-teal transition-opacity duration-150 hover:opacity-75"
+          className="mt-2 flex items-center text-label tracking-hud text-ov-teal transition-opacity duration-150 hover:opacity-75"
         >
-          {expanded ? "SHOW LESS ▴" : "READ FULL REVIEW ▾"}
+          {expanded ? "SHOW LESS" : "READ FULL REVIEW"}
+          <OvIcon name={expanded ? "chevron-up" : "chevron-down"} className="ml-1 text-label" />
         </button>
       )}
 
@@ -145,18 +146,20 @@ export function ReviewCard({
         <button
           type="button"
           onClick={() => setThreadOpen((v) => !v)}
-          className="flex items-center gap-1.5 text-[12px] tracking-[1px] transition-all duration-150 hover:opacity-75 active:scale-95"
-          style={{ color: threadOpen ? "#2dd4bf" : "#5b6b82" }}
+          aria-expanded={threadOpen}
+          className={`flex items-center gap-1.5 text-xs tracking-hud transition-all duration-150 hover:opacity-75 active:scale-95 ${
+            threadOpen ? "text-ov-teal" : "text-ov-muted"
+          }`}
         >
-          <OvIcon name="comment" className="text-[11px]" />
+          <OvIcon name="comment" className="text-label" />
           <span className="font-orbitron font-bold">{review.commentCount}</span>
-          <span className="text-[11px]">
+          <span className="text-label">
             {review.commentCount === 1 ? "COMMENT" : "COMMENTS"}
           </span>
         </button>
         {review.hasSpoilers && (
-          <span className="ml-auto flex items-center gap-1.5 text-[10px] tracking-[1px] text-ov-rose">
-            <OvIcon name="spoiler" className="text-[10px]" />
+          <span className="ml-auto flex items-center gap-1.5 text-micro tracking-hud text-ov-rose">
+            <OvIcon name="spoiler" className="text-micro" />
             SPOILERS
           </span>
         )}

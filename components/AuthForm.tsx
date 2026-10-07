@@ -9,7 +9,7 @@ import { USERNAME_HINT, USERNAME_PATTERN } from "@/utils/reviews";
 export type AuthMode = "signup" | "login";
 
 const fieldClass =
-  "w-full border bg-ov-panel px-4 py-3 text-[13px] text-ov-white outline-none placeholder:text-ov-muted transition-colors duration-150 focus:border-ov-teal";
+  "w-full border bg-ov-panel px-4 py-3 text-ui text-ov-white outline-none placeholder:text-ov-muted transition-colors duration-150 focus:border-ov-teal";
 
 export function AuthForm({
   mode,
@@ -86,7 +86,7 @@ export function AuthForm({
         <>
           <label
             htmlFor="auth-username"
-            className="mb-2 block text-[11px] tracking-wide text-ov-dim"
+            className="mb-2 block text-label tracking-wide text-ov-dim"
           >
             USERNAME
           </label>
@@ -98,13 +98,13 @@ export function AuthForm({
             autoComplete="username"
             className={`${fieldClass} mb-1 border-ov-border`}
           />
-          <p className="mb-3.5 text-[10px] text-ov-muted">{USERNAME_HINT}</p>
+          <p className="mb-3.5 text-micro text-ov-muted">{USERNAME_HINT}</p>
         </>
       )}
 
       <label
         htmlFor="auth-email"
-        className="mb-2 block text-[11px] tracking-wide text-ov-dim"
+        className="mb-2 block text-label tracking-wide text-ov-dim"
       >
         EMAIL
       </label>
@@ -120,7 +120,7 @@ export function AuthForm({
 
       <label
         htmlFor="auth-password"
-        className="mb-2 block text-[11px] tracking-wide text-ov-dim"
+        className="mb-2 block text-label tracking-wide text-ov-dim"
       >
         PASSWORD
       </label>
@@ -135,7 +135,7 @@ export function AuthForm({
       />
 
       {error && (
-        <div className="animate-ov-fade-up mb-4 border border-ov-rose bg-[rgba(244,63,94,0.08)] px-3.5 py-2.5 text-[12px] text-ov-rose">
+        <div className="animate-ov-fade-up mb-4 border border-ov-rose bg-ov-rose/8 px-3.5 py-2.5 text-xs text-ov-rose">
           {error}
         </div>
       )}
@@ -143,7 +143,7 @@ export function AuthForm({
       <button
         type="submit"
         disabled={busy}
-        className="ov-clip-md w-full border border-ov-teal bg-[rgba(45,212,191,0.06)] px-4 py-3.5 font-orbitron text-[13px] font-bold tracking-[2px] text-ov-teal transition-all duration-150 hover:bg-[rgba(45,212,191,0.14)] active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+        className="ov-chamfer-x w-full border border-ov-teal bg-ov-teal/6 px-4 py-3.5 font-orbitron text-ui font-bold tracking-hud-wide text-ov-teal transition-all duration-150 hover:bg-ov-teal/14 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
       >
         {busy ? "..." : isSignup ? "CREATE ACCOUNT" : "LOG IN"}
       </button>

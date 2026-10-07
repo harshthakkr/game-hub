@@ -6,6 +6,7 @@ import { CardProps } from "@/utils/types";
 import { PageContainer, PageTitle } from "@/components/overdrive/PageShell";
 import { LoadMoreButton, NoResults } from "@/components/overdrive/EmptyState";
 import { PlatformsSkeleton, PanelTileSkeletons } from "@/components/overdrive/Skeletons";
+import { OvIcon } from "@/components/overdrive/OvIcon";
 import { platformAbbr } from "@/utils/overdrive";
 
 export default function Platforms() {
@@ -28,15 +29,15 @@ export default function Platforms() {
               <Link
                 key={p.id}
                 href={`/platforms/${p.slug}`}
-                className="group ov-clip-card border border-ov-border bg-ov-panel p-[18px] transition-all duration-200 hover:-translate-y-1 hover:border-ov-teal active:scale-[0.98]"
+                className="group ov-chamfer border border-ov-border bg-ov-panel p-[18px] transition-all duration-200 hover:-translate-y-1 hover:border-ov-teal active:scale-[0.98]"
               >
                 <div className="mb-3.5 flex h-[38px] w-[38px] items-center justify-center border border-ov-teal font-orbitron text-sm font-black text-ov-teal transition-colors duration-150 group-hover:bg-ov-teal group-hover:text-ov-bg">
                   {platformAbbr(p.name)}
                 </div>
-                <div className="text-[16px] font-semibold text-white">{p.name}</div>
-                <div className="mt-1.5 flex items-center gap-1 text-[11px] tracking-wide text-ov-muted transition-colors duration-150 group-hover:text-ov-teal">
+                <div className="text-base font-semibold text-white">{p.name}</div>
+                <div className="mt-1.5 flex items-center gap-1 text-label tracking-wide text-ov-muted transition-colors duration-150 group-hover:text-ov-teal">
                   BROWSE
-                  <span className="transition-transform duration-200 group-hover:translate-x-1">▸</span>
+                  <OvIcon name="chevron-right" className="text-xs transition-transform duration-200 group-hover:translate-x-1" />
                 </div>
               </Link>
             ))}

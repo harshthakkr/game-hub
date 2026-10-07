@@ -82,20 +82,14 @@ export default function Game() {
         {bg && (
           <Image src={bg} alt="" fill className="object-cover" sizes="1320px" priority />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-ov-bg via-[rgba(5,7,14,0.3)] to-transparent" />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(45,212,191,.05) 1px, transparent 1px)",
-            backgroundSize: "100% 30px",
-          }}
-        />
+        <div className="absolute inset-0 bg-linear-to-t from-ov-bg via-ov-bg/30 to-transparent" />
+        <div className="absolute inset-0 bg-[linear-gradient(var(--color-ov-teal)_1px,transparent_1px)] bg-size-[100%_30px] opacity-5" />
         <Link
           href="/games"
-          className="absolute left-4 top-5 z-10 border border-ov-teal bg-[rgba(5,7,14,0.7)] px-3.5 py-2 text-xs tracking-wide text-ov-teal transition-colors duration-150 hover:bg-ov-teal hover:text-ov-bg active:scale-95 lg:left-[34px]"
+          className="absolute left-4 top-5 z-10 flex items-center border border-ov-teal bg-ov-bg/70 px-3.5 py-2 text-xs tracking-wide text-ov-teal transition-colors duration-150 hover:bg-ov-teal hover:text-ov-bg active:scale-95 lg:left-[34px]"
         >
-          ◂ BACK
+          <OvIcon name="chevron-left" className="mr-1 text-xs" />
+          BACK
         </Link>
         <div className="absolute bottom-[26px] left-4 right-4 z-10 flex flex-wrap items-end gap-6 lg:left-[34px] lg:right-[34px]">
           {cover && (
@@ -105,14 +99,14 @@ export default function Game() {
           )}
           <div className="min-w-0 flex-1">
             {data.genres?.[0] && (
-              <span className="border border-ov-rose px-2 py-1 text-[11px] tracking-[3px] text-ov-rose">
+              <span className="border border-ov-rose bg-ov-bg/75 px-2 py-1 text-label tracking-hud-xwide text-ov-rose backdrop-blur-sm">
                 {data.genres[0].name}
               </span>
             )}
-            <h1 className="mt-3.5 font-orbitron text-[28px] font-black text-white lg:text-[34px]">
+            <h1 className="mt-3.5 font-orbitron text-title font-black text-white lg:text-4xl">
               {data.name}
             </h1>
-            <div className="mt-2.5 text-[15px] text-ov-text">
+            <div className="mt-2.5 text-body text-ov-text">
               {developerName(data.involved_companies)} ·{" "}
               {formatYear(data.first_release_date)}
             </div>
@@ -121,14 +115,14 @@ export default function Game() {
             <div className="font-orbitron text-4xl font-black text-ov-teal">
               {formatRating(data.aggregated_rating)}
             </div>
-            <div className="text-[10px] tracking-[2px] text-ov-dim">CRITIC INDEX</div>
+            <div className="text-micro tracking-hud-wide text-ov-dim">CRITIC INDEX</div>
           </div>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-[26px] px-4 py-[26px] lg:px-6">
         <div className="min-w-[280px] flex-1">
-          <div className="mb-[22px] flex flex-wrap gap-0 border-b border-ov-border">
+          <div role="tablist" className="mb-[22px] flex flex-wrap gap-0 border-b border-ov-border">
             {TABS.map((name) => {
               const active = tab === name;
               return (
@@ -136,12 +130,11 @@ export default function Game() {
                   key={name}
                   type="button"
                   onClick={() => setTab(name)}
-                  aria-current={active ? "true" : undefined}
-                  className="cursor-pointer px-4 py-2.5 text-xs tracking-[2px] transition-colors duration-150 hover:text-ov-teal"
-                  style={{
-                    color: active ? "#2dd4bf" : "#5b6b82",
-                    borderBottom: `2px solid ${active ? "#2dd4bf" : "transparent"}`,
-                  }}
+                  role="tab"
+                  aria-selected={active}
+                  className={`cursor-pointer border-b-2 px-4 py-2.5 text-xs tracking-hud-wide transition-colors duration-150 hover:text-ov-teal ${
+                    active ? "border-ov-teal text-ov-teal" : "border-transparent text-ov-muted"
+                  }`}
                 >
                   {name}
                 </button>
@@ -151,10 +144,10 @@ export default function Game() {
 
           {tab === "OVERVIEW" && (
             <>
-              <div className="mb-3.5 font-orbitron text-xs font-bold tracking-[2px] text-ov-rose">
+              <div className="mb-3.5 font-orbitron text-xs font-bold tracking-hud-wide text-ov-rose">
                 ABOUT
               </div>
-              <p className="max-w-[620px] text-[15px] leading-[1.9] text-ov-text">
+              <p className="max-w-[620px] text-body leading-[1.9] text-ov-text">
                 {data.summary || data.storyline || "No summary available."}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
@@ -163,13 +156,9 @@ export default function Game() {
                     href={`https://www.youtube.com/watch?v=${trailer}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="ov-clip-sm flex items-center px-[18px] py-3 font-orbitron text-xs font-bold tracking-[1px] transition-transform duration-150 hover:brightness-110 active:scale-95"
-                    style={{
-                      color: "#05070e",
-                      background: "linear-gradient(#2dd4bf,#14b8a6)",
-                    }}
+                    className="ov-chamfer-x ov-chamfer-sm flex items-center bg-linear-to-b from-ov-teal to-ov-teal-dark px-[18px] py-3 font-orbitron text-xs font-bold tracking-hud text-ov-bg transition-transform duration-150 hover:brightness-110 active:scale-95"
                   >
-                    <OvIcon name="play" className="mr-1.5 text-[12px]" />
+                    <OvIcon name="play" className="mr-1.5 text-xs" />
                     TRAILER
                   </a>
                 )}
@@ -178,26 +167,26 @@ export default function Game() {
                     <button
                       type="button"
                       onClick={() => toggleLibrary(data.id!)}
-                      className="ov-clip-sm px-[18px] py-3 text-[13px] tracking-[1px] transition-transform duration-150 hover:brightness-125 active:scale-95"
-                      style={{
-                        color: "#2dd4bf",
-                        border: "1px solid #2dd4bf",
-                        background: inLib ? "rgba(45,212,191,.16)" : "transparent",
-                      }}
+                      className={`ov-chamfer-x ov-chamfer-sm flex items-center border border-ov-teal px-[18px] py-3 text-ui tracking-hud text-ov-teal transition-transform duration-150 hover:brightness-125 active:scale-95 ${
+                        inLib ? "bg-ov-teal/16" : "bg-transparent"
+                      }`}
+                      aria-pressed={inLib}
                     >
-                      {inLib ? "✓ IN LIBRARY" : "+ LIBRARY"}
+                      <OvIcon name={inLib ? "check" : "plus"} className="mr-1.5 text-xs" />
+                      {inLib ? "IN LIBRARY" : "LIBRARY"}
                     </button>
                     <button
                       type="button"
                       onClick={() => toggleWish(data.id!)}
-                      className="ov-clip-sm px-[18px] py-3 text-[13px] tracking-[1px] transition-transform duration-150 hover:brightness-125 active:scale-95"
-                      style={{
-                        color: wished ? "#f43f5e" : "#c3cede",
-                        border: `1px solid ${wished ? "#f43f5e" : "#c3cede"}`,
-                        background: wished ? "rgba(244,63,94,.12)" : "transparent",
-                      }}
+                      className={`ov-chamfer-x ov-chamfer-sm flex items-center border px-[18px] py-3 text-ui tracking-hud transition-transform duration-150 hover:brightness-125 active:scale-95 ${
+                        wished
+                          ? "border-ov-rose bg-ov-rose/12 text-ov-rose"
+                          : "border-ov-text bg-transparent text-ov-text"
+                      }`}
+                      aria-pressed={wished}
                     >
-                      ♥ {wished ? "WISHLISTED" : "WISHLIST"}
+                      <OvIcon name={wished ? "heart-filled" : "heart"} className="mr-1.5 text-xs" />
+                      {wished ? "WISHLISTED" : "WISHLIST"}
                     </button>
                   </>
                 )}
@@ -205,7 +194,7 @@ export default function Game() {
 
               {shots.length > 0 && (
                 <>
-                  <div className="mb-3.5 mt-9 font-orbitron text-xs font-bold tracking-[2px] text-ov-rose">
+                  <div className="mb-3.5 mt-9 font-orbitron text-xs font-bold tracking-hud-wide text-ov-rose">
                     SCREENSHOTS
                   </div>
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
@@ -215,7 +204,7 @@ export default function Game() {
                         type="button"
                         onClick={() => setLightboxIndex(i)}
                         aria-label={`Expand screenshot ${i + 1}`}
-                        className="ov-clip-card group relative aspect-video overflow-hidden border border-ov-border transition-all duration-150 hover:border-ov-teal active:scale-[0.97]"
+                        className="ov-chamfer group relative aspect-video overflow-hidden border border-ov-border transition-all duration-150 hover:border-ov-teal active:scale-[0.97]"
                       >
                         <Image
                           src={igdbImage(shot.url, "t_screenshot_big")}
@@ -224,8 +213,8 @@ export default function Game() {
                           className="object-cover transition-transform group-hover:scale-[1.04]"
                           sizes="320px"
                         />
-                        <span className="absolute bottom-2 right-2 flex h-6 w-6 items-center justify-center bg-[rgba(5,7,14,0.75)] text-[12px] text-white opacity-0 transition-opacity group-hover:opacity-100">
-                          ⤢
+                        <span className="absolute bottom-2 right-2 flex h-6 w-6 items-center justify-center bg-ov-bg/75 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                          <OvIcon name="expand" className="text-xs" />
                         </span>
                       </button>
                     ))}
@@ -235,7 +224,7 @@ export default function Game() {
 
               {related.length > 0 && (
                 <>
-                  <div className="mb-4 mt-9 font-orbitron text-xs font-bold tracking-[2px] text-ov-rose">
+                  <div className="mb-4 mt-9 font-orbitron text-xs font-bold tracking-hud-wide text-ov-rose">
                     RECOMMENDED
                   </div>
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-[18px]">
@@ -259,7 +248,7 @@ export default function Game() {
 
         {/* self-start keeps the panel at its natural height instead of stretching
             to match the tab content beside it. */}
-        <aside className="ov-clip-panel w-full shrink-0 self-start border border-ov-border bg-ov-panel p-5 lg:w-[300px]">
+        <aside className="ov-chamfer-x w-full shrink-0 self-start border border-ov-border bg-ov-panel p-5 lg:w-[300px]">
           <div className="flex justify-between border-b border-ov-border py-2.5">
             <span className="text-xs text-ov-dim">RELEASE</span>
             <span className="text-xs text-white">
@@ -269,12 +258,12 @@ export default function Game() {
             </span>
           </div>
           <div className="border-b border-ov-border py-3">
-            <div className="mb-2 text-[11px] tracking-wide text-ov-dim">PLATFORMS</div>
+            <div className="mb-2 text-label tracking-wide text-ov-dim">PLATFORMS</div>
             <div className="flex flex-wrap gap-1.5">
               {(data.platforms || []).slice(0, 6).map((p) => (
                 <span
                   key={p.name}
-                  className="border border-ov-teal px-2 py-0.5 text-[11px] text-ov-teal"
+                  className="border border-ov-teal px-2 py-0.5 text-label text-ov-teal"
                 >
                   {platformAbbr(p.name)}
                 </span>
@@ -282,12 +271,12 @@ export default function Game() {
             </div>
           </div>
           <div className="border-b border-ov-border py-3">
-            <div className="mb-2 text-[11px] tracking-wide text-ov-dim">GENRES</div>
+            <div className="mb-2 text-label tracking-wide text-ov-dim">GENRES</div>
             <div className="flex flex-wrap gap-1.5">
               {(data.genres || []).map((g) => (
                 <span
                   key={g.name}
-                  className="border border-ov-rose px-2 py-0.5 text-[11px] text-ov-rose"
+                  className="border border-ov-rose px-2 py-0.5 text-label text-ov-rose"
                 >
                   {g.name}
                 </span>
@@ -295,20 +284,20 @@ export default function Game() {
             </div>
           </div>
           <div className="pt-3">
-            <div className="mb-2 text-[11px] tracking-wide text-ov-dim">WHERE TO BUY</div>
+            <div className="mb-2 text-label tracking-wide text-ov-dim">WHERE TO BUY</div>
             <div className="flex flex-col gap-1.5">
               {data.steamAppId && (
                 <a
                   href={`https://store.steampowered.com/app/${data.steamAppId}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-between border border-ov-border px-3 py-2 text-[12px] transition-all duration-150 hover:border-ov-teal hover:bg-[rgba(45,212,191,0.05)] active:scale-[0.98]"
+                  className="flex items-center justify-between border border-ov-border px-3 py-2 text-xs transition-all duration-150 hover:border-ov-teal hover:bg-ov-teal/5 active:scale-[0.98]"
                 >
                   <span className="text-ov-text">Steam</span>
                   {data.steamPrice ? (
                     <span className="flex items-center gap-2">
                       {data.steamPrice.original && (
-                        <span className="text-[11px] text-ov-muted line-through">
+                        <span className="text-label text-ov-muted line-through">
                           {data.steamPrice.original}
                         </span>
                       )}
@@ -317,7 +306,7 @@ export default function Game() {
                       </span>
                     </span>
                   ) : (
-                    <span className="text-ov-dim">VIEW ▸</span>
+                    <span className="inline-flex items-center gap-0.5 text-ov-dim">VIEW<OvIcon name="chevron-right" className="text-xs" /></span>
                   )}
                 </a>
               )}
@@ -326,16 +315,16 @@ export default function Game() {
                 <button
                   type="button"
                   onClick={() => setPriceModalOpen(true)}
-                  className="flex items-center justify-between border border-ov-border px-3 py-2 text-left text-[12px] transition-all duration-150 hover:border-ov-teal hover:bg-[rgba(45,212,191,0.05)] active:scale-[0.98]"
+                  className="flex items-center justify-between border border-ov-border px-3 py-2 text-left text-xs transition-all duration-150 hover:border-ov-teal hover:bg-ov-teal/5 active:scale-[0.98]"
                 >
                   <span className="flex flex-col">
                     <span className="text-ov-text">PlayStation Store</span>
-                    <span className="text-[10px] tracking-wide text-ov-dim">PRICE HISTORY ▸</span>
+                    <span className="inline-flex items-center gap-0.5 text-micro tracking-wide text-ov-dim">PRICE HISTORY<OvIcon name="chevron-right" className="text-xs" /></span>
                   </span>
                   {data.psStore.price ? (
                     <span className="flex items-center gap-2">
                       {data.psStore.price.original && (
-                        <span className="text-[11px] text-ov-muted line-through">
+                        <span className="text-label text-ov-muted line-through">
                           {data.psStore.price.original}
                         </span>
                       )}
@@ -344,7 +333,7 @@ export default function Game() {
                       </span>
                     </span>
                   ) : (
-                    <span className="text-ov-dim">TRACK ▸</span>
+                    <span className="inline-flex items-center gap-0.5 text-ov-dim">TRACK<OvIcon name="chevron-right" className="text-xs" /></span>
                   )}
                 </button>
               ) : (
@@ -352,20 +341,20 @@ export default function Game() {
                   href={`https://store.playstation.com/en-in/search/${encodeURIComponent(data.name)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-between border border-ov-border px-3 py-2 text-[12px] transition-all duration-150 hover:border-ov-teal hover:bg-[rgba(45,212,191,0.05)] active:scale-[0.98]"
+                  className="flex items-center justify-between border border-ov-border px-3 py-2 text-xs transition-all duration-150 hover:border-ov-teal hover:bg-ov-teal/5 active:scale-[0.98]"
                 >
                   <span className="text-ov-text">PlayStation Store</span>
-                  <span className="text-ov-dim">SEARCH ▸</span>
+                  <span className="inline-flex items-center gap-0.5 text-ov-dim">SEARCH<OvIcon name="chevron-right" className="text-xs" /></span>
                 </a>
               )}
               <a
                 href={`https://www.amazon.in/s?k=${encodeURIComponent(`${data.name} game`)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-between border border-ov-border px-3 py-2 text-[12px] transition-all duration-150 hover:border-ov-teal hover:bg-[rgba(45,212,191,0.05)] active:scale-[0.98]"
+                className="flex items-center justify-between border border-ov-border px-3 py-2 text-xs transition-all duration-150 hover:border-ov-teal hover:bg-ov-teal/5 active:scale-[0.98]"
               >
                 <span className="text-ov-text">Amazon.in</span>
-                <span className="text-ov-dim">SEARCH ▸</span>
+                <span className="inline-flex items-center gap-0.5 text-ov-dim">SEARCH<OvIcon name="chevron-right" className="text-xs" /></span>
               </a>
             </div>
           </div>

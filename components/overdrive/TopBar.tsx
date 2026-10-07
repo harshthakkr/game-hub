@@ -35,6 +35,20 @@ function isNavActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function NavLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={`shrink-0 whitespace-nowrap border-b-2 pb-1 transition-colors duration-150 hover:opacity-80 ${
+        active ? "border-ov-teal text-ov-teal" : "border-transparent text-ov-text"
+      }`}
+    >
+      {label}
+    </Link>
+  );
+}
+
 type SearchBoxProps = {
   query: string;
   setQuery: (v: string) => void;
@@ -63,11 +77,11 @@ function SearchBox({
   return (
     <div ref={innerRef} className={`relative ${className}`}>
       <div
-        className={`ov-clip-md flex items-center gap-2.5 border bg-ov-panel px-3.5 py-2 transition-colors duration-200 ${
+        className={`ov-chamfer-x flex items-center gap-2.5 border bg-ov-panel px-3.5 py-2 transition-colors duration-200 focus-within:border-ov-teal ${
           query ? "border-ov-teal" : "border-ov-border"
         }`}
       >
-        <OvIcon name="search" className="shrink-0 text-[14px] text-[#2dd4bf]" />
+        <OvIcon name="search" className="shrink-0 text-sm text-ov-teal" />
         <input
           ref={inputRef}
           value={query}
@@ -78,25 +92,26 @@ function SearchBox({
           onFocus={() => query.trim() && setDropdownOpen(true)}
           onKeyDown={(e) => e.key === "Enter" && goSearch()}
           placeholder="SEARCH THE GRID"
-          className="min-w-0 flex-1 border-none bg-transparent text-[13px] tracking-wide text-[#e6edf6] outline-none placeholder:text-[#5b6b82]"
+          aria-label="Search games"
+          className="min-w-0 flex-1 border-none bg-transparent text-ui tracking-wide text-ov-white outline-none placeholder:text-ov-muted"
         />
         {query && (
           <button
             type="button"
             onClick={() => setQuery("")}
             aria-label="Clear search"
-            className="flex shrink-0 items-center border-0 bg-transparent p-0 leading-none text-[#5b6b82] transition-colors duration-150 hover:text-ov-teal active:scale-90"
+            className="flex shrink-0 items-center border-0 bg-transparent p-0 leading-none text-ov-muted transition-colors duration-150 hover:text-ov-teal active:scale-90"
           >
-            <OvIcon name="close" className="text-[14px]" />
+            <OvIcon name="close" className="text-sm" />
           </button>
         )}
       </div>
 
       {dropdownOpen && query.trim() && (
-        <div className="animate-ov-pop absolute left-0 right-0 top-[calc(100%+8px)] z-[60] max-h-[360px] origin-top overflow-y-auto border border-ov-teal bg-ov-panel shadow-[0_12px_30px_rgba(0,0,0,0.5)]">
+        <div className="animate-ov-pop absolute left-0 right-0 top-[calc(100%+8px)] z-[60] max-h-[360px] origin-top overflow-y-auto border border-ov-teal bg-ov-panel shadow-ov-pop">
           {searching && <SearchResultsSkeleton />}
           {!searching && results.length === 0 && (
-            <div className="px-3.5 py-4 text-center text-[12px] text-ov-muted">
+            <div className="px-3.5 py-4 text-center text-xs text-ov-muted">
               No games match “{query.trim()}”.
             </div>
           )}
@@ -111,7 +126,7 @@ function SearchBox({
                     setQuery("");
                     setDropdownOpen(false);
                   }}
-                  className="flex items-center gap-3 border-b border-ov-border px-3 py-2.5 transition-colors duration-150 hover:bg-[#0f1a2e]"
+                  className="flex items-center gap-3 border-b border-ov-border px-3 py-2.5 transition-colors duration-150 hover:bg-ov-raised"
                 >
                   {cover && (
                     <Image
@@ -123,8 +138,8 @@ function SearchBox({
                     />
                   )}
                   <div className="min-w-0">
-                    <div className="truncate text-[13px] text-white">{game.name}</div>
-                    <div className="text-[10px] uppercase tracking-wide text-ov-muted">
+                    <div className="truncate text-ui text-white">{game.name}</div>
+                    <div className="text-micro uppercase tracking-wide text-ov-muted">
                       {game.genres?.[0]?.name || "Game"} · {formatYear(game.first_release_date)}
                     </div>
                   </div>
@@ -138,9 +153,10 @@ function SearchBox({
             <button
               type="button"
               onClick={goSearch}
-              className="w-full px-3 py-2.5 text-center text-[11px] tracking-[2px] text-ov-teal transition-colors duration-150 hover:bg-[#0f1a2e]"
+              className="flex w-full items-center justify-center px-3 py-2.5 text-label tracking-hud-wide text-ov-teal transition-colors duration-150 hover:bg-ov-raised"
             >
-              SEE ALL RESULTS ▸
+              SEE ALL RESULTS
+              <OvIcon name="chevron-right" className="ml-1 text-xs" />
             </button>
           )}
         </div>
@@ -233,18 +249,11 @@ export function TopBar() {
   };
 
   return (
-    <header
-      className="sticky top-0 z-40 backdrop-blur-[10px]"
-      style={{
-        borderBottom: "1px solid #16324a",
-        background: "rgba(5,8,16,.92)",
-      }}
-    >
+    <header className="sticky top-0 z-40 border-b border-ov-border bg-ov-bg/92 backdrop-blur-[10px]">
       <div className="mx-auto flex max-w-[1320px] items-center gap-3 px-4 py-3 sm:gap-4 lg:px-6 lg:py-4">
         <Link
           href="/games"
-          className="shrink-0 font-orbitron text-[15px] font-black transition-opacity duration-150 hover:opacity-80 sm:text-[17px]"
-          style={{ color: "#2dd4bf", letterSpacing: "1px" }}
+          className="shrink-0 font-orbitron text-body font-black tracking-hud text-ov-teal transition-opacity duration-150 hover:opacity-80 sm:text-lg"
         >
           GAME//HUB
         </Link>
@@ -252,26 +261,12 @@ export function TopBar() {
         {/* Desktop (xl+): nav, search and the wishlist/library links share one row. */}
         <div className="hidden min-w-0 flex-1 items-center gap-4 xl:flex 2xl:gap-6">
           <nav
-            className="flex shrink-0 gap-3.5 text-[13px] uppercase 2xl:gap-5"
-            style={{ letterSpacing: "1px" }}
+            aria-label="Primary"
+            className="flex shrink-0 gap-3.5 text-ui uppercase tracking-hud 2xl:gap-5"
           >
-            {NAV.map((item) => {
-              const active = isNavActive(pathname, item.href);
-              const accent = active ? "#2dd4bf" : "#c3cede";
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="cursor-pointer whitespace-nowrap pb-1 transition-colors duration-150 hover:opacity-80"
-                  style={{
-                    color: accent,
-                    borderBottom: `2px solid ${active ? accent : "transparent"}`,
-                  }}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+            {NAV.map((item) => (
+              <NavLink key={item.href} {...item} active={isNavActive(pathname, item.href)} />
+            ))}
           </nav>
 
           <SearchBox
@@ -283,14 +278,13 @@ export function TopBar() {
           <Link
             href="/wishlist"
             title="Wishlist"
-            className="flex shrink-0 items-center gap-1.5 transition-transform duration-150 hover:scale-105 active:scale-95"
-            style={{ color: "#f43f5e", cursor: "pointer" }}
+            className="flex shrink-0 items-center gap-1.5 text-ov-rose transition-transform duration-150 hover:scale-105 active:scale-95"
           >
-            <OvIcon name="heart" className="text-[14px]" />
-            <span className="hidden text-[11px] tracking-[1px] text-ov-text 2xl:inline">
+            <OvIcon name="heart" className="text-sm" />
+            <span className="hidden text-label tracking-hud text-ov-text 2xl:inline">
               WISHLIST
             </span>
-            <span className="font-orbitron text-[11px] font-bold" style={{ color: "#c3cede" }}>
+            <span className="font-orbitron text-label font-bold text-ov-text">
               {wishlist.length}
             </span>
           </Link>
@@ -298,14 +292,13 @@ export function TopBar() {
           <Link
             href="/library"
             title="Library"
-            className="flex shrink-0 items-center gap-1.5 transition-transform duration-150 hover:scale-105 active:scale-95"
-            style={{ color: "#2dd4bf", cursor: "pointer" }}
+            className="flex shrink-0 items-center gap-1.5 text-ov-teal transition-transform duration-150 hover:scale-105 active:scale-95"
           >
-            <OvIcon name="library" className="text-[15px]" />
-            <span className="hidden text-[11px] tracking-[1px] text-ov-text 2xl:inline">
+            <OvIcon name="library" className="text-body" />
+            <span className="hidden text-label tracking-hud text-ov-text 2xl:inline">
               LIBRARY
             </span>
-            <span className="font-orbitron text-[11px] font-bold" style={{ color: "#c3cede" }}>
+            <span className="font-orbitron text-label font-bold text-ov-text">
               {library.length}
             </span>
           </Link>
@@ -318,32 +311,31 @@ export function TopBar() {
             onClick={() => setMobileSearchOpen((v) => !v)}
             aria-label={mobileSearchOpen ? "Close search" : "Open search"}
             aria-expanded={mobileSearchOpen}
-            className="transition-transform duration-150 active:scale-90"
-            style={{ color: mobileSearchOpen ? "#2dd4bf" : "#c3cede" }}
+            className={`transition-transform duration-150 active:scale-90 ${
+              mobileSearchOpen ? "text-ov-teal" : "text-ov-text"
+            }`}
           >
-            <OvIcon name={mobileSearchOpen ? "close" : "search"} className="text-[18px]" />
+            <OvIcon name={mobileSearchOpen ? "close" : "search"} className="text-lg" />
           </button>
 
           <Link
             href="/wishlist"
-            title="Wishlist"
-            className="flex items-center gap-1 transition-transform duration-150 active:scale-90"
-            style={{ color: "#f43f5e" }}
+            aria-label={`Wishlist, ${wishlist.length} games`}
+            className="flex items-center gap-1 text-ov-rose transition-transform duration-150 active:scale-90"
           >
-            <OvIcon name="heart" className="text-[16px]" />
-            <span className="font-orbitron text-[11px] font-bold" style={{ color: "#c3cede" }}>
+            <OvIcon name="heart" className="text-base" />
+            <span className="font-orbitron text-label font-bold text-ov-text">
               {wishlist.length}
             </span>
           </Link>
 
           <Link
             href="/library"
-            title="Library"
-            className="flex items-center gap-1 transition-transform duration-150 active:scale-90"
-            style={{ color: "#2dd4bf" }}
+            aria-label={`Library, ${library.length} games`}
+            className="flex items-center gap-1 text-ov-teal transition-transform duration-150 active:scale-90"
           >
-            <OvIcon name="library" className="text-[17px]" />
-            <span className="font-orbitron text-[11px] font-bold" style={{ color: "#c3cede" }}>
+            <OvIcon name="library" className="text-lg" />
+            <span className="font-orbitron text-label font-bold text-ov-text">
               {library.length}
             </span>
           </Link>
@@ -357,7 +349,7 @@ export function TopBar() {
 
       {/* Below xl: search expands into its own row, toggled by the icon above. */}
       {mobileSearchOpen && (
-        <div className="animate-ov-fade-up xl:hidden" style={{ borderTop: "1px solid #16324a" }}>
+        <div className="animate-ov-fade-up border-t border-ov-border xl:hidden">
           <div className="mx-auto max-w-[1320px] px-4 py-3 md:px-6 lg:px-6">
             <SearchBox
               {...searchBoxCommonProps}
@@ -371,28 +363,14 @@ export function TopBar() {
 
       {/* Below xl: the primary nav is a persistent, horizontally scrollable strip
           instead of a hidden hamburger menu, so every section stays one tap away. */}
-      <div className="xl:hidden" style={{ borderTop: "1px solid #16324a" }}>
+      <div className="border-t border-ov-border xl:hidden">
         <nav
-          className="mx-auto flex max-w-[1320px] gap-5 overflow-x-auto px-4 py-2.5 text-[12px] uppercase [-ms-overflow-style:none] [scrollbar-width:none] md:gap-7 md:px-6 md:py-3 md:text-[13px] lg:px-6 [&::-webkit-scrollbar]:hidden"
-          style={{ letterSpacing: "1px" }}
+          aria-label="Primary"
+          className="mx-auto flex max-w-[1320px] gap-5 overflow-x-auto px-4 py-2.5 text-xs uppercase tracking-hud [-ms-overflow-style:none] [scrollbar-width:none] md:gap-7 md:px-6 md:py-3 md:text-ui lg:px-6 [&::-webkit-scrollbar]:hidden"
         >
-          {NAV.map((item) => {
-            const active = isNavActive(pathname, item.href);
-            const accent = active ? "#2dd4bf" : "#c3cede";
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="shrink-0 whitespace-nowrap pb-1 transition-colors duration-150 hover:opacity-80"
-                style={{
-                  color: accent,
-                  borderBottom: `2px solid ${active ? accent : "transparent"}`,
-                }}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+          {NAV.map((item) => (
+            <NavLink key={item.href} {...item} active={isNavActive(pathname, item.href)} />
+          ))}
         </nav>
       </div>
     </header>

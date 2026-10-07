@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { OvIcon } from "./OvIcon";
+import { OvIcon, type IconName } from "./OvIcon";
 
 export function EmptyState({
   icon,
@@ -9,9 +9,9 @@ export function EmptyState({
   description,
   actionLabel,
   actionHref,
-  iconClassName = "text-[#f43f5e]",
+  iconClassName = "text-ov-rose",
 }: {
-  icon: string;
+  icon: IconName;
   title: string;
   description: string;
   actionLabel: string;
@@ -21,15 +21,15 @@ export function EmptyState({
   return (
     <div className="border border-dashed border-ov-border px-8 py-[60px] text-center">
       <div className={`mx-auto mb-3 flex justify-center ${iconClassName}`}>
-        <OvIcon name={icon} className="text-[40px]" />
+        <OvIcon name={icon} className="text-4xl" />
       </div>
       <div className="font-orbitron text-base font-bold tracking-wide text-ov-text">
         {title}
       </div>
-      <p className="mt-2.5 text-[13px] text-ov-muted">{description}</p>
+      <p className="mt-2.5 text-ui text-ov-muted">{description}</p>
       <Link
         href={actionHref}
-        className="mt-5 inline-block bg-ov-teal px-5 py-2.5 font-orbitron text-[11px] font-bold tracking-[2px] text-ov-bg transition-transform duration-150 hover:brightness-110 active:scale-95"
+        className="mt-5 inline-block bg-ov-teal px-5 py-2.5 font-orbitron text-label font-bold tracking-hud-wide text-ov-bg transition-transform duration-150 hover:brightness-110 active:scale-95"
       >
         {actionLabel}
       </Link>
@@ -46,10 +46,10 @@ export function NoResults({
 }) {
   return (
     <div className="border border-dashed border-ov-border px-8 py-[60px] text-center text-ov-muted">
-      <div className="font-orbitron text-base font-bold tracking-[2px] text-ov-text">
+      <div className="font-orbitron text-base font-bold tracking-hud-wide text-ov-text">
         {title}
       </div>
-      <p className="mt-3 text-[13px]">{description}</p>
+      <p className="mt-3 text-ui">{description}</p>
     </div>
   );
 }
@@ -67,7 +67,7 @@ export function LoadMoreButton({
         type="button"
         onClick={onClick}
         disabled={loading}
-        className="flex items-center gap-2 border border-ov-teal bg-[rgba(45,212,191,0.06)] px-7 py-3 font-orbitron text-[11px] font-bold tracking-[2px] text-ov-teal transition-all duration-150 hover:bg-[rgba(45,212,191,0.14)] active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+        className="flex items-center gap-2 border border-ov-teal bg-ov-teal/6 px-7 py-3 font-orbitron text-label font-bold tracking-hud-wide text-ov-teal transition-all duration-150 hover:bg-ov-teal/14 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
       >
         {loading ? (
           <>
@@ -75,7 +75,10 @@ export function LoadMoreButton({
             LOADING
           </>
         ) : (
-          "LOAD MORE ▾"
+          <>
+            LOAD MORE
+            <OvIcon name="chevron-down" className="text-xs" />
+          </>
         )}
       </button>
     </div>

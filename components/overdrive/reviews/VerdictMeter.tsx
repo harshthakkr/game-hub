@@ -1,6 +1,7 @@
 "use client";
 
-import { VERDICTS, verdictMeta, type Verdict } from "@/utils/reviews";
+import { VERDICTS, verdictMeta, verdictVars, type Verdict } from "@/utils/reviews";
+import { OvIcon } from "../OvIcon";
 import type { ReviewStats } from "@/utils/types";
 
 /// Consensus panel: the modal verdict plus a distribution bar per tier. Rows are
@@ -20,28 +21,23 @@ export function VerdictMeter({
   return (
     <div>
       <div className="flex flex-wrap items-baseline gap-3">
-        <span className="font-orbitron text-xs font-bold tracking-[2px] text-ov-rose">
+        <span className="font-orbitron text-xs font-bold tracking-hud-wide text-ov-rose">
           PLAYER CONSENSUS
         </span>
-        <span className="ml-auto text-[11px] tracking-[1px] text-ov-muted">
+        <span className="ml-auto text-label tracking-hud text-ov-muted">
           {stats.total} {stats.total === 1 ? "REVIEW" : "REVIEWS"}
         </span>
       </div>
 
       {consensus ? (
         <div
-          className="ov-clip-md mt-3.5 inline-block px-4 py-2.5 font-orbitron text-[22px] font-black"
-          style={{
-            color: consensus.color,
-            border: `1px solid ${consensus.color}`,
-            background: `${consensus.color}12`,
-            letterSpacing: "1px",
-          }}
+          className="ov-chamfer-x mt-3.5 inline-block border border-(--verdict) bg-(--verdict)/7 px-4 py-2.5 font-orbitron text-2xl font-black tracking-hud text-(--verdict)"
+          style={verdictVars(consensus.color)}
         >
           {consensus.label}
         </div>
       ) : (
-        <div className="mt-3.5 font-orbitron text-[18px] font-black text-ov-muted">
+        <div className="mt-3.5 font-orbitron text-lg font-black text-ov-muted">
           NO VERDICT YET
         </div>
       )}
@@ -59,25 +55,25 @@ export function VerdictMeter({
               disabled={count === 0}
               onClick={() => onVerdictChange(active ? null : tier.value)}
               aria-pressed={active}
-              className="flex w-full items-center gap-3 px-1.5 py-1 text-left transition-all duration-150 hover:brightness-125 active:scale-[0.98] disabled:cursor-default disabled:opacity-40 disabled:active:scale-100"
-              style={{
-                background: active ? `${tier.color}12` : "transparent",
-                borderLeft: `2px solid ${active ? tier.color : "transparent"}`,
-              }}
+              className={`flex w-full items-center gap-3 border-l-2 px-1.5 py-1 text-left transition-all duration-150 hover:brightness-125 active:scale-[0.98] disabled:cursor-default disabled:opacity-40 disabled:active:scale-100 ${
+                active ? "border-(--verdict) bg-(--verdict)/7" : "border-transparent bg-transparent"
+              }`}
+              style={verdictVars(tier.color)}
             >
               <span
-                className="w-[92px] shrink-0 text-[10px] font-semibold tracking-[1px]"
-                style={{ color: active ? tier.color : "#7c8aa0" }}
+                className={`w-[92px] shrink-0 text-micro font-semibold tracking-hud ${
+                  active ? "text-(--verdict)" : "text-ov-dim"
+                }`}
               >
                 {tier.label}
               </span>
-              <span className="h-[7px] min-w-0 flex-1 bg-[#0f1a2e]">
+              <span className="h-[7px] min-w-0 flex-1 bg-ov-raised">
                 <span
-                  className="block h-full transition-[width] duration-300"
-                  style={{ width: `${share}%`, background: tier.color }}
+                  className="block h-full bg-(--verdict) transition-[width] duration-300"
+                  style={{ width: `${share}%` }}
                 />
               </span>
-              <span className="w-7 shrink-0 text-right font-orbitron text-[11px] font-bold text-ov-text">
+              <span className="w-7 shrink-0 text-right font-orbitron text-label font-bold text-ov-text">
                 {count}
               </span>
             </button>
@@ -89,9 +85,10 @@ export function VerdictMeter({
         <button
           type="button"
           onClick={() => onVerdictChange(null)}
-          className="mt-3 text-[10px] tracking-[1px] text-ov-teal transition-opacity duration-150 hover:opacity-75"
+          className="mt-3 text-micro tracking-hud text-ov-teal transition-opacity duration-150 hover:opacity-75"
         >
-          ✕ CLEAR VERDICT FILTER
+          <OvIcon name="close" className="mr-1 text-micro" />
+          CLEAR VERDICT FILTER
         </button>
       )}
     </div>

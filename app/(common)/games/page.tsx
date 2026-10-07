@@ -59,6 +59,7 @@ export default function AllGames() {
         return (b.aggregated_rating || 0) - (a.aggregated_rating || 0);
       if (sort === "date")
         return (b.first_release_date || 0) - (a.first_release_date || 0);
+      if (sort === "popularity") return (b.hypes || 0) - (a.hypes || 0);
       if (sort === "az") return a.name.localeCompare(b.name);
       return 0;
     });
@@ -68,14 +69,14 @@ export default function AllGames() {
 
   return (
     <div className="mx-auto max-w-[1320px] px-4 pb-0 pt-3 lg:px-6 xl:pt-0">
-      <div className="flex flex-col gap-4 pb-[60px] xl:sticky xl:top-[74px] xl:h-[calc(100vh-74px)] xl:flex-row xl:gap-7 xl:overflow-hidden xl:pb-0 xl:pt-6 xl:[background-color:#05070e] xl:[background-image:linear-gradient(rgba(45,212,191,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(45,212,191,.035)_1px,transparent_1px)] xl:[background-size:38px_38px]">
+      <div className="flex flex-col gap-4 pb-[60px] xl:sticky xl:top-(--ov-topbar-h) xl:h-[calc(100dvh-var(--ov-topbar-h))] xl:flex-row xl:gap-7 xl:overflow-hidden xl:pb-0 xl:pt-6 xl:ov-grid-bg">
         <aside className="w-full shrink-0 xl:w-[210px] xl:overflow-y-auto xl:pb-6 xl:pt-1">
           {/* Desktop: filters and sort sit fully expanded in the sidebar. */}
           <div className="hidden xl:block">
-            <div className="mb-3.5 border-l-[3px] border-ov-rose pl-2 font-orbitron text-[11px] font-bold tracking-[2px] text-ov-rose">
+            <div className="mb-3.5 border-l-[3px] border-ov-rose pl-2 font-orbitron text-label font-bold tracking-hud-wide text-ov-rose">
               FILTERS
             </div>
-            <div className="mb-2 text-[11px] tracking-wide text-ov-dim">GENRE</div>
+            <div className="mb-2 text-label tracking-wide text-ov-dim">GENRE</div>
             <div className="mb-5 flex flex-wrap gap-1.5">
               {GENRES.map((g) => {
                 const active = genre === g;
@@ -84,7 +85,7 @@ export default function AllGames() {
                     key={g}
                     type="button"
                     onClick={() => setGenre(g)}
-                    className={`border px-2.5 py-1 text-[11px] transition-colors duration-150 active:scale-95 ${
+                    className={`border px-2.5 py-1 text-label transition-colors duration-150 active:scale-95 ${
                       active
                         ? "border-ov-teal bg-ov-teal text-ov-bg"
                         : "border-ov-border bg-transparent text-ov-text hover:border-ov-teal hover:text-ov-teal"
@@ -95,7 +96,7 @@ export default function AllGames() {
                 );
               })}
             </div>
-            <div className="mb-3.5 border-l-[3px] border-ov-rose pl-2 font-orbitron text-[11px] font-bold tracking-[2px] text-ov-rose">
+            <div className="mb-3.5 border-l-[3px] border-ov-rose pl-2 font-orbitron text-label font-bold tracking-hud-wide text-ov-rose">
               SORT BY
             </div>
             <div className="mb-5 flex flex-wrap gap-1.5">
@@ -106,7 +107,7 @@ export default function AllGames() {
                     key={s.key}
                     type="button"
                     onClick={() => setSort(s.key)}
-                    className={`border px-2.5 py-1 text-[11px] transition-colors duration-150 active:scale-95 ${
+                    className={`border px-2.5 py-1 text-label transition-colors duration-150 active:scale-95 ${
                       active
                         ? "border-ov-teal bg-ov-teal text-ov-bg"
                         : "border-ov-border bg-transparent text-ov-text hover:border-ov-teal hover:text-ov-teal"
@@ -123,13 +124,13 @@ export default function AllGames() {
               always-expanded sidebar, keeping the catalogue close by. */}
           <div className="flex items-center gap-2.5 xl:hidden">
             <div ref={filtersMenuRef} className="relative flex flex-col gap-1.5">
-              <span className="text-[11px] tracking-wide text-ov-dim">Filter by</span>
+              <span className="text-label tracking-wide text-ov-dim">Filter by</span>
               <button
                 type="button"
                 onClick={() => setFiltersOpen((v) => !v)}
                 aria-haspopup="listbox"
                 aria-expanded={filtersOpen}
-                className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[11px] tracking-[1px] transition-colors duration-150 active:scale-95 ${
+                className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-label tracking-hud transition-colors duration-150 active:scale-95 ${
                   filtersOpen || genre !== "All"
                     ? "border-ov-teal text-ov-teal"
                     : "border-ov-border text-ov-text"
@@ -138,14 +139,14 @@ export default function AllGames() {
                 {genre.toUpperCase()}
                 <OvIcon
                   name="chevron-down"
-                  className={`text-[10px] transition-transform ${filtersOpen ? "rotate-180" : ""}`}
+                  className={`text-micro transition-transform ${filtersOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
               {filtersOpen && (
                 <div
                   role="listbox"
-                  className="animate-ov-pop absolute left-0 top-[calc(100%+6px)] z-50 w-[170px] origin-top-left border border-ov-teal bg-ov-panel shadow-[0_12px_30px_rgba(0,0,0,0.5)]"
+                  className="animate-ov-pop absolute left-0 top-[calc(100%+6px)] z-50 w-[170px] origin-top-left border border-ov-teal bg-ov-panel shadow-ov-pop"
                 >
                   {GENRES.map((g) => {
                     const active = g === genre;
@@ -159,12 +160,12 @@ export default function AllGames() {
                           setGenre(g);
                           setFiltersOpen(false);
                         }}
-                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-[12px] tracking-[0.5px] transition-colors duration-150 hover:bg-[#0f1a2e] ${
+                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs tracking-wide transition-colors duration-150 hover:bg-ov-raised ${
                           active ? "text-ov-teal" : "text-ov-text"
                         }`}
                       >
                         {g}
-                        {active && <OvIcon name="check" className="text-[10px]" />}
+                        {active && <OvIcon name="check" className="text-micro" />}
                       </button>
                     );
                   })}
@@ -173,27 +174,27 @@ export default function AllGames() {
             </div>
 
             <div ref={sortMenuRef} className="relative ml-auto flex flex-col items-end gap-1.5">
-              <span className="text-[11px] tracking-wide text-ov-dim">Sort by</span>
+              <span className="text-label tracking-wide text-ov-dim">Sort by</span>
               <button
                 type="button"
                 onClick={() => setSortMenuOpen((v) => !v)}
                 aria-haspopup="listbox"
                 aria-expanded={sortMenuOpen}
-                className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[11px] tracking-[1px] transition-colors duration-150 active:scale-95 ${
+                className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-label tracking-hud transition-colors duration-150 active:scale-95 ${
                   sortMenuOpen ? "border-ov-teal text-ov-teal" : "border-ov-border text-ov-text"
                 }`}
               >
                 {currentSort.label.toUpperCase()}
                 <OvIcon
                   name="chevron-down"
-                  className={`text-[10px] transition-transform ${sortMenuOpen ? "rotate-180" : ""}`}
+                  className={`text-micro transition-transform ${sortMenuOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
               {sortMenuOpen && (
                 <div
                   role="listbox"
-                  className="animate-ov-pop absolute right-0 top-[calc(100%+6px)] z-50 w-[170px] origin-top-right border border-ov-teal bg-ov-panel shadow-[0_12px_30px_rgba(0,0,0,0.5)]"
+                  className="animate-ov-pop absolute right-0 top-[calc(100%+6px)] z-50 w-[170px] origin-top-right border border-ov-teal bg-ov-panel shadow-ov-pop"
                 >
                   {SORTS.map((s) => {
                     const active = s.key === sort;
@@ -207,12 +208,12 @@ export default function AllGames() {
                           setSort(s.key);
                           setSortMenuOpen(false);
                         }}
-                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-[12px] tracking-[0.5px] transition-colors duration-150 hover:bg-[#0f1a2e] ${
+                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs tracking-wide transition-colors duration-150 hover:bg-ov-raised ${
                           active ? "text-ov-teal" : "text-ov-text"
                         }`}
                       >
                         {s.label}
-                        {active && <OvIcon name="check" className="text-[10px]" />}
+                        {active && <OvIcon name="check" className="text-micro" />}
                       </button>
                     );
                   })}
@@ -224,35 +225,35 @@ export default function AllGames() {
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3 xl:pt-1">
-            <span className="font-orbitron text-[17px] font-bold tracking-[2px] text-white">
+            <span className="font-orbitron text-lg font-bold tracking-hud-wide text-white">
               CATALOGUE
             </span>
-            <span className="text-[13px] text-ov-muted">
+            <span className="text-ui text-ov-muted">
               // {games.length} titles
             </span>
             <div className="ml-auto flex gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => setView("grid")}
-                className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-[12px] leading-none transition-colors duration-150 active:scale-95 ${
+                className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs leading-none transition-colors duration-150 active:scale-95 ${
                   view === "grid"
-                    ? "border-[#2dd4bf] bg-[#2dd4bf] text-[#05070e]"
-                    : "border-[#16324a] text-[#5b6b82] hover:border-ov-teal hover:text-ov-teal"
+                    ? "border-ov-teal bg-ov-teal text-ov-bg"
+                    : "border-ov-border text-ov-muted hover:border-ov-teal hover:text-ov-teal"
                 }`}
               >
-                <OvIcon name="grid" className="text-[12px] leading-none" />
+                <OvIcon name="grid" className="text-xs leading-none" />
                 <span>GRID</span>
               </button>
               <button
                 type="button"
                 onClick={() => setView("list")}
-                className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-[12px] leading-none transition-colors duration-150 active:scale-95 ${
+                className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs leading-none transition-colors duration-150 active:scale-95 ${
                   view === "list"
-                    ? "border-[#2dd4bf] bg-[#2dd4bf] text-[#05070e]"
-                    : "border-[#16324a] text-[#5b6b82] hover:border-ov-teal hover:text-ov-teal"
+                    ? "border-ov-teal bg-ov-teal text-ov-bg"
+                    : "border-ov-border text-ov-muted hover:border-ov-teal hover:text-ov-teal"
                 }`}
               >
-                <OvIcon name="list" className="text-[12px] leading-none" />
+                <OvIcon name="list" className="text-xs leading-none" />
                 <span>LIST</span>
               </button>
             </div>

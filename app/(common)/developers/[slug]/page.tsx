@@ -33,7 +33,7 @@ export default function Developer() {
       </div>
 
       {data.websites && data.websites.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-3 text-[13px]">
+        <div className="mb-4 flex flex-wrap gap-3 text-ui">
           {data.websites.map((website) => (
             <Link
               key={website.id}
@@ -48,12 +48,12 @@ export default function Developer() {
       )}
 
       {data.description && (
-        <p className="mb-8 max-w-[720px] text-[15px] leading-relaxed text-ov-text">
+        <p className="mb-8 max-w-[720px] text-body leading-relaxed text-ov-text">
           {data.description}
         </p>
       )}
 
-      <div className="mb-4 font-orbitron text-[13px] font-bold tracking-[2px] text-ov-rose">
+      <div className="mb-4 font-orbitron text-ui font-bold tracking-hud-wide text-ov-rose">
         DEVELOPED GAMES
       </div>
       {covered.length === 0 ? (

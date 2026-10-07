@@ -60,7 +60,7 @@ export default function WishlistPage() {
         <EmptyState
           icon="heart-filled"
           title="YOUR WISHLIST IS EMPTY"
-          description="Tap the ♥ on any game to track price drops and release dates."
+          description="Tap the heart on any game to track price drops and release dates."
           actionLabel="BROWSE GAMES"
           actionHref="/games"
         />
@@ -69,44 +69,37 @@ export default function WishlistPage() {
           {games.map((game) => {
             const cover = coverUrl(game.cover);
             return (
-              <Link
-                key={game.id}
-                href={`/games/${game.slug}`}
-                className="group block"
-              >
-                <div className="ov-clip-card relative aspect-[3/4] overflow-hidden border border-ov-border transition-all duration-200 group-hover:-translate-y-1.5 group-hover:border-ov-teal">
-                  {cover ? (
-                    <Image
-                      src={cover}
-                      alt=""
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="220px"
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-teal-700 to-slate-900" />
-                  )}
-                  {game.id && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toggleWish(game.id!);
-                      }}
-                      className="absolute right-2 top-1.5 z-10 transition-transform duration-150 hover:scale-110 active:scale-90"
-                    >
-                      <OvIcon
-                        name="heart"
-                        className="text-[15px] text-[#f43f5e]"
+              <div key={game.id} className="group relative">
+                <Link href={`/games/${game.slug}`} className="block">
+                  <div className="ov-chamfer relative aspect-[3/4] overflow-hidden border border-ov-border transition-all duration-200 group-hover:-translate-y-1.5 group-hover:border-ov-teal">
+                    {cover ? (
+                      <Image
+                        src={cover}
+                        alt=""
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="220px"
                       />
-                    </button>
-                  )}
-                </div>
-                <div className="mt-2 text-[15px] font-semibold text-white transition-colors duration-150 group-hover:text-ov-teal">
-                  {game.name}
-                </div>
-                <div className="mt-0.5 text-[11px] text-ov-teal">Track price</div>
-              </Link>
+                    ) : (
+                      <div className="h-full w-full bg-linear-to-br from-teal-700 to-slate-900" />
+                    )}
+                  </div>
+                  <div className="mt-2 text-body font-semibold text-white transition-colors duration-150 group-hover:text-ov-teal">
+                    {game.name}
+                  </div>
+                  <div className="mt-0.5 text-label text-ov-teal">Track price</div>
+                </Link>
+                {game.id && (
+                  <button
+                    type="button"
+                    onClick={() => toggleWish(game.id!)}
+                    aria-label={`Remove ${game.name} from wishlist`}
+                    className="absolute right-2 top-2 z-10 transition-transform duration-150 hover:scale-110 active:scale-90 group-hover:-translate-y-1.5"
+                  >
+                    <OvIcon name="heart-filled" className="text-body text-ov-rose" />
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>

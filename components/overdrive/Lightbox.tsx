@@ -51,24 +51,24 @@ export function Lightbox({
       role="dialog"
       aria-modal="true"
       aria-label={`${alt} screenshot ${index + 1} of ${count}`}
-      className="animate-ov-fade-up fixed inset-0 z-[100] flex flex-col bg-[rgba(4,6,12,0.95)] backdrop-blur-[3px]"
+      className="animate-ov-fade-up fixed inset-0 z-[100] flex flex-col bg-ov-bg/95 backdrop-blur-[3px]"
       onClick={onClose}
     >
       <div className="flex shrink-0 items-center gap-4 px-4 py-3.5 lg:px-7">
-        <span className="font-orbitron text-[11px] font-bold tracking-[2px] text-ov-teal">
+        <span className="font-orbitron text-label font-bold tracking-hud-wide text-ov-teal">
           {String(index + 1).padStart(2, "0")}
           <span className="text-ov-muted"> / {String(count).padStart(2, "0")}</span>
         </span>
-        <span className="hidden truncate text-[12px] tracking-[1px] text-ov-dim md:inline">
+        <span className="hidden truncate text-xs tracking-hud text-ov-dim md:inline">
           {alt}
         </span>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close viewer"
-          className="ml-auto border border-ov-border px-3 py-1.5 text-[11px] tracking-[1px] text-ov-dim transition-colors duration-150 hover:border-ov-rose hover:text-ov-rose active:scale-95"
+          className="ml-auto border border-ov-border px-3 py-1.5 text-label tracking-hud text-ov-dim transition-colors duration-150 hover:border-ov-rose hover:text-ov-rose active:scale-95"
         >
-          <OvIcon name="close" className="mr-1.5 text-[11px]" />
+          <OvIcon name="close" className="mr-1.5 text-label" />
           CLOSE
         </button>
       </div>
@@ -99,9 +99,9 @@ export function Lightbox({
                 event.stopPropagation();
                 step(-1);
               }}
-              className="ov-clip-sm absolute left-1 top-1/2 -translate-y-1/2 border border-ov-border bg-[rgba(10,18,32,0.85)] px-3 py-4 text-[16px] text-ov-text transition-all duration-150 hover:border-ov-teal hover:text-ov-teal active:scale-90 lg:left-3"
+              className="ov-chamfer-x ov-chamfer-sm absolute left-1 top-1/2 -translate-y-1/2 border border-ov-border bg-ov-panel/85 px-3 py-4 text-base text-ov-text transition-all duration-150 hover:border-ov-teal hover:text-ov-teal active:scale-90 lg:left-3"
             >
-              ◂
+              <OvIcon name="chevron-left" className="text-lg" />
             </button>
             <button
               type="button"
@@ -110,9 +110,9 @@ export function Lightbox({
                 event.stopPropagation();
                 step(1);
               }}
-              className="ov-clip-sm absolute right-1 top-1/2 -translate-y-1/2 border border-ov-border bg-[rgba(10,18,32,0.85)] px-3 py-4 text-[16px] text-ov-text transition-all duration-150 hover:border-ov-teal hover:text-ov-teal active:scale-90 lg:right-3"
+              className="ov-chamfer-x ov-chamfer-sm absolute right-1 top-1/2 -translate-y-1/2 border border-ov-border bg-ov-panel/85 px-3 py-4 text-base text-ov-text transition-all duration-150 hover:border-ov-teal hover:text-ov-teal active:scale-90 lg:right-3"
             >
-              ▸
+              <OvIcon name="chevron-right" className="text-lg" />
             </button>
           </>
         )}
@@ -131,11 +131,9 @@ export function Lightbox({
                 onClick={() => onNavigate(i)}
                 aria-label={`View image ${i + 1}`}
                 aria-current={i === index ? "true" : undefined}
-                className="relative h-[44px] w-[74px] shrink-0 overflow-hidden transition-all duration-150 hover:scale-105"
-                style={{
-                  border: `1px solid ${i === index ? "#2dd4bf" : "#16324a"}`,
-                  opacity: i === index ? 1 : 0.5,
-                }}
+                className={`relative h-[44px] w-[74px] shrink-0 overflow-hidden border transition-all duration-150 hover:scale-105 ${
+                  i === index ? "border-ov-teal" : "border-ov-border opacity-50"
+                }`}
               >
                 <Image src={src} alt="" fill sizes="74px" className="object-cover" />
               </button>

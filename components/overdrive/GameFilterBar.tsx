@@ -57,27 +57,27 @@ export function GameFilterBar({
   return (
     <div className="mb-6 flex justify-end">
       <div ref={sortMenuRef} className="relative flex flex-col items-end gap-1.5">
-        <span className="text-[11px] tracking-wide text-ov-dim">Sort by</span>
+        <span className="text-label tracking-wide text-ov-dim">Sort by</span>
         <button
           type="button"
           onClick={() => setSortMenuOpen((v) => !v)}
           aria-haspopup="listbox"
           aria-expanded={sortMenuOpen}
-          className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[11px] tracking-[1px] transition-colors duration-150 hover:border-ov-teal hover:text-ov-teal active:scale-[0.97] ${
+          className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-label tracking-hud transition-colors duration-150 hover:border-ov-teal hover:text-ov-teal active:scale-[0.97] ${
             sortMenuOpen ? "border-ov-teal text-ov-teal" : "border-ov-border text-ov-text"
           }`}
         >
           {currentSort.label.toUpperCase()}
           <OvIcon
             name="chevron-down"
-            className={`text-[10px] transition-transform duration-200 ${sortMenuOpen ? "rotate-180" : ""}`}
+            className={`text-micro transition-transform duration-200 ${sortMenuOpen ? "rotate-180" : ""}`}
           />
         </button>
 
         {sortMenuOpen && (
           <div
             role="listbox"
-            className="absolute right-0 top-[calc(100%+6px)] z-50 w-[170px] origin-top-right animate-ov-pop border border-ov-teal bg-ov-panel shadow-[0_12px_30px_rgba(0,0,0,0.5)]"
+            className="absolute right-0 top-[calc(100%+6px)] z-50 w-[170px] origin-top-right animate-ov-pop border border-ov-teal bg-ov-panel shadow-ov-pop"
           >
             {SORTS.map((s) => {
               const active = s.key === sort;
@@ -91,12 +91,12 @@ export function GameFilterBar({
                     setSort(s.key);
                     setSortMenuOpen(false);
                   }}
-                  className={`flex w-full items-center justify-between px-3 py-2 text-left text-[12px] tracking-[0.5px] transition-colors duration-150 hover:bg-[#0f1a2e] ${
+                  className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs tracking-wide transition-colors duration-150 hover:bg-ov-raised ${
                     active ? "text-ov-teal" : "text-ov-text"
                   }`}
                 >
                   {s.label}
-                  {active && <OvIcon name="check" className="text-[10px]" />}
+                  {active && <OvIcon name="check" className="text-micro" />}
                 </button>
               );
             })}

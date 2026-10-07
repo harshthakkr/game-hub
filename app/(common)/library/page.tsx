@@ -36,7 +36,7 @@ export default function LibraryPage() {
         <PageTitle title="LIBRARY" />
         <EmptyState
           icon="library"
-          iconClassName="text-[#2dd4bf]"
+          iconClassName="text-ov-teal"
           title="LOG IN TO SEE YOUR LIBRARY"
           description="Your library is saved to your account, so it follows you across devices."
           actionLabel="LOG IN"
@@ -54,7 +54,7 @@ export default function LibraryPage() {
       {games.length === 0 ? (
         <EmptyState
           icon="library"
-          iconClassName="text-[#2dd4bf]"
+          iconClassName="text-ov-teal"
           title="NOTHING IN YOUR LIBRARY"
           description='Add games with "+ Library" to keep your collection in one place.'
           actionLabel="BROWSE GAMES"
@@ -65,10 +65,11 @@ export default function LibraryPage() {
           {games.map((game) => {
             const cover = coverUrl(game.cover);
             return (
-              <Link
+              // The title link stretches over the row (its ::before); the remove
+              // button stays a sibling rather than nesting inside the <a>.
+              <div
                 key={game.id}
-                href={`/games/${game.slug}`}
-                className="group ov-clip-row flex items-center gap-4 border border-ov-border bg-ov-panel px-4 py-3 transition-colors duration-150 hover:border-ov-teal"
+                className="group ov-chamfer ov-chamfer-sm flex items-center gap-4 border border-ov-border bg-ov-panel px-4 py-3 transition-colors duration-150 hover:border-ov-teal has-[a:focus-visible]:border-ov-teal has-[a:focus-visible]:bg-ov-raised"
               >
                 {cover ? (
                   <Image
@@ -79,33 +80,34 @@ export default function LibraryPage() {
                     className="h-[60px] w-[46px] shrink-0 border border-ov-border object-cover"
                   />
                 ) : (
-                  <div className="h-[60px] w-[46px] shrink-0 bg-gradient-to-br from-teal-700 to-slate-900" />
+                  <div className="h-[60px] w-[46px] shrink-0 bg-linear-to-br from-teal-700 to-slate-900" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="text-[17px] font-semibold text-white transition-colors duration-150 group-hover:text-ov-teal">
+                  <Link
+                    href={`/games/${game.slug}`}
+                    className="text-lg font-semibold text-white outline-none transition-colors duration-150 before:absolute before:inset-0 group-hover:text-ov-teal"
+                  >
                     {game.name}
-                  </div>
-                  <div className="mt-1 text-[11px] uppercase tracking-wide text-ov-muted">
+                  </Link>
+                  <div className="mt-1 text-label uppercase tracking-wide text-ov-muted">
                     {developerName(game.involved_companies)} ·{" "}
                     {game.genres?.[0]?.name || "Game"}
                   </div>
                 </div>
-                <span className="border border-ov-teal px-2 py-0.5 text-[10px] tracking-wide text-ov-teal">
+                <span className="border border-ov-teal px-2 py-0.5 text-micro tracking-wide text-ov-teal">
                   INSTALLED
                 </span>
                 {game.id && (
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toggleLibrary(game.id!);
-                    }}
-                    className="border border-ov-rose px-3 py-1.5 text-[11px] tracking-wide text-ov-rose transition-colors duration-150 hover:bg-ov-rose hover:text-ov-bg active:scale-95"
+                    onClick={() => toggleLibrary(game.id!)}
+                    aria-label={`Remove ${game.name} from library`}
+                    className="relative z-10 border border-ov-rose px-3 py-1.5 text-label tracking-wide text-ov-rose transition-colors duration-150 hover:bg-ov-rose hover:text-ov-bg active:scale-95"
                   >
                     REMOVE
                   </button>
                 )}
-              </Link>
+              </div>
             );
           })}
         </div>

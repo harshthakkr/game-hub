@@ -35,8 +35,7 @@ export default async function Register({
       <div className="flex items-center px-6 py-5 lg:hidden">
         <Link
           href="/games"
-          className="font-orbitron text-[18px] font-black transition-opacity duration-150 hover:opacity-80"
-          style={{ color: "#2dd4bf", letterSpacing: "1px" }}
+          className="font-orbitron text-lg font-black tracking-hud text-ov-teal transition-opacity duration-150 hover:opacity-80"
         >
           GAME//HUB
         </Link>
@@ -44,22 +43,21 @@ export default async function Register({
 
       <div className="relative hidden min-h-[40vh] flex-[1_1_340px] overflow-hidden bg-ov-bg lg:block">
         <Suspense
-          fallback={<div className="absolute inset-0 bg-[#070b14]" />}
+          fallback={<div className="absolute inset-0 bg-ov-sunken" />}
         >
           <CoverMarquee />
         </Suspense>
         <div className="absolute left-[34px] top-[26px] z-10">
           <Link
             href="/games"
-            className="font-orbitron text-[18px] font-black transition-opacity duration-150 hover:opacity-80"
-            style={{ color: "#2dd4bf", letterSpacing: "1px" }}
+            className="font-orbitron text-lg font-black tracking-hud text-ov-teal transition-opacity duration-150 hover:opacity-80"
           >
             GAME//HUB
           </Link>
         </div>
       </div>
 
-      <div className="flex min-w-[300px] flex-1 flex-[1_1_360px] items-center justify-center border-ov-border bg-[#070b14] px-6 py-8 lg:border-l lg:px-10 lg:py-10">
+      <div className="flex min-w-[300px] flex-1 flex-[1_1_360px] items-center justify-center border-ov-border bg-ov-sunken px-6 py-8 lg:border-l lg:px-10 lg:py-10">
         <AuthPanel initialMode={initialMode} callbackUrl={safeCallback} />
       </div>
     </div>

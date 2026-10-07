@@ -1,6 +1,6 @@
 export function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="ov-grid-bg text-ov-text">
+    <div className="ov-grid-bg min-h-screen text-ov-text">
       {children}
     </div>
   );
@@ -29,7 +29,7 @@ export function PageTitle({
 }) {
   return (
     <div className="mb-5 flex flex-wrap items-baseline gap-3 lg:mb-6">
-      <h1 className="font-orbitron text-[28px] font-black tracking-wide text-white">
+      <h1 className="font-orbitron text-title font-black tracking-wide text-white">
         {title}
         {accent && <span className={accentClassName}>{accent}</span>}
       </h1>

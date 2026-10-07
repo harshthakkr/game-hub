@@ -28,14 +28,14 @@ export default function Developers() {
               <Link
                 key={d.id}
                 href={`/developers/${d.slug}`}
-                className="group ov-clip-row flex items-center gap-3.5 border border-ov-border bg-ov-panel p-4 transition-all duration-200 hover:-translate-y-1 hover:border-ov-rose active:scale-[0.98]"
+                className="group ov-chamfer ov-chamfer-sm flex items-center gap-3.5 border border-ov-border bg-ov-panel p-4 transition-all duration-200 hover:-translate-y-1 hover:border-ov-rose active:scale-[0.98]"
               >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-ov-rose font-orbitron text-base font-black text-ov-rose transition-colors duration-150 group-hover:bg-ov-rose group-hover:text-ov-bg">
                   {abbrev(d.name)}
                 </div>
                 <div>
-                  <div className="text-[15px] font-semibold text-white">{d.name}</div>
-                  <div className="mt-1 text-[11px] tracking-wide text-ov-muted">
+                  <div className="text-body font-semibold text-white">{d.name}</div>
+                  <div className="mt-1 text-label tracking-wide text-ov-muted">
                     STUDIO · VIEW GAMES
                   </div>
                 </div>

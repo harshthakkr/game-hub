@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 // Client-safe review constants and helpers. Nothing here may import Prisma —
 // these run inside client components alongside the server routes.
 
@@ -12,6 +14,8 @@ export interface VerdictMeta {
   value: Verdict;
   label: string;
   blurb: string;
+  /// A CSS color (a theme token reference). Components hand it to the
+  /// `--verdict` custom property and style with `text-(--verdict)` and friends.
   color: string;
 }
 
@@ -22,31 +26,31 @@ export const VERDICTS: readonly VerdictMeta[] = [
     value: "SKIP",
     label: "SKIP",
     blurb: "Not worth your time",
-    color: "#f43f5e",
+    color: "var(--color-ov-rose)",
   },
   {
     value: "TIMEPASS",
     label: "TIMEPASS",
     blurb: "Fine on a slow weekend",
-    color: "#7c8aa0",
+    color: "var(--color-ov-dim)",
   },
   {
     value: "WORTH_IT",
     label: "WORTH IT",
     blurb: "Solid — no regrets",
-    color: "#38bdf8",
+    color: "var(--color-ov-sky)",
   },
   {
     value: "GO_FOR_IT",
     label: "GO FOR IT",
     blurb: "Buy it, play it",
-    color: "#2dd4bf",
+    color: "var(--color-ov-teal)",
   },
   {
     value: "MASTERPIECE",
     label: "MASTERPIECE",
     blurb: "An all-timer",
-    color: "#fbbf24",
+    color: "var(--color-ov-amber)",
   },
 ] as const;
 
@@ -56,11 +60,16 @@ const FALLBACK_VERDICT: VerdictMeta = {
   value: "WORTH_IT",
   label: "WORTH IT",
   blurb: "",
-  color: "#5b6b82",
+  color: "var(--color-ov-muted)",
 };
 
 export function verdictMeta(verdict: string): VerdictMeta {
   return VERDICTS.find((v) => v.value === verdict) ?? FALLBACK_VERDICT;
+}
+
+/// Inline style that exposes a verdict's color as `--verdict`.
+export function verdictVars(color: string) {
+  return { "--verdict": color } as CSSProperties;
 }
 
 export function isVerdict(value: unknown): value is Verdict {

@@ -1,4 +1,4 @@
-import { verdictMeta } from "@/utils/reviews";
+import { verdictMeta, verdictVars } from "@/utils/reviews";
 
 export function VerdictBadge({
   verdict,
@@ -12,15 +12,10 @@ export function VerdictBadge({
 
   return (
     <span
-      className={`ov-clip-sm inline-block whitespace-nowrap font-orbitron font-bold ${
-        compact ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-1 text-[10px]"
+      className={`ov-chamfer-x ov-chamfer-sm inline-block whitespace-nowrap border border-(--verdict) bg-(--verdict)/8 font-orbitron text-micro font-bold tracking-hud-wide text-(--verdict) ${
+        compact ? "px-2 py-0.5" : "px-2.5 py-1"
       }`}
-      style={{
-        color: meta.color,
-        border: `1px solid ${meta.color}`,
-        background: `${meta.color}14`,
-        letterSpacing: "1.5px",
-      }}
+      style={verdictVars(meta.color)}
     >
       {meta.label}
     </span>

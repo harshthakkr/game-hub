@@ -48,28 +48,29 @@ export default function Event() {
     <PageContainer>
       <Link
         href="/events"
-        className="mb-5 inline-block border border-ov-teal px-3.5 py-2 text-xs tracking-wide text-ov-teal transition-colors duration-150 hover:bg-ov-teal hover:text-ov-bg active:scale-95"
+        className="mb-5 inline-flex items-center border border-ov-teal px-3.5 py-2 text-xs tracking-wide text-ov-teal transition-colors duration-150 hover:bg-ov-teal hover:text-ov-bg active:scale-95"
       >
-        ◂ BACK TO EVENTS
+        <OvIcon name="chevron-left" className="mr-1 text-xs" />
+        BACK TO EVENTS
       </Link>
 
       <div className="flex flex-wrap gap-7">
         <div className="max-w-[440px] min-w-[280px] flex-1">
-          <div className="ov-clip-hero relative h-[240px] overflow-hidden border border-ov-border bg-gradient-to-br from-sky-700 to-slate-950">
+          <div className="ov-chamfer ov-chamfer-lg relative h-[240px] overflow-hidden border border-ov-border bg-linear-to-br from-sky-700 to-slate-950">
             {logo && (
               <Image src={logo} alt="" fill className="object-cover" sizes="440px" />
             )}
-            <span className="absolute left-3 top-3 bg-ov-teal px-2 py-0.5 text-[10px] tracking-wide text-ov-bg">
+            <span className="absolute left-3 top-3 bg-ov-teal px-2 py-0.5 text-micro tracking-wide text-ov-bg">
               EVENT
             </span>
           </div>
         </div>
 
         <div className="min-w-[280px] flex-1">
-          <h1 className="font-orbitron text-[30px] font-black tracking-wide text-white">
+          <h1 className="font-orbitron text-3xl font-black tracking-wide text-white">
             {data.name}
           </h1>
-          <div className="mt-[18px] flex flex-wrap gap-5 text-[13px]">
+          <div className="mt-[18px] flex flex-wrap gap-5 text-ui">
             <div>
               <div className="tracking-wide text-ov-dim">START</div>
               <div className="mt-1 text-ov-teal">
@@ -88,7 +89,7 @@ export default function Event() {
             </div>
           </div>
           {data.description && (
-            <p className="mt-5 max-w-[520px] text-[15px] leading-relaxed text-ov-text">
+            <p className="mt-5 max-w-[520px] text-body leading-relaxed text-ov-text">
               {data.description}
             </p>
           )}
@@ -100,9 +101,9 @@ export default function Event() {
                   href={data.live_stream_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="ov-clip-sm flex items-center bg-[#f43f5e] px-5 py-3 font-orbitron text-xs font-bold tracking-[1px] text-[#05070e] transition-transform duration-150 hover:brightness-110 active:scale-95"
+                  className="ov-chamfer-x ov-chamfer-sm flex items-center bg-ov-rose px-5 py-3 font-orbitron text-xs font-bold tracking-hud text-ov-bg transition-transform duration-150 hover:brightness-110 active:scale-95"
                 >
-                  <OvIcon name="play" className="mr-1.5 text-[12px]" />
+                  <OvIcon name="play" className="mr-1.5 text-xs" />
                   WATCH STREAM
                 </a>
               )}
@@ -112,9 +113,9 @@ export default function Event() {
                   href={calendarUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="ov-clip-sm flex items-center border border-[#2dd4bf] bg-[rgba(45,212,191,0.08)] px-5 py-3 text-[13px] tracking-[1px] text-[#2dd4bf] transition-colors duration-150 hover:bg-[rgba(45,212,191,0.18)] active:scale-95"
+                  className="ov-chamfer-x ov-chamfer-sm flex items-center border border-ov-teal bg-ov-teal/8 px-5 py-3 text-ui tracking-hud text-ov-teal transition-colors duration-150 hover:bg-ov-teal/18 active:scale-95"
                 >
-                  <OvIcon name="reminder" className="mr-1.5 text-[13px]" />
+                  <OvIcon name="reminder" className="mr-1.5 text-ui" />
                   ADD TO CALENDAR
                 </a>
               )}
@@ -125,7 +126,7 @@ export default function Event() {
 
       {games.length > 0 && (
         <>
-          <div className="mb-4 mt-10 font-orbitron text-[13px] font-bold tracking-[2px] text-ov-teal">
+          <div className="mb-4 mt-10 font-orbitron text-ui font-bold tracking-hud-wide text-ov-teal">
             FEATURED GAMES
           </div>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-[18px]">

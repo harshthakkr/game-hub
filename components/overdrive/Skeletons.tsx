@@ -1,8 +1,7 @@
 function Bone({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`animate-pulse rounded-[1px] bg-[#0f1a2e] ${className}`}
-      style={{ border: "1px solid #16324a" }}
+      className={`animate-pulse rounded-[1px] border border-ov-border bg-ov-raised ${className}`}
     />
   );
 }
@@ -35,7 +34,7 @@ export function GamesSkeleton() {
           <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[18px]">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i}>
-                <Bone className="ov-clip-card aspect-[3/4] w-full" />
+                <Bone className="ov-chamfer aspect-[3/4] w-full" />
                 <Bone className="mt-2 h-4 w-[75%]" />
                 <Bone className="mt-1.5 h-3 w-[50%]" />
               </div>
@@ -68,14 +67,14 @@ export function GameDetailSkeleton() {
             <Bone className="h-11 w-32" />
           </div>
         </div>
-        <Bone className="ov-clip-panel h-64 w-full lg:w-[300px]" />
+        <Bone className="ov-chamfer-x h-64 w-full lg:w-[300px]" />
       </div>
       <div className="px-4 lg:px-6">
         <Bone className="mb-4 h-4 w-36" />
         <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[18px]">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i}>
-              <Bone className="ov-clip-card aspect-[3/4] w-full" />
+              <Bone className="ov-chamfer aspect-[3/4] w-full" />
               <Bone className="mt-2 h-4 w-[75%]" />
             </div>
           ))}
@@ -100,7 +99,7 @@ export function EventsSkeleton() {
       </div>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[18px]">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="ov-clip-card overflow-hidden border border-ov-border">
+          <div key={i} className="ov-chamfer overflow-hidden border border-ov-border">
             <Bone className="h-[150px] w-full border-0" />
             <div className="space-y-2 p-3.5">
               <Bone className="h-4 w-full" />
@@ -118,7 +117,7 @@ export function EventDetailSkeleton() {
     <div className="mx-auto max-w-[1320px] px-4 pb-[60px] pt-3 lg:px-6 lg:pt-7">
       <Bone className="mb-5 h-9 w-40" />
       <div className="flex flex-wrap gap-7">
-        <Bone className="ov-clip-hero h-[240px] max-w-[440px] min-w-[280px] flex-1" />
+        <Bone className="ov-chamfer ov-chamfer-lg h-[240px] max-w-[440px] min-w-[280px] flex-1" />
         <div className="min-w-[280px] flex-1 space-y-4">
           <Bone className="h-8 w-[75%]" />
           <div className="flex gap-5">
@@ -138,7 +137,7 @@ export function EventDetailSkeleton() {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[18px]">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i}>
-            <Bone className="ov-clip-card aspect-[3/4] w-full" />
+            <Bone className="ov-chamfer aspect-[3/4] w-full" />
             <Bone className="mt-2 h-4 w-[75%]" />
           </div>
         ))}
@@ -156,7 +155,7 @@ export function PlatformsSkeleton() {
       </div>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
         {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="ov-clip-card border border-ov-border bg-ov-panel p-[18px]">
+          <div key={i} className="ov-chamfer border border-ov-border bg-ov-panel p-[18px]">
             <Bone className="mb-3.5 h-[38px] w-[38px]" />
             <Bone className="h-4 w-[75%]" />
             <Bone className="mt-2 h-3 w-20" />
@@ -194,7 +193,7 @@ export function DevelopersSkeleton() {
         {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}
-            className="ov-clip-row flex items-center gap-3.5 border border-ov-border bg-ov-panel p-4"
+            className="ov-chamfer ov-chamfer-sm flex items-center gap-3.5 border border-ov-border bg-ov-panel p-4"
           >
             <Bone className="h-11 w-11 shrink-0" />
             <div className="min-w-0 flex-1 space-y-2">
@@ -224,7 +223,7 @@ export function DeveloperDetailSkeleton() {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[18px]">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i}>
-            <Bone className="ov-clip-card aspect-[3/4] w-full" />
+            <Bone className="ov-chamfer aspect-[3/4] w-full" />
             <Bone className="mt-2 h-4 w-[75%]" />
           </div>
         ))}
@@ -243,7 +242,7 @@ export function CatalogueSkeleton() {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[18px]">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i}>
-            <Bone className="ov-clip-card aspect-[3/4] w-full" />
+            <Bone className="ov-chamfer aspect-[3/4] w-full" />
             <Bone className="mt-2 h-4 w-[75%]" />
             <Bone className="mt-1.5 h-3 w-[50%]" />
           </div>
@@ -264,7 +263,7 @@ export function SearchSkeleton() {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[18px]">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i}>
-            <Bone className="ov-clip-card aspect-[3/4] w-full" />
+            <Bone className="ov-chamfer aspect-[3/4] w-full" />
             <Bone className="mt-2 h-4 w-[75%]" />
             <Bone className="mt-1.5 h-3 w-[50%]" />
           </div>
@@ -289,7 +288,7 @@ export function LibrarySkeleton() {
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="ov-clip-row flex items-center gap-4 border border-ov-border bg-ov-panel px-4 py-3"
+            className="ov-chamfer ov-chamfer-sm flex items-center gap-4 border border-ov-border bg-ov-panel px-4 py-3"
           >
             <Bone className="h-[60px] w-[46px] shrink-0" />
             <div className="min-w-0 flex-1 space-y-2">
@@ -307,12 +306,12 @@ export function LibrarySkeleton() {
 
 export function ChatSkeleton() {
   return (
-    <div className="mx-auto flex h-[calc(100vh-94px)] max-w-[900px] flex-col px-4 py-7 lg:px-6 xl:h-[calc(100vh-74px)]">
+    <div className="mx-auto flex h-[calc(100dvh-var(--ov-topbar-h))] max-w-[900px] flex-col px-4 py-7 lg:px-6">
       <div className="mb-[18px] flex items-center gap-3">
         <Bone className="h-6 w-48" />
         <Bone className="h-6 w-20" />
       </div>
-      <div className="ov-clip-chat flex flex-1 flex-col gap-5 border border-ov-border bg-[#070b14] p-6">
+      <div className="ov-chamfer ov-chamfer-lg flex flex-1 flex-col gap-5 border border-ov-border bg-ov-sunken p-6">
         <Bone className="ml-auto h-16 w-[60%]" />
         <Bone className="h-24 w-[70%]" />
         <Bone className="ml-auto h-12 w-[45%]" />
@@ -323,7 +322,7 @@ export function ChatSkeleton() {
           <Bone key={i} className="h-8 w-36" />
         ))}
       </div>
-      <Bone className="ov-clip-input h-14 w-full" />
+      <Bone className="ov-chamfer-x h-14 w-full" />
     </div>
   );
 }
@@ -334,12 +333,12 @@ export function ReviewListSkeleton() {
       {Array.from({ length: 3 }).map((_, i) => (
         <div key={i} className="py-5">
           <div className="flex items-start gap-3">
-            <Bone className="ov-clip-sm h-[38px] w-[38px] shrink-0" />
+            <Bone className="ov-chamfer-x ov-chamfer-sm h-[38px] w-[38px] shrink-0" />
             <div className="flex-1 space-y-2">
               <Bone className="h-4 w-32" />
               <Bone className="h-3 w-24" />
             </div>
-            <Bone className="ov-clip-sm h-6 w-24 shrink-0" />
+            <Bone className="ov-chamfer-x ov-chamfer-sm h-6 w-24 shrink-0" />
           </div>
           <div className="mt-3.5 space-y-2">
             <Bone className="h-3 w-full" />
@@ -365,7 +364,7 @@ export function GameTileSkeletons({ count = 8 }: { count?: number }) {
     <>
       {Array.from({ length: count }).map((_, i) => (
         <div key={`tile-${i}`}>
-          <Bone className="ov-clip-card aspect-[3/4] w-full" />
+          <Bone className="ov-chamfer aspect-[3/4] w-full" />
           <Bone className="mt-2 h-4 w-[75%]" />
           <Bone className="mt-1.5 h-3 w-[50%]" />
         </div>
@@ -380,7 +379,7 @@ export function EventTileSkeletons({ count = 8 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={`event-${i}`}
-          className="ov-clip-card overflow-hidden border border-ov-border"
+          className="ov-chamfer overflow-hidden border border-ov-border"
         >
           <Bone className="h-[130px] w-full border-0" />
           <div className="space-y-2 p-3.5">
@@ -399,7 +398,7 @@ export function PanelTileSkeletons({ count = 8 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={`panel-${i}`}
-          className="ov-clip-row flex items-center gap-3.5 border border-ov-border bg-ov-panel p-4"
+          className="ov-chamfer ov-chamfer-sm flex items-center gap-3.5 border border-ov-border bg-ov-panel p-4"
         >
           <Bone className="h-11 w-11 shrink-0" />
           <div className="flex-1 space-y-2">

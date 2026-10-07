@@ -12,12 +12,7 @@ export const SignIn = ({
     <form action={googleSignIn.bind(null, callbackUrl)}>
       <button
         type="submit"
-        className="ov-clip-md flex w-full items-center justify-center gap-3 px-4 py-[15px] font-orbitron text-[13px] font-bold transition-transform duration-150 hover:brightness-110 active:scale-[0.98]"
-        style={{
-          color: "#05070e",
-          background: "linear-gradient(#2dd4bf,#14b8a6)",
-          letterSpacing: "1px",
-        }}
+        className="ov-chamfer-x flex w-full items-center justify-center gap-3 px-4 py-[15px] font-orbitron text-ui font-bold transition-transform duration-150 hover:brightness-110 active:scale-[0.98] bg-linear-to-b from-ov-teal to-ov-teal-dark text-ov-bg tracking-hud"
       >
         <Image
           width={20}

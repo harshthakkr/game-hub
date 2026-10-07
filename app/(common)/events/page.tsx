@@ -45,8 +45,12 @@ export default function Events() {
         accent=" FEED"
         subtitle="global broadcast schedule"
         badge={
-          <span className="animate-ov-pulse border border-[#f43f5e] px-3 py-1 text-[11px] text-[#f43f5e]">
-            <OvIcon name="live-dot" className="mr-1 text-[11px] text-[#f43f5e]" />
+          <span
+            className={`flex items-center border border-ov-rose px-3 py-1 text-label text-ov-rose ${
+              liveCount ? "animate-ov-pulse" : ""
+            }`}
+          >
+            <span aria-hidden className="mr-1.5 size-1.5 rounded-full bg-current" />
             {liveCount || 0} LIVE
           </span>
         }
@@ -92,9 +96,9 @@ export default function Events() {
                   <Link
                     key={event.id}
                     href={`/events/${event.slug}`}
-                    className="ov-clip-card group overflow-hidden border border-ov-border transition-all duration-200 hover:-translate-y-1 hover:border-ov-teal"
+                    className="ov-chamfer group overflow-hidden border border-ov-border transition-all duration-200 hover:-translate-y-1 hover:border-ov-teal"
                   >
-                    <div className="relative h-[130px] overflow-hidden bg-gradient-to-br from-sky-700 to-slate-950">
+                    <div className="relative h-[130px] overflow-hidden bg-linear-to-br from-sky-700 to-slate-950">
                       {logo && (
                         <Image
                           src={logo}
@@ -104,17 +108,17 @@ export default function Events() {
                           sizes="220px"
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-ov-bg to-transparent" />
-                      <span className="absolute right-2 top-2 bg-[rgba(5,7,14,0.8)] px-1.5 py-0.5 font-orbitron text-[9px] font-bold text-ov-rose">
+                      <div className="absolute inset-0 bg-linear-to-t from-ov-bg to-transparent" />
+                      <span className="absolute right-2 top-2 bg-ov-bg/80 px-1.5 py-0.5 font-orbitron text-micro font-bold text-ov-rose">
                         {status.label}
                       </span>
                     </div>
                     <div className="p-3.5">
-                      <div className="text-[13px] font-semibold leading-snug text-white">
+                      <div className="text-ui font-semibold leading-snug text-white">
                         {event.name}
                       </div>
-                      <div className="mt-2 text-[11px] tracking-[1px] text-[#2dd4bf]">
-                        <OvIcon name="clock" className="mr-1 text-[11px] text-[#2dd4bf]" />
+                      <div className="mt-2 text-label tracking-hud text-ov-teal">
+                        <OvIcon name="clock" className="mr-1 text-label text-ov-teal" />
                         {formatEventDate(event.start_time)}
                       </div>
                     </div>

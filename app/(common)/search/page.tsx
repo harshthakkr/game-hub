@@ -32,11 +32,11 @@ function SearchResults() {
   return (
     <PageContainer>
       <div className="mb-6 flex flex-wrap items-baseline gap-3">
-        <h1 className="font-orbitron text-[28px] font-black tracking-[2px] text-white">
+        <h1 className="font-orbitron text-title font-black tracking-hud-wide text-white">
           SEARCH
         </h1>
         <span className="text-sm text-ov-teal">// &quot;{q}&quot;</span>
-        <span className="ml-auto text-[13px] text-ov-muted">
+        <span className="ml-auto text-ui text-ov-muted">
           {results.length} results
         </span>
       </div>
@@ -49,10 +49,10 @@ function SearchResults() {
         </div>
       ) : (
         <div className="border border-dashed border-ov-border px-8 py-[60px] text-center text-ov-muted">
-          <div className="font-orbitron text-base font-bold tracking-[2px] text-ov-text">
+          <div className="font-orbitron text-base font-bold tracking-hud-wide text-ov-text">
             NO MATCHES FOUND
           </div>
-          <p className="mt-3 text-[13px]">
+          <p className="mt-3 text-ui">
             Nothing in the grid matches &quot;{q}&quot;. Try a different
             title, studio, or genre.
           </p>

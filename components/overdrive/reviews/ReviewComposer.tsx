@@ -11,6 +11,7 @@ import {
   countWords,
   displayName,
   verdictMeta,
+  verdictVars,
   type Verdict,
 } from "@/utils/reviews";
 import type { ReviewProps } from "@/utils/types";
@@ -47,7 +48,6 @@ export function ReviewComposer({
   const [hasSpoilers, setHasSpoilers] = useState(myReview?.hasSpoilers ?? false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [bodyFocused, setBodyFocused] = useState(false);
 
   const words = countWords(body);
   const overLimit = words > MAX_REVIEW_WORDS;
@@ -57,20 +57,16 @@ export function ReviewComposer({
   if (!viewer) {
     return (
       <div className="py-2 text-center">
-        <div className="font-orbitron text-sm font-bold tracking-[2px] text-ov-text">
+        <div className="font-orbitron text-sm font-bold tracking-hud-wide text-ov-text">
           SIGN IN TO POST A REVIEW
         </div>
-        <p className="mx-auto mt-2.5 max-w-[420px] text-[13px] leading-relaxed text-ov-muted">
+        <p className="mx-auto mt-2.5 max-w-[420px] text-ui leading-relaxed text-ov-muted">
           Reviews are tied to a player handle so other players know whose call
           they are reading. Reading is open to everyone.
         </p>
         <Link
           href={`/register?callbackUrl=${encodeURIComponent(`/games/${gameSlug}`)}`}
-          className="ov-clip-sm mt-5 inline-block px-5 py-2.5 font-orbitron text-[11px] font-bold tracking-[2px] transition-transform duration-150 hover:brightness-110 active:scale-95"
-          style={{
-            color: "#05070e",
-            background: "linear-gradient(#2dd4bf,#14b8a6)",
-          }}
+          className="ov-chamfer-x ov-chamfer-sm mt-5 inline-block px-5 py-2.5 font-orbitron text-label font-bold tracking-hud-wide transition-transform duration-150 hover:brightness-110 active:scale-95 bg-linear-to-b from-ov-teal to-ov-teal-dark text-ov-bg"
         >
           JOIN THE GRID
         </Link>
@@ -81,19 +77,22 @@ export function ReviewComposer({
   if (myReview && !open) {
     return (
       <div className="flex flex-wrap items-center gap-3">
-        <OvIcon name="check" className="text-[14px] text-ov-teal" />
-        <span className="text-[13px] text-ov-text">
+        <OvIcon name="check" className="text-sm text-ov-teal" />
+        <span className="text-ui text-ov-text">
           You reviewed {gameName} —{" "}
-          <span style={{ color: verdictMeta(myReview.verdict).color }}>
+          <span
+            className="text-(--verdict)"
+            style={verdictVars(verdictMeta(myReview.verdict).color)}
+          >
             {verdictMeta(myReview.verdict).label}
           </span>
         </span>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="ml-auto border border-ov-border px-3 py-1.5 text-[11px] tracking-[1px] text-ov-dim transition-all duration-150 hover:border-ov-teal hover:text-ov-teal active:scale-95"
+          className="ml-auto border border-ov-border px-3 py-1.5 text-label tracking-hud text-ov-dim transition-all duration-150 hover:border-ov-teal hover:text-ov-teal active:scale-95"
         >
-          <OvIcon name="edit" className="mr-1 text-[11px]" />
+          <OvIcon name="edit" className="mr-1 text-label" />
           EDIT
         </button>
       </div>
@@ -144,16 +143,16 @@ export function ReviewComposer({
       <div className="flex items-center gap-3">
         <Avatar author={viewer} size={34} />
         <div className="min-w-0">
-          <div className="font-orbitron text-xs font-bold tracking-[2px] text-ov-rose">
+          <div className="font-orbitron text-xs font-bold tracking-hud-wide text-ov-rose">
             {myReview ? "EDIT YOUR REVIEW" : "WRITE A REVIEW"}
           </div>
-          <div className="mt-0.5 text-[11px] text-ov-muted">
+          <div className="mt-0.5 text-label text-ov-muted">
             posting as {displayName(viewer)}
           </div>
         </div>
       </div>
 
-      <div className="mt-5 mb-2 text-[11px] tracking-[2px] text-ov-dim">
+      <div className="mt-5 mb-2 text-label tracking-hud-wide text-ov-dim">
         YOUR VERDICT
       </div>
       <div className="flex flex-wrap gap-2">
@@ -165,28 +164,28 @@ export function ReviewComposer({
               type="button"
               onClick={() => setVerdict(tier.value)}
               aria-pressed={active}
-              className="ov-clip-sm px-3 py-2 font-orbitron text-[10px] font-bold transition-all duration-150 hover:brightness-125 active:scale-95"
-              style={{
-                color: active ? tier.color : "#7c8aa0",
-                border: `1px solid ${active ? tier.color : "#16324a"}`,
-                background: active ? `${tier.color}16` : "transparent",
-                letterSpacing: "1.5px",
-              }}
+              className={`ov-chamfer-x ov-chamfer-sm border px-3 py-2 font-orbitron text-micro font-bold tracking-hud-wide transition-all duration-150 hover:brightness-125 active:scale-95 ${
+                active
+                  ? "border-(--verdict) bg-(--verdict)/9 text-(--verdict)"
+                  : "border-ov-border bg-transparent text-ov-dim"
+              }`}
+              style={verdictVars(tier.color)}
             >
               {tier.label}
             </button>
           );
         })}
       </div>
-      <div className="mt-2 h-4 text-[11px] italic text-ov-muted">
+      <div className="mt-2 h-4 text-label italic text-ov-muted">
         {selected ? `// ${selected.blurb}` : ""}
       </div>
 
       <div className="mt-4 mb-2 flex items-baseline gap-3">
-        <span className="text-[11px] tracking-[2px] text-ov-dim">REVIEW</span>
+        <span className="text-label tracking-hud-wide text-ov-dim">REVIEW</span>
         <span
-          className="ml-auto font-orbitron text-[11px] font-bold"
-          style={{ color: overLimit ? "#f43f5e" : "#5b6b82" }}
+          className={`ml-auto font-orbitron text-label font-bold ${
+            overLimit ? "text-ov-rose" : "text-ov-muted"
+          }`}
         >
           {words} / {MAX_REVIEW_WORDS} WORDS
         </span>
@@ -194,14 +193,13 @@ export function ReviewComposer({
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        onFocus={() => setBodyFocused(true)}
-        onBlur={() => setBodyFocused(false)}
         rows={7}
         placeholder="What worked, what didn't, who should play it..."
-        className="ov-clip-input w-full resize-y border bg-[#070d18] px-4 py-3 text-[14px] leading-[1.8] text-ov-white outline-none transition-colors duration-150 placeholder:text-ov-muted"
-        style={{
-          borderColor: overLimit ? "#f43f5e" : bodyFocused ? "#2dd4bf" : "#16324a",
-        }}
+        aria-label="Review"
+        aria-invalid={overLimit}
+        className={`ov-chamfer-x block w-full resize-y border bg-ov-sunken px-4 py-3 text-sm leading-[1.8] text-ov-white outline-none transition-colors duration-150 placeholder:text-ov-muted ${
+          overLimit ? "border-ov-rose" : "border-ov-border focus:border-ov-teal"
+        }`}
       />
 
       <button
@@ -211,25 +209,21 @@ export function ReviewComposer({
         className="mt-3.5 flex items-center gap-2.5 transition-transform duration-150 active:scale-95"
       >
         <span
-          className="flex h-[18px] w-[18px] shrink-0 items-center justify-center transition-colors duration-150"
-          style={{
-            border: `1px solid ${hasSpoilers ? "#f43f5e" : "#16324a"}`,
-            background: hasSpoilers ? "rgba(244,63,94,0.16)" : "transparent",
-            color: "#f43f5e",
-          }}
+          className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center border text-ov-rose transition-colors duration-150 ${
+            hasSpoilers ? "border-ov-rose bg-ov-rose/16" : "border-ov-border bg-transparent"
+          }`}
         >
-          {hasSpoilers && <OvIcon name="check" className="text-[11px]" />}
+          {hasSpoilers && <OvIcon name="check" className="text-label" />}
         </span>
         <span
-          className="text-[11px] tracking-[1px]"
-          style={{ color: hasSpoilers ? "#f43f5e" : "#7c8aa0" }}
+          className={`text-label tracking-hud ${hasSpoilers ? "text-ov-rose" : "text-ov-dim"}`}
         >
           THIS REVIEW CONTAINS SPOILERS
         </span>
       </button>
 
       {error && (
-        <div className="animate-ov-fade-up mt-3.5 border-l-2 border-ov-rose py-1.5 pl-3.5 text-[12px] text-ov-rose">
+        <div className="animate-ov-fade-up mt-3.5 border-l-2 border-ov-rose py-1.5 pl-3.5 text-xs text-ov-rose">
           {error}
         </div>
       )}
@@ -239,11 +233,7 @@ export function ReviewComposer({
           type="button"
           onClick={submit}
           disabled={!canSubmit}
-          className="ov-clip-sm px-5 py-3 font-orbitron text-[11px] font-bold tracking-[2px] transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:active:scale-100"
-          style={{
-            color: "#05070e",
-            background: "linear-gradient(#2dd4bf,#14b8a6)",
-          }}
+          className="ov-chamfer-x ov-chamfer-sm px-5 py-3 font-orbitron text-label font-bold tracking-hud-wide transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:active:scale-100 bg-linear-to-b from-ov-teal to-ov-teal-dark text-ov-bg"
         >
           {saving ? "SAVING..." : myReview ? "UPDATE REVIEW" : "POST REVIEW"}
         </button>
@@ -259,14 +249,14 @@ export function ReviewComposer({
                 setError(null);
                 setOpen(false);
               }}
-              className="px-4 py-3 text-[11px] tracking-[1px] text-ov-muted transition-colors duration-150 hover:text-ov-text"
+              className="px-4 py-3 text-label tracking-hud text-ov-muted transition-colors duration-150 hover:text-ov-text"
             >
               CANCEL
             </button>
             <button
               type="button"
               onClick={remove}
-              className="ml-auto border border-ov-rose px-4 py-2.5 text-[11px] tracking-[1px] text-ov-rose transition-colors duration-150 hover:bg-ov-rose hover:text-ov-bg active:scale-95"
+              className="ml-auto border border-ov-rose px-4 py-2.5 text-label tracking-hud text-ov-rose transition-colors duration-150 hover:bg-ov-rose hover:text-ov-bg active:scale-95"
             >
               DELETE
             </button>

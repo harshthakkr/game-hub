@@ -16,10 +16,10 @@ export function AuthPanel({
 
   return (
     <div className="w-full max-w-[360px]">
-      <div className="text-[11px] tracking-[4px] text-ov-teal">
+      <div className="text-label tracking-hud-xwide text-ov-teal">
         {isSignup ? "JOIN THE GRID" : "WELCOME BACK"}
       </div>
-      <h1 className="mt-3.5 font-orbitron text-[38px] font-black tracking-wide text-white">
+      <h1 className="mt-3.5 font-orbitron text-4xl font-black tracking-wide text-white">
         {isSignup ? "SIGN UP" : "LOG IN"}
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-ov-dim">
@@ -37,7 +37,7 @@ export function AuthPanel({
 
       <div className="my-[22px] flex items-center gap-3">
         <div className="h-px flex-1 bg-ov-border" />
-        <span className="text-[11px] tracking-[2px] text-ov-muted">OR</span>
+        <span className="text-label tracking-hud-wide text-ov-muted">OR</span>
         <div className="h-px flex-1 bg-ov-border" />
       </div>
 
