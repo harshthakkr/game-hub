@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import axios from "axios";
+import { ToggleGroup } from "radix-ui";
 import { OvIcon } from "../OvIcon";
+import { Button, CharCount, Checkbox, Textarea } from "@/components/ui";
 import { Avatar } from "./Avatar";
 import {
   MAX_REVIEW_WORDS,
@@ -64,12 +66,11 @@ export function ReviewComposer({
           Reviews are tied to a player handle so other players know whose call
           they are reading. Reading is open to everyone.
         </p>
-        <Link
-          href={`/register?callbackUrl=${encodeURIComponent(`/games/${gameSlug}`)}`}
-          className="ov-chamfer-x ov-chamfer-sm mt-5 inline-block px-5 py-2.5 font-orbitron text-label font-bold tracking-hud-wide transition-transform duration-150 hover:brightness-110 active:scale-95 bg-linear-to-b from-ov-teal to-ov-teal-dark text-ov-bg"
-        >
-          JOIN THE GRID
-        </Link>
+        <Button asChild variant="primary" className="mt-5">
+          <Link href={`/register?callbackUrl=${encodeURIComponent(`/games/${gameSlug}`)}`}>
+            JOIN THE GRID
+          </Link>
+        </Button>
       </div>
     );
   }
@@ -87,14 +88,9 @@ export function ReviewComposer({
             {verdictMeta(myReview.verdict).label}
           </span>
         </span>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="ml-auto border border-ov-border px-3 py-1.5 text-label tracking-hud text-ov-dim transition-all duration-150 hover:border-ov-teal hover:text-ov-teal active:scale-95"
-        >
-          <OvIcon name="edit" className="mr-1 text-label" />
+        <Button size="sm" variant="outline" icon="edit" onClick={() => setOpen(true)} className="ml-auto">
           EDIT
-        </button>
+        </Button>
       </div>
     );
   }
@@ -152,96 +148,72 @@ export function ReviewComposer({
         </div>
       </div>
 
-      <div className="mt-5 mb-2 text-label tracking-hud-wide text-ov-dim">
+      <div aria-hidden className="mt-5 mb-2 text-label tracking-hud-wide text-ov-dim">
         YOUR VERDICT
       </div>
-      <div className="flex flex-wrap gap-2">
-        {VERDICTS.map((tier) => {
-          const active = verdict === tier.value;
-          return (
-            <button
-              key={tier.value}
-              type="button"
-              onClick={() => setVerdict(tier.value)}
-              aria-pressed={active}
-              className={`ov-chamfer-x ov-chamfer-sm border px-3 py-2 font-orbitron text-micro font-bold tracking-hud-wide transition-all duration-150 hover:brightness-125 active:scale-95 ${
-                active
-                  ? "border-(--verdict) bg-(--verdict)/9 text-(--verdict)"
-                  : "border-ov-border bg-transparent text-ov-dim"
-              }`}
-              style={verdictVars(tier.color)}
-            >
-              {tier.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* Same ToggleGroup primitive as ChipGroup (roving focus, arrow keys), but
+          each tier lights up in its own verdict color. */}
+      <ToggleGroup.Root
+        type="single"
+        aria-label="Your verdict"
+        value={verdict ?? ""}
+        onValueChange={(next) => next && setVerdict(next as Verdict)}
+        className="flex flex-wrap gap-2"
+      >
+        {VERDICTS.map((tier) => (
+          <ToggleGroup.Item
+            key={tier.value}
+            value={tier.value}
+            style={verdictVars(tier.color)}
+            className="ov-chamfer-x ov-chamfer-sm border border-ov-border px-3 py-2 font-orbitron text-micro font-bold tracking-hud-wide text-ov-dim transition-[filter,background-color,border-color,color,scale] duration-150 hover:brightness-125 active:scale-95 data-[state=on]:border-(--verdict) data-[state=on]:bg-(--verdict)/9 data-[state=on]:text-(--verdict)"
+          >
+            {tier.label}
+          </ToggleGroup.Item>
+        ))}
+      </ToggleGroup.Root>
       <div className="mt-2 h-4 text-label italic text-ov-muted">
         {selected ? `// ${selected.blurb}` : ""}
       </div>
 
       <div className="mt-4 mb-2 flex items-baseline gap-3">
-        <span className="text-label tracking-hud-wide text-ov-dim">REVIEW</span>
-        <span
-          className={`ml-auto font-orbitron text-label font-bold ${
-            overLimit ? "text-ov-rose" : "text-ov-muted"
-          }`}
-        >
-          {words} / {MAX_REVIEW_WORDS} WORDS
-        </span>
+        <label htmlFor="review-body" className="text-label tracking-hud-wide text-ov-dim">
+          REVIEW
+        </label>
+        <CharCount count={words} max={MAX_REVIEW_WORDS} unit="WORDS" className="ml-auto" />
       </div>
-      <textarea
+      <Textarea
+        id="review-body"
         value={body}
         onChange={(e) => setBody(e.target.value)}
         rows={7}
         placeholder="What worked, what didn't, who should play it..."
-        aria-label="Review"
-        aria-invalid={overLimit}
-        className={`ov-chamfer-x block w-full resize-y border bg-ov-sunken px-4 py-3 text-sm leading-[1.8] text-ov-white outline-none transition-colors duration-150 placeholder:text-ov-muted ${
-          overLimit ? "border-ov-rose" : "border-ov-border focus:border-ov-teal"
-        }`}
+        invalid={overLimit}
+        className="ov-chamfer-x"
       />
 
-      <button
-        type="button"
-        onClick={() => setHasSpoilers((v) => !v)}
-        aria-pressed={hasSpoilers}
-        className="mt-3.5 flex items-center gap-2.5 transition-transform duration-150 active:scale-95"
-      >
-        <span
-          className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center border text-ov-rose transition-colors duration-150 ${
-            hasSpoilers ? "border-ov-rose bg-ov-rose/16" : "border-ov-border bg-transparent"
-          }`}
-        >
-          {hasSpoilers && <OvIcon name="check" className="text-label" />}
-        </span>
-        <span
-          className={`text-label tracking-hud ${hasSpoilers ? "text-ov-rose" : "text-ov-dim"}`}
-        >
-          THIS REVIEW CONTAINS SPOILERS
-        </span>
-      </button>
+      <Checkbox tone="rose" checked={hasSpoilers} onCheckedChange={setHasSpoilers} className="mt-3.5">
+        THIS REVIEW CONTAINS SPOILERS
+      </Checkbox>
 
       {error && (
-        <div className="animate-ov-fade-up mt-3.5 border-l-2 border-ov-rose py-1.5 pl-3.5 text-xs text-ov-rose">
+        <div
+          role="alert"
+          className="animate-ov-fade-up mt-3.5 border-l-2 border-ov-rose py-1.5 pl-3.5 text-xs text-ov-rose"
+        >
           {error}
         </div>
       )}
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={submit}
-          disabled={!canSubmit}
-          className="ov-chamfer-x ov-chamfer-sm px-5 py-3 font-orbitron text-label font-bold tracking-hud-wide transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:active:scale-100 bg-linear-to-b from-ov-teal to-ov-teal-dark text-ov-bg"
-        >
-          {saving ? "SAVING..." : myReview ? "UPDATE REVIEW" : "POST REVIEW"}
-        </button>
+        <Button variant="primary" onClick={submit} disabled={!canSubmit} loading={saving}>
+          {saving ? "SAVING" : myReview ? "UPDATE REVIEW" : "POST REVIEW"}
+        </Button>
 
         {myReview && (
           <>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 setBody(myReview.body);
                 setVerdict(myReview.verdict);
@@ -249,17 +221,12 @@ export function ReviewComposer({
                 setError(null);
                 setOpen(false);
               }}
-              className="px-4 py-3 text-label tracking-hud text-ov-muted transition-colors duration-150 hover:text-ov-text"
             >
               CANCEL
-            </button>
-            <button
-              type="button"
-              onClick={remove}
-              className="ml-auto border border-ov-rose px-4 py-2.5 text-label tracking-hud text-ov-rose transition-colors duration-150 hover:bg-ov-rose hover:text-ov-bg active:scale-95"
-            >
+            </Button>
+            <Button variant="danger" size="sm" onClick={remove} disabled={saving} className="ml-auto">
               DELETE
-            </button>
+            </Button>
           </>
         )}
       </div>

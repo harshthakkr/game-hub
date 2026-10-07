@@ -7,6 +7,7 @@ import { GameCardProps } from "@/utils/types";
 import { PageContainer } from "@/components/overdrive/PageShell";
 import { GameGridCard } from "@/components/overdrive/GameCards";
 import { SearchSkeleton } from "@/components/overdrive/Skeletons";
+import { NoResults } from "@/components/overdrive/EmptyState";
 
 function SearchResults() {
   const searchParams = useSearchParams();
@@ -35,7 +36,9 @@ function SearchResults() {
         <h1 className="font-orbitron text-title font-black tracking-hud-wide text-white">
           SEARCH
         </h1>
-        <span className="text-sm text-ov-teal">// &quot;{q}&quot;</span>
+        <span className="text-sm text-ov-teal">
+          {"// "}&quot;{q}&quot;
+        </span>
         <span className="ml-auto text-ui text-ov-muted">
           {results.length} results
         </span>
@@ -48,15 +51,10 @@ function SearchResults() {
           ))}
         </div>
       ) : (
-        <div className="border border-dashed border-ov-border px-8 py-[60px] text-center text-ov-muted">
-          <div className="font-orbitron text-base font-bold tracking-hud-wide text-ov-text">
-            NO MATCHES FOUND
-          </div>
-          <p className="mt-3 text-ui">
-            Nothing in the grid matches &quot;{q}&quot;. Try a different
-            title, studio, or genre.
-          </p>
-        </div>
+        <NoResults
+          title="NO MATCHES FOUND"
+          description={`Nothing in the grid matches "${q}". Try a different title, studio, or genre.`}
+        />
       )}
     </PageContainer>
   );

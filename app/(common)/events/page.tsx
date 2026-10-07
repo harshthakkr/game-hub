@@ -9,9 +9,10 @@ import { PageContainer, PageTitle } from "@/components/overdrive/PageShell";
 import { LoadMoreButton, NoResults } from "@/components/overdrive/EmptyState";
 import { EventsSkeleton, EventTileSkeletons } from "@/components/overdrive/Skeletons";
 import { OvIcon } from "@/components/overdrive/OvIcon";
+import { ChipGroup, Panel } from "@/components/ui";
 import { eventStatus, formatEventDate, isThisCalendarMonth } from "@/utils/overdrive";
 
-const FILTERS = ["All", "Live now", "Upcoming", "This month"];
+const FILTERS = ["All", "Live now", "Upcoming", "This month"].map((f) => ({ value: f, label: f }));
 
 export default function Events() {
   const { data, hasMore, loading, loadingMore, handlePagination } =
@@ -56,25 +57,13 @@ export default function Events() {
         }
       />
 
-      <div className="mb-6 flex flex-wrap gap-2 text-xs tracking-wide">
-        {FILTERS.map((f) => {
-          const active = filter === f;
-          return (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setFilter(f)}
-              className={`border px-3 py-1 transition-colors duration-150 active:scale-95 ${
-                active
-                  ? "border-ov-teal bg-ov-teal text-ov-bg"
-                  : "border-ov-border text-ov-text hover:border-ov-teal hover:text-ov-teal"
-              }`}
-            >
-              {f}
-            </button>
-          );
-        })}
-      </div>
+      <ChipGroup
+        label="Event status"
+        options={FILTERS}
+        value={filter}
+        onValueChange={setFilter}
+        className="mb-6"
+      />
 
       {data.length === 0 ? (
         <NoResults description="No events found right now. Check back later." />
@@ -93,36 +82,34 @@ export default function Events() {
                   : null;
                 const status = eventStatus(event.start_time, event.end_time);
                 return (
-                  <Link
-                    key={event.id}
-                    href={`/events/${event.slug}`}
-                    className="ov-chamfer group overflow-hidden border border-ov-border transition-all duration-200 hover:-translate-y-1 hover:border-ov-teal"
-                  >
-                    <div className="relative h-[130px] overflow-hidden bg-linear-to-br from-sky-700 to-slate-950">
-                      {logo && (
-                        <Image
-                          src={logo}
-                          alt=""
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          sizes="220px"
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-linear-to-t from-ov-bg to-transparent" />
-                      <span className="absolute right-2 top-2 bg-ov-bg/80 px-1.5 py-0.5 font-orbitron text-micro font-bold text-ov-rose">
-                        {status.label}
-                      </span>
-                    </div>
-                    <div className="p-3.5">
-                      <div className="text-ui font-semibold leading-snug text-white">
-                        {event.name}
+                  <Panel asChild key={event.id} cut="br" surface="none" interactive className="group overflow-hidden">
+                    <Link href={`/events/${event.slug}`}>
+                      <div className="relative h-[130px] overflow-hidden bg-linear-to-br from-sky-700 to-slate-950">
+                        {logo && (
+                          <Image
+                            src={logo}
+                            alt=""
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            sizes="220px"
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-linear-to-t from-ov-bg to-transparent" />
+                        <span className="absolute right-2 top-2 bg-ov-bg/80 px-1.5 py-0.5 font-orbitron text-micro font-bold text-ov-rose">
+                          {status.label}
+                        </span>
                       </div>
-                      <div className="mt-2 text-label tracking-hud text-ov-teal">
-                        <OvIcon name="clock" className="mr-1 text-label text-ov-teal" />
-                        {formatEventDate(event.start_time)}
+                      <div className="p-3.5">
+                        <div className="text-ui font-semibold leading-snug text-white">
+                          {event.name}
+                        </div>
+                        <div className="mt-2 text-label tracking-hud text-ov-teal">
+                          <OvIcon name="clock" className="mr-1 text-label text-ov-teal" />
+                          {formatEventDate(event.start_time)}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                  </Panel>
                 );
               })}
               {loadingMore && <EventTileSkeletons count={8} />}

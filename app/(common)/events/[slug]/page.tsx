@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useSingleData } from "@/utils/hooks/useSingleData";
 import { EventPageProps } from "@/utils/types";
 import { PageContainer } from "@/components/overdrive/PageShell";
-import { OvIcon } from "@/components/overdrive/OvIcon";
+import { Button, SectionLabel, Tag } from "@/components/ui";
 import { GameGridCard } from "@/components/overdrive/GameCards";
 import { EventDetailSkeleton } from "@/components/overdrive/Skeletons";
 import {
@@ -46,13 +46,9 @@ export default function Event() {
 
   return (
     <PageContainer>
-      <Link
-        href="/events"
-        className="mb-5 inline-flex items-center border border-ov-teal px-3.5 py-2 text-xs tracking-wide text-ov-teal transition-colors duration-150 hover:bg-ov-teal hover:text-ov-bg active:scale-95"
-      >
-        <OvIcon name="chevron-left" className="mr-1 text-xs" />
-        BACK TO EVENTS
-      </Link>
+      <Button asChild size="sm" variant="secondary" icon="chevron-left" className="mb-5">
+        <Link href="/events">BACK TO EVENTS</Link>
+      </Button>
 
       <div className="flex flex-wrap gap-7">
         <div className="max-w-[440px] min-w-[280px] flex-1">
@@ -60,9 +56,9 @@ export default function Event() {
             {logo && (
               <Image src={logo} alt="" fill className="object-cover" sizes="440px" />
             )}
-            <span className="absolute left-3 top-3 bg-ov-teal px-2 py-0.5 text-micro tracking-wide text-ov-bg">
+            <Tag tone="teal" variant="solid" size="sm" className="absolute left-3 top-3">
               EVENT
-            </span>
+            </Tag>
           </div>
         </div>
 
@@ -97,27 +93,19 @@ export default function Event() {
             <div className="mt-[22px] flex flex-wrap gap-3">
               {/* Only rendered when there is somewhere to actually send the viewer. */}
               {data.live_stream_url && (
-                <a
-                  href={data.live_stream_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="ov-chamfer-x ov-chamfer-sm flex items-center bg-ov-rose px-5 py-3 font-orbitron text-xs font-bold tracking-hud text-ov-bg transition-transform duration-150 hover:brightness-110 active:scale-95"
-                >
-                  <OvIcon name="play" className="mr-1.5 text-xs" />
-                  WATCH STREAM
-                </a>
+                <Button asChild variant="live" icon="play">
+                  <a href={data.live_stream_url} target="_blank" rel="noreferrer">
+                    WATCH STREAM
+                  </a>
+                </Button>
               )}
               {/* Past events cannot be reminded about, so this is upcoming-only. */}
               {calendarUrl && (
-                <a
-                  href={calendarUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="ov-chamfer-x ov-chamfer-sm flex items-center border border-ov-teal bg-ov-teal/8 px-5 py-3 text-ui tracking-hud text-ov-teal transition-colors duration-150 hover:bg-ov-teal/18 active:scale-95"
-                >
-                  <OvIcon name="reminder" className="mr-1.5 text-ui" />
-                  ADD TO CALENDAR
-                </a>
+                <Button asChild variant="secondary" icon="reminder">
+                  <a href={calendarUrl} target="_blank" rel="noreferrer">
+                    ADD TO CALENDAR
+                  </a>
+                </Button>
               )}
             </div>
           )}
@@ -126,9 +114,9 @@ export default function Event() {
 
       {games.length > 0 && (
         <>
-          <div className="mb-4 mt-10 font-orbitron text-ui font-bold tracking-hud-wide text-ov-teal">
+          <SectionLabel tone="teal" className="mb-4 mt-10">
             FEATURED GAMES
-          </div>
+          </SectionLabel>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-[18px]">
             {games.map((game) => (
               <GameGridCard key={game.id || game.slug} game={game} />

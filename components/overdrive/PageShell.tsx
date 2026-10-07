@@ -34,7 +34,10 @@ export function PageTitle({
         {accent && <span className={accentClassName}>{accent}</span>}
       </h1>
       {subtitle && (
-        <span className="text-sm text-ov-muted">// {subtitle}</span>
+        <span className="text-sm text-ov-muted">
+          {"// "}
+          {subtitle}
+        </span>
       )}
       {badge && <span className="ml-auto">{badge}</span>}
     </div>

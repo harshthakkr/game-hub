@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { OvIcon } from "../OvIcon";
+import { Button, CharCount, Textarea } from "@/components/ui";
 import { Avatar } from "./Avatar";
 import { LikeButton } from "./LikeButton";
 import {
@@ -68,7 +69,8 @@ function CommentBox({
     <div className="flex items-start gap-2.5">
       <Avatar author={viewer} size={28} />
       <div className="min-w-0 flex-1">
-        <textarea
+        <Textarea
+          size="sm"
           value={value}
           autoFocus={autoFocus}
           onChange={(e) => setValue(e.target.value)}
@@ -81,38 +83,28 @@ function CommentBox({
           rows={2}
           placeholder={placeholder}
           aria-label={placeholder}
-          aria-invalid={tooLong}
-          className={`block w-full resize-y border bg-ov-sunken px-3 py-2 text-ui leading-[1.7] text-ov-white outline-none transition-colors duration-150 placeholder:text-ov-muted ${
-            tooLong ? "border-ov-rose" : "border-ov-border focus:border-ov-teal"
-          }`}
+          invalid={tooLong}
         />
         <div className="mt-1.5 flex items-center gap-2.5">
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant="secondary"
+            icon="send"
             disabled={!canSend}
+            loading={submitting}
             onClick={() => {
               onSubmit(value.trim());
               setValue("");
             }}
-            className="flex items-center gap-1.5 border border-ov-teal px-3 py-1.5 text-micro tracking-hud text-ov-teal transition-all duration-150 hover:bg-ov-teal/10 active:scale-95 disabled:opacity-40 disabled:active:scale-100"
           >
-            <OvIcon name="send" className="text-label" />
-            {submitting ? "SENDING..." : "SEND"}
-          </button>
+            {submitting ? "SENDING" : "SEND"}
+          </Button>
           {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="text-micro tracking-hud text-ov-muted transition-colors duration-150 hover:text-ov-text"
-            >
+            <Button size="sm" variant="ghost" onClick={onCancel}>
               CANCEL
-            </button>
+            </Button>
           )}
-          <span
-            className={`ml-auto text-micro ${tooLong ? "text-ov-rose" : "text-ov-muted"}`}
-          >
-            {value.length}/{MAX_COMMENT_CHARS}
-          </span>
+          <CharCount count={value.length} max={MAX_COMMENT_CHARS} className="ml-auto" />
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { OvIcon } from "../OvIcon";
+import { Button, Checkbox, ChipGroup } from "@/components/ui";
 import { ReviewListSkeleton } from "../Skeletons";
 import { ReviewCard } from "./ReviewCard";
 import { ReviewComposer } from "./ReviewComposer";
@@ -49,48 +50,31 @@ function Pager({
   if (pages <= 1) return null;
 
   return (
-    <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-      <button
-        type="button"
-        disabled={page <= 1}
-        onClick={() => onChange(page - 1)}
-        className="flex items-center border border-ov-border px-3 py-2 text-label tracking-hud text-ov-dim transition-all duration-150 hover:border-ov-teal hover:text-ov-teal active:scale-95 disabled:opacity-30 disabled:active:scale-100"
-      >
-        <OvIcon name="chevron-left" className="mr-1 text-xs" />
+    <nav aria-label="Review pages" className="mt-6 flex flex-wrap items-center justify-center gap-2">
+      <Button size="sm" icon="chevron-left" disabled={page <= 1} onClick={() => onChange(page - 1)}>
         PREV
-      </button>
+      </Button>
       {window[0] > 1 && <span className="text-label text-ov-muted">…</span>}
-      {window.map((n) => {
-        const active = n === page;
-        return (
-          <button
-            key={n}
-            type="button"
-            onClick={() => onChange(n)}
-            aria-current={active ? "page" : undefined}
-            className={`ov-chamfer-x ov-chamfer-sm border px-3.5 py-2 font-orbitron text-label font-bold transition-all duration-150 hover:brightness-125 active:scale-95 ${
-              active
-                ? "border-ov-teal bg-ov-teal text-ov-bg"
-                : "border-ov-border bg-transparent text-ov-dim"
-            }`}
-          >
-            {n}
-          </button>
-        );
-      })}
+      {window.map((n) => (
+        <Button
+          key={n}
+          size="sm"
+          chamfer
+          variant={n === page ? "primary" : "outline"}
+          aria-current={n === page ? "page" : undefined}
+          aria-label={`Page ${n}`}
+          onClick={() => onChange(n)}
+        >
+          {n}
+        </Button>
+      ))}
       {window[window.length - 1] < pages && (
         <span className="text-label text-ov-muted">…</span>
       )}
-      <button
-        type="button"
-        disabled={page >= pages}
-        onClick={() => onChange(page + 1)}
-        className="flex items-center border border-ov-border px-3 py-2 text-label tracking-hud text-ov-dim transition-all duration-150 hover:border-ov-teal hover:text-ov-teal active:scale-95 disabled:opacity-30 disabled:active:scale-100"
-      >
+      <Button size="sm" iconRight="chevron-right" disabled={page >= pages} onClick={() => onChange(page + 1)}>
         NEXT
-        <OvIcon name="chevron-right" className="ml-1 text-xs" />
-      </button>
-    </div>
+      </Button>
+    </nav>
   );
 }
 
@@ -208,54 +192,22 @@ export function ReviewsPanel({
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-ov-border pt-4">
-        <span className="text-micro tracking-hud-wide text-ov-dim">SORT</span>
-        <div className="flex flex-wrap gap-1.5">
-          {REVIEW_SORTS.map((option) => {
-            const active = sort === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setSort(option.value)}
-                aria-pressed={active}
-                className={`border px-2.5 py-1.5 text-micro tracking-hud transition-all duration-150 hover:brightness-125 active:scale-95 ${
-                  active
-                    ? "border-ov-teal bg-ov-teal/8 text-ov-teal"
-                    : "border-ov-border bg-transparent text-ov-dim"
-                }`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
+        <span aria-hidden className="text-micro tracking-hud-wide text-ov-dim">SORT</span>
+        <ChipGroup label="Sort reviews" options={REVIEW_SORTS} value={sort} onValueChange={setSort} />
 
-        <button
-          type="button"
-          onClick={() => setHideSpoilers((v) => !v)}
-          aria-pressed={hideSpoilers}
-          className="ml-auto flex items-center gap-2 transition-transform duration-150 active:scale-95"
-        >
-          <span
-            className={`flex h-[16px] w-[16px] shrink-0 items-center justify-center border text-ov-teal transition-colors duration-150 ${
-              hideSpoilers ? "border-ov-teal bg-ov-teal/16" : "border-ov-border bg-transparent"
-            }`}
-          >
-            {hideSpoilers && <OvIcon name="check" className="text-micro" />}
-          </span>
-          <span
-            className={`text-micro tracking-hud ${hideSpoilers ? "text-ov-teal" : "text-ov-dim"}`}
-          >
-            HIDE SPOILERS
-            {stats.spoilerCount > 0 && ` (${stats.spoilerCount})`}
-          </span>
-        </button>
+        <Checkbox size="sm" checked={hideSpoilers} onCheckedChange={setHideSpoilers} className="ml-auto">
+          HIDE SPOILERS
+          {stats.spoilerCount > 0 && ` (${stats.spoilerCount})`}
+        </Checkbox>
       </div>
 
       {loading ? (
         <ReviewListSkeleton />
       ) : error ? (
-        <div className="animate-ov-fade-up mt-4 border-l-2 border-ov-rose py-2 pl-3.5 text-ui text-ov-rose">
+        <div
+          role="alert"
+          className="animate-ov-fade-up mt-4 border-l-2 border-ov-rose py-2 pl-3.5 text-ui text-ov-rose"
+        >
           {error}
         </div>
       ) : reviews.length === 0 ? (

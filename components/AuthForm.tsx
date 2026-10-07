@@ -5,11 +5,9 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import axios from "axios";
 import { USERNAME_HINT, USERNAME_PATTERN } from "@/utils/reviews";
+import { Button, FieldLabel, Input } from "@/components/ui";
 
 export type AuthMode = "signup" | "login";
-
-const fieldClass =
-  "w-full border bg-ov-panel px-4 py-3 text-ui text-ov-white outline-none placeholder:text-ov-muted transition-colors duration-150 focus:border-ov-teal";
 
 export function AuthForm({
   mode,
@@ -84,69 +82,53 @@ export function AuthForm({
     <form onSubmit={submit} noValidate>
       {isSignup && (
         <>
-          <label
-            htmlFor="auth-username"
-            className="mb-2 block text-label tracking-wide text-ov-dim"
-          >
-            USERNAME
-          </label>
-          <input
+          <FieldLabel htmlFor="auth-username">USERNAME</FieldLabel>
+          <Input
             id="auth-username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="neon_drifter"
             autoComplete="username"
-            className={`${fieldClass} mb-1 border-ov-border`}
+            className="mb-1"
           />
           <p className="mb-3.5 text-micro text-ov-muted">{USERNAME_HINT}</p>
         </>
       )}
 
-      <label
-        htmlFor="auth-email"
-        className="mb-2 block text-label tracking-wide text-ov-dim"
-      >
-        EMAIL
-      </label>
-      <input
+      <FieldLabel htmlFor="auth-email">EMAIL</FieldLabel>
+      <Input
         id="auth-email"
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="player@grid.io"
         autoComplete="email"
-        className={`${fieldClass} mb-3.5 border-ov-border`}
+        className="mb-3.5"
       />
 
-      <label
-        htmlFor="auth-password"
-        className="mb-2 block text-label tracking-wide text-ov-dim"
-      >
-        PASSWORD
-      </label>
-      <input
+      <FieldLabel htmlFor="auth-password">PASSWORD</FieldLabel>
+      <Input
         id="auth-password"
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="••••••••••"
         autoComplete={isSignup ? "new-password" : "current-password"}
-        className={`${fieldClass} mb-5 border-ov-border`}
+        className="mb-5"
       />
 
       {error && (
-        <div className="animate-ov-fade-up mb-4 border border-ov-rose bg-ov-rose/8 px-3.5 py-2.5 text-xs text-ov-rose">
+        <div
+          role="alert"
+          className="animate-ov-fade-up mb-4 border border-ov-rose bg-ov-rose/8 px-3.5 py-2.5 text-xs text-ov-rose"
+        >
           {error}
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="ov-chamfer-x w-full border border-ov-teal bg-ov-teal/6 px-4 py-3.5 font-orbitron text-ui font-bold tracking-hud-wide text-ov-teal transition-all duration-150 hover:bg-ov-teal/14 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
-      >
-        {busy ? "..." : isSignup ? "CREATE ACCOUNT" : "LOG IN"}
-      </button>
+      <Button type="submit" variant="secondary" size="lg" loading={busy}>
+        {isSignup ? "CREATE ACCOUNT" : "LOG IN"}
+      </Button>
 
       <div className="mt-5 text-center text-xs text-ov-muted">
         {isSignup ? "Already have an account? " : "Need an account? "}

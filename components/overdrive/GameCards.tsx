@@ -10,15 +10,16 @@ import {
 } from "@/utils/overdrive";
 import Image from "next/image";
 import Link from "next/link";
-import { OvIcon } from "./OvIcon";
+import { Button, IconButton, Tag } from "@/components/ui";
+import { cx } from "@/utils/cx";
 
 /// Wishlist toggle laid over a cover or row. It sits beside the card's link,
 /// never inside it: a button nested in an <a> is invalid and breaks focus order.
-function WishButton({
+export function WishButton({
   gameId,
   gameName,
-  className = "",
-  iconClassName = "",
+  className,
+  iconClassName,
 }: {
   gameId: number;
   gameName: string;
@@ -28,20 +29,15 @@ function WishButton({
   const { isWished, toggleWish } = useCollection();
   const wished = isWished(gameId);
   return (
-    <button
-      type="button"
-      onClick={() => toggleWish(gameId)}
+    <IconButton
+      variant="overlay"
+      icon={wished ? "heart-filled" : "heart"}
+      label={wished ? `Remove ${gameName} from wishlist` : `Add ${gameName} to wishlist`}
       aria-pressed={wished}
-      aria-label={wished ? `Remove ${gameName} from wishlist` : `Add ${gameName} to wishlist`}
-      className={`z-10 transition-transform duration-150 hover:scale-110 active:scale-90 ${className}`}
-    >
-      <OvIcon
-        name={wished ? "heart-filled" : "heart"}
-        className={`transition-colors duration-150 ${
-          wished ? "text-ov-rose" : "text-white/70"
-        } ${iconClassName}`}
-      />
-    </button>
+      onClick={() => toggleWish(gameId)}
+      className={cx("z-10", className)}
+      iconClassName={iconClassName}
+    />
   );
 }
 
@@ -65,9 +61,9 @@ export function GameGridCard({ game }: { game: GameCardProps }) {
             <div className="h-full w-full bg-linear-to-br from-teal-700 to-slate-900" />
           )}
           {tag && (
-            <span className="absolute left-2 top-2 bg-ov-teal px-1.5 py-0.5 text-micro tracking-wide text-ov-bg">
+            <Tag tone="teal" variant="solid" size="sm" className="absolute left-2 top-2">
               {tag}
-            </span>
+            </Tag>
           )}
         </div>
         <div className="mt-2 text-body font-semibold text-white transition-colors duration-150 group-hover:text-ov-teal">
@@ -82,18 +78,49 @@ export function GameGridCard({ game }: { game: GameCardProps }) {
           gameId={game.id}
           gameName={game.name}
           className="absolute right-2 top-2 group-hover:-translate-y-1.5"
-          iconClassName="text-body drop-shadow-[0_1px_4px_rgb(0_0_0/0.6)]"
+          iconClassName="text-body"
         />
       )}
     </div>
   );
 }
 
-export function GameListRow({ game }: { game: GameCardProps }) {
+/// Wishlist and library toggles: a list row's default actions.
+function CollectionActions({ game }: { game: GameCardProps }) {
   const { isInLibrary, toggleLibrary } = useCollection();
+  if (!game.id) return null;
+  const inLib = isInLibrary(game.id);
+  return (
+    <>
+      <WishButton gameId={game.id} gameName={game.name} className="relative" iconClassName="text-lg" />
+      <Button
+        size="sm"
+        variant={inLib ? "secondary" : "outline"}
+        icon={inLib ? "check" : "plus"}
+        aria-pressed={inLib}
+        aria-label={inLib ? `Remove ${game.name} from library` : `Add ${game.name} to library`}
+        onClick={() => toggleLibrary(game.id!)}
+        className="relative z-10"
+      >
+        {inLib ? "IN LIB" : "LIB"}
+      </Button>
+    </>
+  );
+}
+
+export function GameListRow({
+  game,
+  meta,
+  actions,
+}: {
+  game: GameCardProps;
+  /// Secondary line; defaults to "developer · year".
+  meta?: string;
+  /// Trailing controls; defaults to the wishlist and library toggles. They
+  /// need `relative z-10` to sit above the row-wide link.
+  actions?: React.ReactNode;
+}) {
   const cover = coverUrl(game.cover);
-  const inLib = game.id ? isInLibrary(game.id) : false;
-  const dev = developerName(game.involved_companies);
   const tag = gameTag(game.genres, game.hypes);
 
   // The title link stretches over the whole row (its ::before), so the row is
@@ -119,30 +146,15 @@ export function GameListRow({ game }: { game: GameCardProps }) {
           {game.name}
         </Link>
         <div className="mt-1 text-label uppercase tracking-wide text-ov-muted">
-          {dev} · {formatYear(game.first_release_date)}
+          {meta ?? `${developerName(game.involved_companies)} · ${formatYear(game.first_release_date)}`}
         </div>
       </div>
       {tag && (
-        <span className="bg-ov-teal px-2 py-0.5 text-micro tracking-wide text-ov-bg">
+        <Tag tone="teal" variant="solid" size="sm">
           {tag}
-        </span>
+        </Tag>
       )}
-      {game.id && (
-        <>
-          <WishButton gameId={game.id} gameName={game.name} className="relative" iconClassName="text-lg" />
-          <button
-            type="button"
-            onClick={() => toggleLibrary(game.id!)}
-            aria-pressed={inLib}
-            className={`relative z-10 flex items-center gap-1 border bg-transparent px-3 py-[7px] text-label tracking-hud transition-all duration-150 hover:brightness-125 active:scale-95 ${
-              inLib ? "border-ov-teal text-ov-teal" : "border-ov-muted text-ov-muted"
-            }`}
-          >
-            <OvIcon name={inLib ? "check" : "plus"} className="text-xs" />
-            {inLib ? "IN LIB" : "LIB"}
-          </button>
-        </>
-      )}
+      {actions ?? <CollectionActions game={game} />}
     </div>
   );
 }

@@ -7,7 +7,7 @@
    utilities (bg-ov-panel, text-label, tracking-hud, shadow-ov-pop, ...) or
    var(--color-ov-*) when a value has to be computed at runtime.
    --------------------------------------------------------------------------- */
-@theme {
+@theme static {
   /* Surfaces, darkest to lightest. */
   --color-ov-bg: #05070e;
   --color-ov-sunken: #070b14;
@@ -52,6 +52,8 @@
 
   --animate-ov-pop: ov-pop 0.14s ease-out both;
   --animate-ov-fade-up: ov-fade-up 0.25s ease-out both;
+  --animate-ov-fade-out: ov-fade-out 0.15s ease-in both;
+  --animate-ov-pop-out: ov-pop-out 0.1s ease-in both;
   --animate-ov-pulse: ov-pulse 2s ease-in-out infinite;
   --animate-ov-think: ov-think 0.8s linear infinite;
   --animate-ov-scrollup: ov-scrollup 26s linear infinite;
@@ -74,6 +76,19 @@
     from {
       opacity: 0;
       transform: translateY(6px);
+    }
+  }
+
+  @keyframes ov-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes ov-pop-out {
+    to {
+      opacity: 0;
+      transform: scale(0.97);
     }
   }
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { OvIcon, type IconName } from "./OvIcon";
+import { Button } from "@/components/ui";
 
 export function EmptyState({
   icon,
@@ -27,12 +28,9 @@ export function EmptyState({
         {title}
       </div>
       <p className="mt-2.5 text-ui text-ov-muted">{description}</p>
-      <Link
-        href={actionHref}
-        className="mt-5 inline-block bg-ov-teal px-5 py-2.5 font-orbitron text-label font-bold tracking-hud-wide text-ov-bg transition-transform duration-150 hover:brightness-110 active:scale-95"
-      >
-        {actionLabel}
-      </Link>
+      <Button asChild variant="primary" className="mt-5">
+        <Link href={actionHref}>{actionLabel}</Link>
+      </Button>
     </div>
   );
 }
@@ -63,24 +61,14 @@ export function LoadMoreButton({
 }) {
   return (
     <div className="mt-8 flex justify-center">
-      <button
-        type="button"
+      <Button
+        variant="secondary"
         onClick={onClick}
-        disabled={loading}
-        className="flex items-center gap-2 border border-ov-teal bg-ov-teal/6 px-7 py-3 font-orbitron text-label font-bold tracking-hud-wide text-ov-teal transition-all duration-150 hover:bg-ov-teal/14 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+        loading={loading}
+        iconRight={loading ? undefined : "chevron-down"}
       >
-        {loading ? (
-          <>
-            <span className="inline-block h-3 w-3 animate-ov-think border-2 border-ov-teal border-t-transparent" />
-            LOADING
-          </>
-        ) : (
-          <>
-            LOAD MORE
-            <OvIcon name="chevron-down" className="text-xs" />
-          </>
-        )}
-      </button>
+        {loading ? "LOADING" : "LOAD MORE"}
+      </Button>
     </div>
   );
 }

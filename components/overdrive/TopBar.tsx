@@ -10,6 +10,7 @@ import { coverUrl, formatRating, formatYear } from "@/utils/overdrive";
 import { OvIcon } from "./OvIcon";
 import { AccountChip } from "./AccountChip";
 import { SearchResultsSkeleton } from "./Skeletons";
+import { IconButton } from "@/components/ui";
 import Image from "next/image";
 
 const NAV = [
@@ -96,14 +97,7 @@ function SearchBox({
           className="min-w-0 flex-1 border-none bg-transparent text-ui tracking-wide text-ov-white outline-none placeholder:text-ov-muted"
         />
         {query && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            aria-label="Clear search"
-            className="flex shrink-0 items-center border-0 bg-transparent p-0 leading-none text-ov-muted transition-colors duration-150 hover:text-ov-teal active:scale-90"
-          >
-            <OvIcon name="close" className="text-sm" />
-          </button>
+          <IconButton icon="close" label="Clear search" onClick={() => setQuery("")} />
         )}
       </div>
 
@@ -306,17 +300,13 @@ export function TopBar() {
 
         {/* Below xl: a compact icon cluster replaces the inline nav/search/links. */}
         <div className="ml-auto flex items-center gap-4 sm:gap-5 xl:hidden">
-          <button
-            type="button"
-            onClick={() => setMobileSearchOpen((v) => !v)}
-            aria-label={mobileSearchOpen ? "Close search" : "Open search"}
+          <IconButton
+            icon={mobileSearchOpen ? "close" : "search"}
+            label={mobileSearchOpen ? "Close search" : "Open search"}
             aria-expanded={mobileSearchOpen}
-            className={`transition-transform duration-150 active:scale-90 ${
-              mobileSearchOpen ? "text-ov-teal" : "text-ov-text"
-            }`}
-          >
-            <OvIcon name={mobileSearchOpen ? "close" : "search"} className="text-lg" />
-          </button>
+            onClick={() => setMobileSearchOpen((v) => !v)}
+            iconClassName="text-lg"
+          />
 
           <Link
             href="/wishlist"

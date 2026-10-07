@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { OvIcon } from "./OvIcon";
+import { Button, Spinner } from "@/components/ui";
 
 const SUGGESTIONS = [
   "Best RPGs of 2025",
@@ -124,7 +124,7 @@ export function AIChat({
           })}
           {loading && (
             <div className="flex items-center gap-2.5 text-ui text-ov-muted">
-              <span className="inline-block h-3.5 w-3.5 animate-ov-think rounded-full border-2 border-ov-teal border-t-transparent" />
+              <Spinner className="text-sm text-ov-teal" />
               Scanning the grid…
             </div>
           )}
@@ -134,37 +134,38 @@ export function AIChat({
 
       <div className="my-3.5 flex flex-wrap gap-2">
         {SUGGESTIONS.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => send(s)}
-            className="border border-ov-border px-3 py-1.5 text-xs text-ov-teal transition-all duration-150 hover:border-ov-teal hover:bg-ov-teal/8 active:scale-95"
-          >
+          <Button key={s} size="sm" variant="secondary" disabled={loading} onClick={() => send(s)}>
             {s}
-          </button>
+          </Button>
         ))}
       </div>
 
-      <div className="ov-chamfer-x flex items-center gap-3 border border-ov-border bg-ov-panel px-4 py-3 transition-colors duration-200 focus-within:border-ov-teal">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          send(query);
+        }}
+        className="ov-chamfer-x flex items-center gap-3 border border-ov-border bg-ov-panel px-4 py-3 transition-colors duration-200 focus-within:border-ov-teal"
+      >
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send(query)}
           placeholder="Ask me about games, events, or recommendations…"
           aria-label="Message the AI concierge"
           disabled={loading}
           className="min-w-0 flex-1 border-none bg-transparent text-sm text-ov-white outline-none placeholder:text-ov-muted"
         />
-        <button
-          type="button"
-          onClick={() => send(query)}
-          disabled={loading || !query.trim()}
-          className="flex items-center bg-ov-teal px-4 py-2.5 font-orbitron text-xs font-bold text-ov-bg transition-transform duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+        <Button
+          type="submit"
+          variant="primary"
+          iconRight="send"
+          chamfer={false}
+          disabled={!query.trim()}
+          loading={loading}
         >
           SEND
-          <OvIcon name="send" className="ml-1.5 text-xs" />
-        </button>
-      </div>
+        </Button>
+      </form>
     </div>
   );
 }

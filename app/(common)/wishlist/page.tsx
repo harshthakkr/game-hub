@@ -9,11 +9,11 @@ import { GameCardProps } from "@/utils/types";
 import { PageContainer, PageTitle } from "@/components/overdrive/PageShell";
 import { EmptyState } from "@/components/overdrive/EmptyState";
 import { WishlistSkeleton } from "@/components/overdrive/Skeletons";
-import { OvIcon } from "@/components/overdrive/OvIcon";
+import { WishButton } from "@/components/overdrive/GameCards";
 import { coverUrl } from "@/utils/overdrive";
 
 export default function WishlistPage() {
-  const { wishlist, toggleWish, ready, signedIn } = useCollection();
+  const { wishlist, ready, signedIn } = useCollection();
   const [games, setGames] = useState<GameCardProps[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -90,14 +90,12 @@ export default function WishlistPage() {
                   <div className="mt-0.5 text-label text-ov-teal">Track price</div>
                 </Link>
                 {game.id && (
-                  <button
-                    type="button"
-                    onClick={() => toggleWish(game.id!)}
-                    aria-label={`Remove ${game.name} from wishlist`}
-                    className="absolute right-2 top-2 z-10 transition-transform duration-150 hover:scale-110 active:scale-90 group-hover:-translate-y-1.5"
-                  >
-                    <OvIcon name="heart-filled" className="text-body text-ov-rose" />
-                  </button>
+                  <WishButton
+                    gameId={game.id}
+                    gameName={game.name}
+                    className="absolute right-2 top-2 group-hover:-translate-y-1.5"
+                    iconClassName="text-body"
+                  />
                 )}
               </div>
             );

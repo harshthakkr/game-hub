@@ -3,6 +3,7 @@
 import axios from "axios";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { OvIcon } from "./OvIcon";
+import { Button, ChipGroup, Dialog, Price, Stat, Tag } from "@/components/ui";
 
 const RANGES = [
   { key: "24h", label: "24H", hours: 24 },
@@ -66,35 +67,40 @@ function formatStamp(date: Date) {
   });
 }
 
-/// Modal showing the PS Store price trail for a game, sampled hourly.
-/// Mirrors the Lightbox: Escape or a backdrop click closes it, and page scroll
-/// is locked while it is open.
+/// Modal showing the PS Store price trail for a game, sampled hourly. The
+/// body mounts only while open, so history is fetched on each opening.
 export function PriceHistoryModal({
+  open,
+  onOpenChange,
   slug,
   gameName,
-  onClose,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   slug: string;
   gameName: string;
-  onClose: () => void;
 }) {
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      eyebrow="PRICE TRACKER · PS STORE IN"
+      title={gameName}
+      description={`PlayStation Store price history for ${gameName}`}
+      className="max-w-[720px]"
+    >
+      <PriceHistoryBody slug={slug} />
+    </Dialog>
+  );
+}
+
+const RANGE_OPTIONS = RANGES.map((r) => ({ value: r.key, label: r.label }));
+
+function PriceHistoryBody({ slug }: { slug: string }) {
   const [range, setRange] = useState<RangeKey>("24h");
   const [history, setHistory] = useState<PriceHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [onClose]);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,7 +119,7 @@ export function PriceHistoryModal({
     };
   }, [slug, range]);
 
-  const hours = RANGES.find((r) => r.key === range)!.hours;
+  const { hours, label: rangeLabel } = RANGES.find((r) => r.key === range)!;
   const stats = useMemo(() => {
     if (!history) return null;
     const prices = history.points.map((p) => p.price);
@@ -128,155 +134,97 @@ export function PriceHistoryModal({
   const onSale = current && current.price < current.basePrice;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={`${gameName} PlayStation Store price history`}
-      className="animate-ov-fade-up fixed inset-0 z-[100] flex items-center justify-center bg-ov-bg/88 p-3 backdrop-blur-[3px]"
-      onClick={onClose}
-    >
-      {/* The chamfered frame can't scroll itself (its corner hairlines would
-          scroll away with the content), so an inner layer does. */}
-      <div
-        className="ov-chamfer-x flex max-h-full w-full max-w-[720px] flex-col border border-ov-border bg-ov-panel"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="min-h-0 overflow-y-auto">
-          <div className="flex items-start gap-4 border-b border-ov-border px-5 py-4">
-            <div className="min-w-0 flex-1">
-              <div className="font-orbitron text-label font-bold tracking-hud-wide text-ov-rose">
-                PRICE TRACKER · PS STORE IN
-              </div>
-              <div className="mt-1.5 truncate font-orbitron text-lg font-bold text-white">
-                {history?.productName || gameName}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close price history"
-              className="border border-ov-border px-3 py-1.5 text-label tracking-hud text-ov-dim transition-colors duration-150 hover:border-ov-rose hover:text-ov-rose active:scale-95"
+    <>
+      <div className="grid grid-cols-2 gap-px border-b border-ov-border bg-ov-border md:grid-cols-4">
+        <Stat label="CURRENT" className="bg-ov-panel px-5 py-3">
+          {current ? (
+            <Price
+              size="xl"
+              current={current.formatted}
+              original={onSale ? money(current.basePrice) : null}
+            />
+          ) : (
+            <span className="text-ov-muted">—</span>
+          )}
+        </Stat>
+        <Stat label={`LOW · ${rangeLabel}`} className="bg-ov-panel px-5 py-3">
+          {stats ? money(stats.low) : "—"}
+        </Stat>
+        <Stat label={`HIGH · ${rangeLabel}`} className="bg-ov-panel px-5 py-3">
+          {stats ? money(stats.high) : "—"}
+        </Stat>
+        <Stat label="CHANGE" className="bg-ov-panel px-5 py-3">
+          {stats ? (
+            <span
+              className={`inline-flex items-center gap-1 ${
+                stats.change < 0 ? "text-ov-teal" : stats.change > 0 ? "text-ov-rose" : ""
+              }`}
             >
-              <OvIcon name="close" className="mr-1.5 text-label" />
-              CLOSE
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-px border-b border-ov-border bg-ov-border md:grid-cols-4">
-            <Stat label="CURRENT">
-              {current ? (
-                <span className="flex flex-wrap items-baseline gap-2">
-                  <span className="font-orbitron text-xl font-bold text-ov-teal">
-                    {current.formatted}
-                  </span>
-                  {onSale && (
-                    <span className="text-label text-ov-muted line-through">
-                      {money(current.basePrice)}
-                    </span>
-                  )}
-                </span>
-              ) : (
-                <span className="text-ov-muted">—</span>
+              {stats.change !== 0 && (
+                <OvIcon name={stats.change < 0 ? "trend-down" : "trend-up"} className="text-sm" />
               )}
-            </Stat>
-            <Stat label={`LOW · ${RANGES.find((r) => r.key === range)!.label}`}>
-              {stats ? money(stats.low) : "—"}
-            </Stat>
-            <Stat label={`HIGH · ${RANGES.find((r) => r.key === range)!.label}`}>
-              {stats ? money(stats.high) : "—"}
-            </Stat>
-            <Stat label="CHANGE">
-              {stats ? (
-                <span
-                  className={`inline-flex items-center gap-1 ${
-                    stats.change < 0 ? "text-ov-teal" : stats.change > 0 ? "text-ov-rose" : ""
-                  }`}
-                >
-                  {stats.change !== 0 && (
-                    <OvIcon name={stats.change < 0 ? "trend-down" : "trend-up"} className="text-sm" />
-                  )}
-                  {stats.change === 0 ? "No change" : money(Math.abs(stats.change))}
-                </span>
-              ) : (
-                "—"
-              )}
-            </Stat>
-          </div>
-
-          <div className="px-5 pt-3">
-            <div className="flex flex-wrap items-center gap-0 border-b border-ov-border">
-              {RANGES.map((r) => {
-                const active = range === r.key;
-                return (
-                  <button
-                    key={r.key}
-                    type="button"
-                    onClick={() => setRange(r.key)}
-                    aria-pressed={active}
-                    className={`cursor-pointer border-b-2 px-4 py-2 text-xs tracking-hud-wide transition-colors duration-150 hover:text-ov-teal ${
-                      active ? "border-ov-teal text-ov-teal" : "border-transparent text-ov-muted"
-                    }`}
-                  >
-                    {r.label}
-                  </button>
-                );
-              })}
-              {onSale && current?.saleEndsAt && (
-                <span className="ml-auto border border-ov-rose px-2 py-0.5 text-micro tracking-hud text-ov-rose">
-                  SALE ENDS {formatStamp(new Date(current.saleEndsAt)).toUpperCase()}
-                </span>
-              )}
-            </div>
-
-            <div
-              className={`py-4 transition-opacity duration-150 ${loading && history ? "opacity-50" : ""}`}
-            >
-              {failed ? (
-                <ChartMessage>Couldn&apos;t load price history. Try again in a moment.</ChartMessage>
-              ) : !history ? (
-                <ChartMessage>
-                  <span className="animate-ov-pulse">LOADING PRICE DATA…</span>
-                </ChartMessage>
-              ) : history.points.length === 0 && !history.previous ? (
-                <ChartMessage>
-                  Tracking has just started — prices are sampled every hour, so the
-                  trail builds up from here.
-                </ChartMessage>
-              ) : (
-                <PriceChart history={history} hours={hours} />
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 border-t border-ov-border px-5 py-3.5">
-            <span className="text-label tracking-wide text-ov-dim">
-              <OvIcon name="clock" className="mr-1.5 text-label" />
-              Checked {timeAgo(history?.lastFetchedAt ?? null)} · refreshes hourly
+              {stats.change === 0
+                ? "No change"
+                : `${stats.change < 0 ? "Down" : "Up"} ${money(Math.abs(stats.change))}`}
             </span>
-            {history && (
-              <a
-                href={history.url}
-                target="_blank"
-                rel="noreferrer"
-                className="ov-chamfer-x ov-chamfer-sm ml-auto flex items-center px-[18px] py-2.5 font-orbitron text-xs font-bold tracking-hud transition-transform duration-150 hover:brightness-110 active:scale-95 bg-linear-to-b from-ov-teal to-ov-teal-dark text-ov-bg"
-              >
-                OPEN IN PS STORE
-                <OvIcon name="chevron-right" className="ml-1 text-xs" />
-              </a>
-            )}
-          </div>
+          ) : (
+            "—"
+          )}
+        </Stat>
+      </div>
+
+      <div className="px-5 pt-3">
+        <div className="flex flex-wrap items-center">
+          <ChipGroup
+            label="Time range"
+            variant="underline"
+            options={RANGE_OPTIONS}
+            value={range}
+            onValueChange={setRange}
+            className="flex-1"
+          />
+          {onSale && current?.saleEndsAt && (
+            <Tag tone="rose" size="sm" className="ml-3">
+              SALE ENDS {formatStamp(new Date(current.saleEndsAt)).toUpperCase()}
+            </Tag>
+          )}
+        </div>
+
+        <div
+          aria-busy={loading}
+          className={`py-4 transition-opacity duration-150 ${loading && history ? "opacity-50" : ""}`}
+        >
+          {failed ? (
+            <ChartMessage>Couldn&apos;t load price history. Try again in a moment.</ChartMessage>
+          ) : !history ? (
+            <ChartMessage>
+              <span className="animate-ov-pulse">LOADING PRICE DATA…</span>
+            </ChartMessage>
+          ) : history.points.length === 0 && !history.previous ? (
+            <ChartMessage>
+              Tracking has just started — prices are sampled every hour, so the
+              trail builds up from here.
+            </ChartMessage>
+          ) : (
+            <PriceChart history={history} hours={hours} />
+          )}
         </div>
       </div>
-    </div>
-  );
-}
 
-function Stat({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-ov-panel px-5 py-3">
-      <div className="mb-1 text-micro tracking-hud-wide text-ov-dim">{label}</div>
-      <div className="font-orbitron text-sm font-bold text-ov-text">{children}</div>
-    </div>
+      <div className="flex flex-wrap items-center gap-3 border-t border-ov-border px-5 py-3.5">
+        <span className="inline-flex items-center text-label tracking-wide text-ov-dim">
+          <OvIcon name="clock" className="mr-1.5 text-label" />
+          Checked {timeAgo(history?.lastFetchedAt ?? null)} · refreshes hourly
+        </span>
+        {history && (
+          <Button asChild variant="primary" iconRight="chevron-right" className="ml-auto">
+            <a href={history.url} target="_blank" rel="noreferrer">
+              OPEN IN PS STORE
+            </a>
+          </Button>
+        )}
+      </div>
+    </>
   );
 }
 
