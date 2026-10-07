@@ -20,6 +20,17 @@ export interface GamePageProps {
     original: string | null;
     discountPercent: number;
   } | null;
+  psStore?: {
+    conceptId: string;
+    url: string;
+    price: {
+      free: boolean;
+      current: string;
+      original: string | null;
+      discountPercent: number;
+      fetchedAt: string;
+    } | null;
+  } | null;
   genres: { name: string }[];
   involved_companies: {
     developer: boolean;

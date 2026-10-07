@@ -202,3 +202,47 @@ model CollectionItem {
 
   @@unique([userId, kind, gameId])
 }
+
+enum PriceStore {
+  PLAYSTATION
+}
+
+/// A store product whose price we poll. Created the first time a game page is
+/// viewed with a known store id; the hourly cron keeps active listings fresh.
+model PriceListing {
+  id            String     @id @default(cuid())
+  createdAt     DateTime   @default(now())
+  store         PriceStore
+  /// IGDB game id/slug — games are not mirrored locally, so these are loose refs.
+  gameId        Int
+  gameSlug      String
+  /// The store's own id for the game: a PS Store concept id.
+  externalId    String
+  productName   String?
+  lastViewedAt  DateTime   @default(now())
+  lastFetchedAt DateTime?
+  lastError     String?
+
+  snapshots PriceSnapshot[]
+
+  @@unique([gameId, store])
+  @@index([gameSlug, store])
+  @@index([lastViewedAt])
+}
+
+/// One observed price. Amounts are whole currency units — PS Store India
+/// quotes rupees without paise.
+model PriceSnapshot {
+  id         String    @id @default(cuid())
+  fetchedAt  DateTime  @default(now())
+  currency   String
+  basePrice  Int
+  price      Int
+  isFree     Boolean   @default(false)
+  saleEndsAt DateTime?
+
+  listing   PriceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listingId String
+
+  @@index([listingId, fetchedAt])
+}

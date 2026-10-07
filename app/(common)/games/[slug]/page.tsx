@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useParams } from "next/navigation";
 import { useSingleData } from "@/utils/hooks/useSingleData";
 import { GamePageProps } from "@/utils/types";
@@ -11,6 +11,7 @@ import { OvIcon } from "@/components/overdrive/OvIcon";
 import { GameGridCard } from "@/components/overdrive/GameCards";
 import { GameDetailSkeleton } from "@/components/overdrive/Skeletons";
 import { Lightbox } from "@/components/overdrive/Lightbox";
+import { PriceHistoryModal } from "@/components/overdrive/PriceHistoryModal";
 import { ReviewsPanel } from "@/components/overdrive/reviews/ReviewsPanel";
 import {
   coverUrl,
@@ -34,6 +35,8 @@ export default function Game() {
   const { isWished, isInLibrary, toggleWish, toggleLibrary } = useCollection();
   const [tab, setTab] = useState<Tab>("OVERVIEW");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [priceModalOpen, setPriceModalOpen] = useState(false);
+  const closePriceModal = useCallback(() => setPriceModalOpen(false), []);
   const { slug } = useParams<{ slug: string }>();
 
   if (loading) return <GameDetailSkeleton />;
@@ -318,15 +321,43 @@ export default function Game() {
                   )}
                 </a>
               )}
-              <a
-                href={`https://store.playstation.com/en-in/search/${encodeURIComponent(data.name)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-between border border-ov-border px-3 py-2 text-[12px] transition-all duration-150 hover:border-ov-teal hover:bg-[rgba(45,212,191,0.05)] active:scale-[0.98]"
-              >
-                <span className="text-ov-text">PlayStation Store</span>
-                <span className="text-ov-dim">SEARCH ▸</span>
-              </a>
+              {data.psStore ? (
+                // Tracked listings open the price history; the modal links on to the store.
+                <button
+                  type="button"
+                  onClick={() => setPriceModalOpen(true)}
+                  className="flex items-center justify-between border border-ov-border px-3 py-2 text-left text-[12px] transition-all duration-150 hover:border-ov-teal hover:bg-[rgba(45,212,191,0.05)] active:scale-[0.98]"
+                >
+                  <span className="flex flex-col">
+                    <span className="text-ov-text">PlayStation Store</span>
+                    <span className="text-[10px] tracking-wide text-ov-dim">PRICE HISTORY ▸</span>
+                  </span>
+                  {data.psStore.price ? (
+                    <span className="flex items-center gap-2">
+                      {data.psStore.price.original && (
+                        <span className="text-[11px] text-ov-muted line-through">
+                          {data.psStore.price.original}
+                        </span>
+                      )}
+                      <span className="font-orbitron text-sm font-bold text-ov-teal">
+                        {data.psStore.price.current}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-ov-dim">TRACK ▸</span>
+                  )}
+                </button>
+              ) : (
+                <a
+                  href={`https://store.playstation.com/en-in/search/${encodeURIComponent(data.name)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between border border-ov-border px-3 py-2 text-[12px] transition-all duration-150 hover:border-ov-teal hover:bg-[rgba(45,212,191,0.05)] active:scale-[0.98]"
+                >
+                  <span className="text-ov-text">PlayStation Store</span>
+                  <span className="text-ov-dim">SEARCH ▸</span>
+                </a>
+              )}
               <a
                 href={`https://www.amazon.in/s?k=${encodeURIComponent(`${data.name} game`)}`}
                 target="_blank"
@@ -340,6 +371,14 @@ export default function Game() {
           </div>
         </aside>
       </div>
+
+      {priceModalOpen && data.psStore && (
+        <PriceHistoryModal
+          slug={String(slug)}
+          gameName={data.name}
+          onClose={closePriceModal}
+        />
+      )}
 
       {lightboxIndex !== null && (
         <Lightbox

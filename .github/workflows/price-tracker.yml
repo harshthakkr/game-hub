@@ -1,0 +1,19 @@
+name: Price tracker
+
+# Refreshes tracked PS Store prices every hour. GitHub may delay scheduled runs
+# by a few minutes under load, which is fine for hourly sampling.
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Refresh prices
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/cron/prices"
