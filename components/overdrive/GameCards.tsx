@@ -12,6 +12,7 @@ import { IconButton, Price, Rating, Tag } from "@/components/ui";
 import { cx } from "@/utils/cx";
 import { startHeroNav } from "@/utils/heroNav";
 import { ShelfMenu } from "./ShelfMenu";
+import { OvIcon } from "./OvIcon";
 
 /// Wishlist state for one game, plus a heart "pop" class that plays when the
 /// user turns it on (not on mount, so already-wished games stay still).
@@ -32,29 +33,75 @@ export function useWishToggle(gameId?: number | null) {
   };
 }
 
-/// Wishlist toggle laid over a cover or row. It sits beside the card's link,
-/// never inside it: a button nested in an <a> is invalid and breaks focus order.
+/// Wishlist toggle on a card. It sits beside the card's link, never inside
+/// it: a button nested in an <a> is invalid and breaks focus order. The label
+/// stays the same and aria-pressed carries the state (a label that flips
+/// between "Add" and "Remove" would contradict the pressed state).
+///
+/// - "bookmark" (covers): a notched tab hanging from the cover's top edge,
+///   bringing its own backdrop so it reads on any art. With a mouse it drops
+///   in on hover/focus; on touch it's always there; once saved it stays,
+///   solid rose, so saved games read at a glance across a grid.
+/// - "ghost" (list rows): a plain icon button.
 export function WishButton({
   gameId,
   gameName,
-  variant = "overlay",
+  variant = "bookmark",
   className,
 }: {
   gameId: number;
   gameName: string;
-  variant?: "overlay" | "ghost";
+  variant?: "bookmark" | "ghost";
   className?: string;
 }) {
   const { wished, popClass, toggle } = useWishToggle(gameId);
+  const label = `Wishlist ${gameName}`;
+
+  // Mouse/trackpad: hidden until the card is hovered or focused, unless saved.
+  const reveal =
+    !wished &&
+    "pointer-fine:-translate-y-2 pointer-fine:opacity-0 pointer-fine:group-focus-within:translate-y-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:translate-y-0 pointer-fine:group-hover:opacity-100";
+
+  if (variant === "ghost") {
+    return (
+      <IconButton
+        variant="ghost"
+        icon={wished ? "heart-filled" : "heart"}
+        label={label}
+        aria-pressed={wished}
+        onClick={toggle}
+        className={cx("z-10", popClass, className)}
+      />
+    );
+  }
+
   return (
-    <IconButton
-      variant={variant}
-      icon={wished ? "heart-filled" : "heart"}
-      label={wished ? `Remove ${gameName} from wishlist` : `Add ${gameName} to wishlist`}
+    // The button is the unclipped hit area (40×48, focus ring intact); the
+    // notched tab inside it is the visible shape.
+    <button
+      type="button"
+      aria-label={label}
       aria-pressed={wished}
       onClick={toggle}
-      className={cx("z-10", popClass, className)}
-    />
+      className={cx(
+        "group/tab absolute top-0 right-1.5 z-10 flex h-12 w-10 justify-center outline-offset-0 transition-[opacity,translate] duration-200 ease-out",
+        reveal,
+        className
+      )}
+    >
+      <span
+        aria-hidden
+        className={cx(
+          "flex h-[38px] w-[30px] items-start justify-center pt-2 transition-colors duration-150 [clip-path:polygon(0_0,100%_0,100%_100%,50%_calc(100%-7px),0_100%)]",
+          wished
+            ? "bg-ov-rose-strong text-white"
+            : "bg-ov-bg/85 text-ov-white backdrop-blur-sm group-hover/tab:text-ov-rose-soft",
+          popClass
+        )}
+      >
+        <OvIcon name={wished ? "heart-filled" : "heart"} className="text-[15px]" />
+      </span>
+    </button>
   );
 }
 
@@ -146,7 +193,7 @@ export function GameGridCard({ game, showRating = true }: { game: GameCardProps;
         <PriceText game={game} className="ml-auto text-ui" />
       </div>
       {game.id && (
-        <WishButton gameId={game.id} gameName={game.name} className="absolute top-2.5 right-2.5" />
+        <WishButton gameId={game.id} gameName={game.name} />
       )}
     </div>
   );
@@ -196,7 +243,7 @@ export function DealCard({ game }: { game: GameCardProps }) {
         </span>
       </div>
       {game.id && (
-        <WishButton gameId={game.id} gameName={game.name} className="absolute top-2.5 right-2.5" />
+        <WishButton gameId={game.id} gameName={game.name} />
       )}
     </div>
   );
