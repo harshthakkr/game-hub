@@ -1,57 +1,36 @@
 import axios from "axios";
 import { getIgdbHeaders } from "@/lib/igdb";
 import { after, NextRequest, NextResponse } from "next/server";
-import { psStoreConceptUrl } from "@/lib/psStore";
 import {
+  STORES,
   isStale,
   latestSnapshot,
   refreshListing,
   summarizeSnapshot,
-  trackPsListing,
+  trackListing,
 } from "@/lib/prices";
+import type { PriceStore } from "@/app/generated/prisma";
 
 // IGDB's external_games.external_game_source enum: 1 identifies a Steam
 // store listing, with the Steam app id carried in `uid`; 36 is a PlayStation
 // Store listing, whose `uid` is a region-independent concept id.
-const STEAM_SOURCE = 1;
-const PS_STORE_SOURCE = 36;
+const SOURCES: { source: number; store: PriceStore }[] = [
+  { source: 36, store: "PLAYSTATION" },
+  { source: 1, store: "STEAM" },
+];
 const FIRST_FETCH_TIMEOUT_MS = 6000;
 
-async function fetchSteamPrice(appId: string) {
-  try {
-    const { data } = await axios.get(
-      `https://store.steampowered.com/api/appdetails?appids=${appId}&cc=in&filters=price_overview,is_free`,
-      { timeout: 4000 }
-    );
-    const entry = data?.[appId];
-    if (!entry?.success) return null;
-    const info = entry.data;
-    if (info?.is_free) {
-      return { free: true, current: "Free", original: null, discountPercent: 0 };
-    }
-    const overview = info?.price_overview;
-    if (!overview) return null;
-    return {
-      free: false,
-      current: overview.final_formatted,
-      original:
-        overview.discount_percent > 0 ? overview.initial_formatted : null,
-      discountPercent: overview.discount_percent || 0,
-    };
-  } catch {
-    // Steam's API is unauthenticated and occasionally flaky/rate-limited —
-    // pricing is a nice-to-have, so fail quietly rather than break the page.
-    return null;
-  }
-}
-
-/// Tracks the game's PS Store listing and returns its latest known price.
-/// A game seen for the first time is scraped inline (bounded by a timeout) so
-/// the button isn't empty; after that, stale prices are served immediately and
+/// Tracks the game's listing on one store and returns its latest known price.
+/// A game seen for the first time is fetched inline (bounded by a timeout) so
+/// the page isn't empty; after that, stale prices are served immediately and
 /// refreshed in the background.
-async function getPsStorePrice(game: { id: number; slug: string }, conceptId: string) {
+async function getStorePrice(
+  game: { id: number; slug: string },
+  store: PriceStore,
+  externalId: string
+) {
   try {
-    const listing = await trackPsListing(game, conceptId);
+    const listing = await trackListing(game, store, externalId);
     let snapshot = await latestSnapshot(listing.id);
     if (!snapshot && !listing.lastFetchedAt) {
       snapshot = await Promise.race([
@@ -77,33 +56,31 @@ export const GET = async (
 
   const gameRes = await axios.post(
     `${process.env.NEXT_PUBLIC_BASE_URL}/games`,
-    `fields id,name,summary,videos.video_id,involved_companies.developer,involved_companies.publisher,involved_companies.company.name,genres.name,aggregated_rating,first_release_date,screenshots.url,screenshots.height,screenshots.width,artworks.url,artworks.height,artworks.width,cover.url,release_dates.human,platforms.name,external_games.external_game_source,external_games.uid,similar_games.id,similar_games.name,similar_games.cover.url,similar_games.slug,similar_games.aggregated_rating,similar_games.first_release_date,similar_games.genres.name,similar_games.hypes; where slug = "${slug}";`,
+    `fields id,name,summary,hypes,videos.video_id,involved_companies.developer,involved_companies.publisher,involved_companies.company.name,genres.name,aggregated_rating,first_release_date,screenshots.url,screenshots.height,screenshots.width,artworks.url,artworks.height,artworks.width,cover.url,release_dates.human,platforms.name,external_games.external_game_source,external_games.uid,similar_games.id,similar_games.name,similar_games.cover.url,similar_games.slug,similar_games.aggregated_rating,similar_games.first_release_date,similar_games.genres.name,similar_games.hypes; where slug = "${slug}";`,
     { headers }
   );
   const res = gameRes.data[0];
   if (!res) return NextResponse.json(res);
 
-  const externalGames = res.external_games as
-    | { external_game_source: number; uid: string }[]
-    | undefined;
-  const steamAppId = externalGames?.find(
-    (g) => g.external_game_source === STEAM_SOURCE
-  )?.uid;
-  const psConceptId = externalGames?.find(
-    (g) => g.external_game_source === PS_STORE_SOURCE
-  )?.uid;
-
-  const [steamPrice, psPrice] = await Promise.all([
-    steamAppId ? fetchSteamPrice(steamAppId) : null,
-    psConceptId ? getPsStorePrice({ id: res.id, slug }, psConceptId) : null,
-  ]);
-
-  return NextResponse.json({
-    ...res,
-    steamAppId: steamAppId || null,
-    steamPrice,
-    psStore: psConceptId
-      ? { conceptId: psConceptId, url: psStoreConceptUrl(psConceptId), price: psPrice }
-      : null,
+  const externalGames = (res.external_games ?? []) as {
+    external_game_source: number;
+    uid: string;
+  }[];
+  const listed = SOURCES.flatMap(({ source, store }) => {
+    const externalId = externalGames.find((g) => g.external_game_source === source)?.uid;
+    return externalId ? [{ store, externalId }] : [];
   });
+
+  // Every store the game is listed on, PS Store first, each with its tracked
+  // price (null while the first fetch is pending or the store has no price).
+  const stores = await Promise.all(
+    listed.map(async ({ store, externalId }) => ({
+      store,
+      label: STORES[store].label,
+      url: STORES[store].url(externalId),
+      price: await getStorePrice({ id: res.id, slug }, store, externalId),
+    }))
+  );
+
+  return NextResponse.json({ ...res, stores });
 };

@@ -189,6 +189,13 @@ enum CollectionKind {
   LIBRARY
 }
 
+/// Shelf a library game sits on. Only set for LIBRARY items.
+enum LibraryStatus {
+  PLAYING
+  BACKLOG
+  FINISHED
+}
+
 /// A game a user has wishlisted or added to their library.
 model CollectionItem {
   id        String         @id @default(cuid())
@@ -196,6 +203,7 @@ model CollectionItem {
   kind      CollectionKind
   /// IGDB game id — games are not mirrored locally, so this is a loose ref.
   gameId    Int
+  status    LibraryStatus?
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
@@ -205,6 +213,7 @@ model CollectionItem {
 
 enum PriceStore {
   PLAYSTATION
+  STEAM
 }
 
 /// A store product whose price we poll. Created the first time a game page is
@@ -216,7 +225,7 @@ model PriceListing {
   /// IGDB game id/slug — games are not mirrored locally, so these are loose refs.
   gameId        Int
   gameSlug      String
-  /// The store's own id for the game: a PS Store concept id.
+  /// The store's own id for the game: a PS Store concept id or a Steam app id.
   externalId    String
   productName   String?
   lastViewedAt  DateTime   @default(now())
@@ -230,8 +239,8 @@ model PriceListing {
   @@index([lastViewedAt])
 }
 
-/// One observed price. Amounts are whole currency units — PS Store India
-/// quotes rupees without paise.
+/// One observed price. Amounts are whole currency units: PS Store India quotes
+/// rupees directly; Steam's paise amounts are converted on the way in.
 model PriceSnapshot {
   id         String    @id @default(cuid())
   fetchedAt  DateTime  @default(now())
