@@ -4,14 +4,19 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import type { StoreListing } from "@/utils/types";
 import { discountLabel } from "@/utils/price";
-import { Button, Eyebrow, Price, Tag } from "@/components/ui";
+import { Button, Eyebrow, Tag } from "@/components/ui";
 import { cx } from "@/utils/cx";
+import { OvIcon } from "./OvIcon";
 import { PriceHistoryModal } from "./PriceHistoryModal";
 
-type Series = { store: StoreListing["store"]; points: { t: string; price: number }[] };
+type Series = {
+  store: StoreListing["store"];
+  lastFetchedAt: string | null;
+  points: { t: string; price: number }[];
+};
 
-/// 7-day price trail per store, for the sparklines. Optional decoration: a
-/// failure just leaves the sparklines out.
+/// 7-day price trail per store, for the trend notes and sparkline. Optional
+/// decoration: a failure just leaves them out.
 function useWeekTrend(slug: string, enabled: boolean) {
   const [series, setSeries] = useState<Series[]>([]);
   useEffect(() => {
@@ -39,13 +44,7 @@ function Sparkline({ points, label }: { points: { price: number }[]; label: stri
     .join(" ");
   return (
     <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-11 w-full" role="img" aria-label={label}>
-      <polyline
-        points={coords}
-        fill="none"
-        className="stroke-ov-teal"
-        strokeWidth={2.5}
-        vectorEffect="non-scaling-stroke"
-      />
+      <polyline points={coords} fill="none" className="stroke-ov-teal" strokeWidth={2.5} vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
@@ -54,14 +53,22 @@ function trendNote(points: { price: number }[]) {
   if (points.length < 2) return null;
   const first = points[0].price;
   const last = points[points.length - 1].price;
-  if (last < first) return { text: `Down ₹${(first - last).toLocaleString("en-IN")} this week`, tone: "deal" as const };
-  if (last > first) return { text: `Up ₹${(last - first).toLocaleString("en-IN")} this week`, tone: "rose" as const };
-  return { text: "No change this week", tone: "muted" as const };
+  if (last < first) return { text: `Down ₹${(first - last).toLocaleString("en-IN")} this week`, tone: "text-ov-deal" };
+  if (last > first) return { text: `Up ₹${(last - first).toLocaleString("en-IN")} this week`, tone: "text-ov-rose-soft" };
+  return { text: "No change this week", tone: "text-ov-dim" };
 }
 
-/// "Where to buy": every store the game is listed on. The cheapest priced
-/// store is expanded with its sale state, week trend and actions; the rest
-/// are compact rows. Price history opens one chart covering every store.
+function timeAgo(iso: string | null | undefined) {
+  if (!iso) return null;
+  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (minutes < 60) return `${Math.max(1, minutes)} min ago`;
+  const hours = Math.round(minutes / 60);
+  return hours < 24 ? `${hours}h ago` : `${Math.round(hours / 24)}d ago`;
+}
+
+/// "Where to buy": every store the game is listed on, each with its own sale
+/// state. When both stores have a price, the cheaper one gets a teal frame
+/// and a CHEAPEST tag. Price history opens one chart covering both.
 export function WhereToBuy({
   slug,
   gameName,
@@ -73,11 +80,17 @@ export function WhereToBuy({
 }) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const priced = stores.filter((s) => s.price);
-  const best = [...priced].sort((a, b) => a.price!.amount - b.price!.amount)[0];
+  const cheapest = priced.length > 1 ? [...priced].sort((a, b) => a.price!.amount - b.price!.amount)[0] : null;
   const trend = useWeekTrend(slug, priced.length > 0);
+  const checked = timeAgo(
+    trend.map((s) => s.lastFetchedAt).filter(Boolean).sort().at(-1)
+  );
 
   return (
-    <section aria-labelledby="where-to-buy" className="ov-chamfer flex flex-col gap-3.5 border border-ov-border bg-ov-panel p-5.5">
+    <section
+      aria-labelledby="where-to-buy"
+      className="ov-chamfer flex flex-col gap-2.5 lg:gap-3.5 lg:border lg:border-ov-border lg:bg-ov-panel lg:p-5.5"
+    >
       <h2 id="where-to-buy">
         <Eyebrow>WHERE TO BUY</Eyebrow>
       </h2>
@@ -89,78 +102,87 @@ export function WhereToBuy({
       )}
 
       {stores.map((store) => {
-        const isBest = store === best && priced.length > 1;
+        const isCheapest = store === cheapest;
         const off = discountLabel(store.price);
         const points = trend.find((s) => s.store === store.store)?.points ?? [];
         const note = trendNote(points);
-
-        if (store !== best) {
-          return (
-            <a
-              key={store.store}
-              href={store.url}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-between gap-3 border border-ov-border bg-ov-field px-4 py-3.5 transition-colors duration-150 hover:border-ov-border-strong"
-            >
-              <span className="text-body font-semibold">{store.label}</span>
-              <span className="flex items-center gap-2.5">
-                {store.price ? (
-                  <Price size="md" current={store.price.current} original={store.price.original} />
-                ) : (
-                  <span className="text-ui text-ov-muted">Price pending</span>
-                )}
-                <span className="sr-only">(opens {store.label})</span>
-              </span>
-            </a>
-          );
-        }
-
         return (
           <div
             key={store.store}
             className={cx(
-              "flex flex-col gap-3 border bg-ov-field p-4",
-              isBest ? "border-ov-teal-deep" : "border-ov-border"
+              "flex flex-col gap-2 border bg-ov-field px-3.5 py-3 lg:gap-3 lg:p-4",
+              isCheapest ? "border-ov-teal-deep" : "border-ov-border"
             )}
           >
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
               <span className="text-body font-semibold">{store.label}</span>
-              <span className="flex gap-1.5">
-                {isBest && <Tag tone="teal" size="sm">Best price</Tag>}
-                {off && <Tag tone="deal" size="sm">{off}</Tag>}
-              </span>
+              {isCheapest && (
+                <span className="bg-ov-teal px-1.5 py-0.5 font-mono text-micro font-medium tracking-label text-ov-teal-ink">
+                  CHEAPEST
+                </span>
+              )}
+              {off && (
+                <Tag tone="deal" size="sm" className="ml-auto">
+                  {off}
+                </Tag>
+              )}
             </div>
-            <Price size="xl" current={store.price!.current} original={store.price!.original} />
-            <Sparkline points={points} label={`${store.label} price over the last 7 days`} />
-            <div className="flex justify-between text-ui">
-              <span
-                className={cx(
-                  note?.tone === "deal" && "text-ov-deal",
-                  note?.tone === "rose" && "text-ov-rose-soft",
-                  (!note || note.tone === "muted") && "text-ov-dim"
-                )}
-              >
-                {note?.text ?? (off ? "On sale now" : "Regular price")}
-              </span>
-              <span className="text-ov-muted">7-day trend</span>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="secondary" size="md" chamfer={false} className="flex-1" onClick={() => setHistoryOpen(true)}>
-                Price history
-              </Button>
-              <Button asChild variant="primary" size="md" iconRight="external" className="flex-1">
-                <a href={store.url} target="_blank" rel="noreferrer">
-                  Open store
-                </a>
-              </Button>
-            </div>
+            {store.price ? (
+              <div className="flex items-center gap-2.5">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="flex flex-wrap items-baseline gap-2">
+                    <span className="font-orbitron text-[21px] font-bold lg:text-[26px]">
+                      {off && <span className="sr-only">Now </span>}
+                      {store.price.current}
+                    </span>
+                    {store.price.original && (
+                      <s className="text-ui text-ov-muted">
+                        <span className="sr-only">was </span>
+                        {store.price.original}
+                      </s>
+                    )}
+                  </span>
+                  <span className={cx("text-ui", note?.tone ?? "text-ov-dim")}>
+                    {note?.text ?? (off ? "On sale now" : "Regular price")}
+                  </span>
+                </div>
+                <Button asChild variant="secondary" size="md" iconRight="external" chamfer={false}>
+                  <a href={store.url} target="_blank" rel="noreferrer" aria-label={`Open ${store.label}`}>
+                    Open
+                  </a>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2.5">
+                <span className="flex flex-1 flex-col gap-0.5">
+                  <span className="text-body font-semibold text-ov-text">Price unavailable</span>
+                  <span className="text-ui text-ov-muted">We&apos;ll have it after the next hourly check.</span>
+                </span>
+                <Button asChild variant="outline" size="md" iconRight="external" chamfer={false}>
+                  <a href={store.url} target="_blank" rel="noreferrer" aria-label={`Open ${store.label}`}>
+                    Open
+                  </a>
+                </Button>
+              </div>
+            )}
+            {isCheapest && (
+              <div className="hidden lg:block">
+                <Sparkline points={points} label={`${store.label} price over the last 7 days`} />
+              </div>
+            )}
           </div>
         );
       })}
 
       {priced.length > 0 && (
-        <PriceHistoryModal open={historyOpen} onOpenChange={setHistoryOpen} slug={slug} gameName={gameName} />
+        <>
+          <Button variant="secondary" size="lg" chamfer={false} className="w-full" onClick={() => setHistoryOpen(true)}>
+            <OvIcon name="trend-down" className="text-base" />
+            {priced.length > 1 ? "Price history · both stores" : "Price history"}
+          </Button>
+          {checked && <p className="text-label text-ov-muted">Checked {checked} · refreshes hourly</p>}
+          <PriceHistoryModal open={historyOpen} onOpenChange={setHistoryOpen} slug={slug} gameName={gameName} />
+        </>
       )}
     </section>
   );

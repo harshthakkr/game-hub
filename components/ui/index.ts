@@ -21,3 +21,4 @@ export {
 export { Input, Textarea, FieldLabel, CharCount } from "./Field";
 export { Spinner } from "./Spinner";
 export { ToastProvider, useToast } from "./Toast";
+export { Sheet, SheetOption } from "./Sheet";

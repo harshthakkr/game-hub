@@ -166,6 +166,34 @@ export function DealCard({ game }: { game: GameCardProps }) {
   );
 }
 
+/// Ranked list row (trending on phones): rank, thumb, title, meta, score.
+export function RankedRow({ game, rank }: { game: GameCardProps; rank: number }) {
+  const cover = coverUrl(game.cover);
+  return (
+    <Link
+      href={`/games/${game.slug}`}
+      className="grid min-h-[84px] grid-cols-[28px_48px_minmax(0,1fr)_auto] items-center gap-3 border-b border-ov-raised py-2.5"
+    >
+      <span className="font-orbitron text-sm font-bold text-ov-muted">
+        <span className="sr-only">Rank </span>
+        {rank}
+      </span>
+      {cover ? (
+        <Image src={cover} alt="" width={48} height={64} className="h-16 w-12 object-cover" />
+      ) : (
+        <span className="h-16 w-12 bg-ov-raised" />
+      )}
+      <span className="flex min-w-0 flex-col gap-1">
+        <span className="line-clamp-2 text-body leading-snug font-semibold text-ov-white">{game.name}</span>
+        <span className="truncate text-ui text-ov-muted">
+          {[formatYear(game.first_release_date) || "TBA", game.genres?.[0]?.name].filter(Boolean).join(" · ")}
+        </span>
+      </span>
+      <Rating value={game.aggregated_rating} boxed />
+    </Link>
+  );
+}
+
 /// Dense row for lists (new releases): thumb, title, meta, score, price, heart.
 export function CompactRow({ game, meta }: { game: GameCardProps; meta?: string }) {
   const cover = coverUrl(game.cover);
@@ -208,7 +236,7 @@ export function GameListRow({ game }: { game: GameCardProps }) {
   const cover = coverUrl(game.cover);
   const discount = discountLabel(game.price);
   return (
-    <div className="group relative grid grid-cols-[48px_minmax(0,1fr)_36px] items-center gap-x-4 border-t border-ov-raised px-2.5 py-2.5 transition-colors duration-150 hover:bg-ov-panel has-[a:focus-visible]:bg-ov-panel lg:grid-cols-[48px_minmax(0,1fr)_120px_52px_110px_36px_150px]">
+    <div className="group relative grid grid-cols-[48px_minmax(0,1fr)_auto_36px] items-center gap-x-3 border-t border-ov-raised px-2.5 py-2.5 lg:gap-x-4 transition-colors duration-150 hover:bg-ov-panel has-[a:focus-visible]:bg-ov-panel lg:grid-cols-[48px_minmax(0,1fr)_120px_52px_110px_36px_150px]">
       {cover ? (
         <Image src={cover} alt="" width={48} height={64} className="h-16 w-12 object-cover" />
       ) : (
@@ -226,6 +254,20 @@ export function GameListRow({ game }: { game: GameCardProps }) {
             .filter(Boolean)
             .join(" · ")}
         </span>
+      </span>
+      {/* Phones: score and best price stacked at the end of the row. */}
+      <span className="flex flex-col items-end gap-1.5 lg:hidden">
+        <Rating value={game.aggregated_rating} className="text-ui" />
+        {game.price && (
+          <span className="flex items-center gap-1.5 whitespace-nowrap">
+            {discount && (
+              <Tag tone="deal" size="sm">
+                {discount}
+              </Tag>
+            )}
+            <span className="font-orbitron text-ui font-bold">{game.price.current}</span>
+          </span>
+        )}
       </span>
       <span className="hidden truncate text-ui text-ov-text lg:block">{game.genres?.[0]?.name}</span>
       <Rating value={game.aggregated_rating} className="hidden text-body lg:block" />
@@ -257,6 +299,51 @@ export function GameListRow({ game }: { game: GameCardProps }) {
           <ShelfMenu gameId={game.id} gameName={game.name} size="sm" />
         </div>
       )}
+    </div>
+  );
+}
+
+/// Phone wishlist row: thumb, title, best price with store mark and sale
+/// badge, a note, and the remove (heart) button.
+export function WishlistRow({ game }: { game: GameCardProps }) {
+  const cover = coverUrl(game.cover);
+  const discount = discountLabel(game.price);
+  const note = saleNote(game.price);
+  return (
+    <div className="relative grid grid-cols-[60px_minmax(0,1fr)_44px] items-center gap-3 border-b border-ov-raised py-3 pr-1.5 pl-4">
+      {cover ? (
+        <Image src={cover} alt="" width={60} height={80} className="h-20 w-[60px] object-cover" />
+      ) : (
+        <span className="h-20 w-[60px] bg-ov-raised" />
+      )}
+      <span className="flex min-w-0 flex-col gap-1.5">
+        <Link
+          href={`/games/${game.slug}`}
+          className="line-clamp-2 text-body leading-snug font-semibold text-ov-white outline-none before:absolute before:inset-0"
+        >
+          {game.name}
+        </Link>
+        {game.price ? (
+          <span className="flex flex-wrap items-center gap-1.5">
+            {discount && (
+              <Tag tone="deal" size="sm">
+                {discount}
+              </Tag>
+            )}
+            <span className="font-orbitron text-body font-bold">{game.price.current}</span>
+            <span className="border border-ov-border-strong px-1 font-mono text-[10px] text-ov-dim">
+              {STORE_SHORT[game.price.store].toUpperCase()}
+            </span>
+            {game.price.original && <s className="text-label text-ov-muted">{game.price.original}</s>}
+          </span>
+        ) : (
+          <span className="text-ui text-ov-muted">No price yet</span>
+        )}
+        <span className={cx("text-label", note ? "text-ov-deal" : "text-ov-muted")}>
+          {note ?? (game.price ? "Tracking · no change" : "Checked hourly once it's on a store")}
+        </span>
+      </span>
+      {game.id && <WishButton variant="ghost" gameId={game.id} gameName={game.name} className="relative" />}
     </div>
   );
 }

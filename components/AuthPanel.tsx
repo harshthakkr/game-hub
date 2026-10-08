@@ -23,9 +23,16 @@ export function AuthPanel({
 
   return (
     <div className="flex w-full max-w-[420px] animate-ov-fade-up flex-col gap-5.5">
-      <ChipGroup label="Account" variant="segmented" options={MODES} value={mode} onValueChange={setMode} className="w-max" />
+      <ChipGroup
+        label="Account"
+        variant="segmented"
+        options={MODES}
+        value={mode}
+        onValueChange={setMode}
+        className="w-full lg:w-max [&>*]:h-11 [&>*]:flex-1 [&>*]:justify-center lg:[&>*]:h-auto lg:[&>*]:flex-none"
+      />
       <div className="flex flex-col gap-2">
-        <h1 className="text-[32px] font-semibold tracking-[-0.02em]">
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] lg:text-[32px]">
           {isSignup ? "Create your account" : "Welcome back"}
         </h1>
         <p className="text-body leading-normal text-ov-dim">

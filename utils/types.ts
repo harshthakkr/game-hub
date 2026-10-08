@@ -91,6 +91,7 @@ export interface GameCardProps {
 export interface HeroGame extends GameCardProps {
   summary?: string;
   artworks?: { url: string; width?: number; height?: number }[];
+  screenshots?: { url: string; width?: number; height?: number }[];
   videos?: { video_id: string }[];
 }
 

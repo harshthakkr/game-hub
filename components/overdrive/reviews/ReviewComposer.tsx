@@ -6,6 +6,7 @@ import axios from "axios";
 import { ToggleGroup } from "radix-ui";
 import { OvIcon } from "../OvIcon";
 import { Button, CharCount, Switch, Textarea } from "@/components/ui";
+import { VerdictPips } from "./VerdictPips";
 import {
   MAX_REVIEW_WORDS,
   VERDICTS,
@@ -147,7 +148,7 @@ export function ReviewComposer({
               style={verdictVars(tier.color)}
               className="flex items-center gap-1.5 border border-ov-border-strong px-3 py-1.5 text-ui font-medium text-ov-dim transition-colors duration-150 hover:text-ov-white data-[state=on]:border-(--verdict) data-[state=on]:bg-ov-raised data-[state=on]:text-(--verdict)"
             >
-              <span aria-hidden className="size-1.5 rotate-45 bg-(--verdict)" />
+              <VerdictPips verdict={tier.value} />
               {tier.label}
             </ToggleGroup.Item>
           ))}

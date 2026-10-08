@@ -7,7 +7,9 @@ import { useParams } from "next/navigation";
 import axios from "axios";
 import { useSingleData } from "@/utils/hooks/useSingleData";
 import type { GameCardProps, GamePageProps, ReviewsResponse } from "@/utils/types";
-import { useCollection } from "@/context/CollectionContext";
+import { SHELVES, useCollection } from "@/context/CollectionContext";
+import { useIsMobile } from "@/utils/hooks/useMediaQuery";
+import { useScreenTitle } from "@/components/overdrive/ScreenTitle";
 import { verdictMeta, verdictVars } from "@/utils/reviews";
 import {
   coverUrl,
@@ -20,10 +22,11 @@ import { OvIcon } from "@/components/overdrive/OvIcon";
 import { GameGridCard } from "@/components/overdrive/GameCards";
 import { GameDetailSkeleton } from "@/components/overdrive/Skeletons";
 import { Lightbox } from "@/components/overdrive/Lightbox";
-import { ShelfMenu } from "@/components/overdrive/ShelfMenu";
+import { ShelfMenu, ShelfSheet } from "@/components/overdrive/ShelfMenu";
 import { TrailerDialog } from "@/components/overdrive/TrailerDialog";
 import { WhereToBuy } from "@/components/overdrive/WhereToBuy";
 import { ReviewsPanel } from "@/components/overdrive/reviews/ReviewsPanel";
+import { VerdictPips } from "@/components/overdrive/reviews/VerdictPips";
 import {
   Button,
   Eyebrow,
@@ -80,10 +83,13 @@ function FactRow({ label, children }: { label: string; children: React.ReactNode
 export default function GamePage() {
   const { data, loading } = useSingleData<GamePageProps>("games");
   const { slug } = useParams<{ slug: string }>();
-  const { isWished, toggleWish } = useCollection();
+  const { isWished, toggleWish, shelfOf } = useCollection();
   const stats = useReviewStats(data?.id);
   const [lightbox, setLightbox] = useState({ open: false, index: 0 });
   const [trailerOpen, setTrailerOpen] = useState(false);
+  const [shelfSheet, setShelfSheet] = useState(false);
+  const isMobile = useIsMobile();
+  useScreenTitle(data?.name);
 
   if (loading) return <GameDetailSkeleton />;
   if (!data) {
@@ -98,7 +104,7 @@ export default function GamePage() {
   }
 
   const cover = coverUrl(data.cover);
-  const art = landscapeArt(data.artworks) ?? landscapeArt(data.screenshots);
+  const art = landscapeArt(data.artworks, data.screenshots);
   const shots = data.screenshots ?? [];
   const fullShots = shots.map((shot) => igdbImage(shot.url, "t_1080p"));
   const wished = data.id ? isWished(data.id) : false;
@@ -109,12 +115,125 @@ export default function GamePage() {
     stats?.consensus && stats.total ? Math.round((stats.counts[stats.consensus] / stats.total) * 100) : 0;
   const developer = developerName(data.involved_companies);
   const related: GameCardProps[] = (data.similar_games ?? []).filter((g) => g.cover).slice(0, 10);
+  const unreleased = !!data.first_release_date && data.first_release_date * 1000 > Date.now();
+  const shelf = data.id ? shelfOf(data.id) : null;
+  const where = <WhereToBuy slug={String(slug)} gameName={data.name} stores={data.stores ?? []} />;
+  const facts = (
+    <dl
+      className={cx(
+        "flex flex-col",
+        !isMobile && "ov-chamfer border border-ov-border bg-ov-panel px-5.5 pt-2 pb-4"
+      )}
+    >
+      <FactRow label="Release">
+        {data.release_dates?.[0]?.human || formatYear(data.first_release_date) || "TBA"}
+      </FactRow>
+      {developer && <FactRow label="Developer">{developer}</FactRow>}
+      {data.platforms?.length ? (
+        <FactRow label="Platforms">
+          <span className="flex flex-wrap gap-1.5">
+            {data.platforms.map((p) => (
+              <Tag key={p.name} size="sm">
+                {p.name}
+              </Tag>
+            ))}
+          </span>
+        </FactRow>
+      ) : null}
+      {data.genres?.length ? (
+        <FactRow label="Genres">
+          <span className="flex flex-wrap gap-1.5">
+            {data.genres.map((g) => (
+              <Tag key={g.name} size="sm">
+                {g.name}
+              </Tag>
+            ))}
+          </span>
+        </FactRow>
+      ) : null}
+    </dl>
+  );
 
   return (
-    <div className="animate-ov-fade-up">
-      {/* Hero. Landscape art only; a portrait cover blown up to banner width
+    <div className="animate-ov-fade-up pb-24 lg:pb-0">
+      {/* Phone hero: art band, then the title block and a 3-up stat grid. */}
+      <section className="lg:hidden">
+        <div className="relative h-[236px] overflow-hidden bg-ov-panel">
+          {art ? (
+            <Image src={art} alt="" fill priority sizes="100vw" className="object-cover object-[50%_30%]" />
+          ) : (
+            cover && (
+              <>
+                <Image src={cover} alt="" fill sizes="100vw" className="scale-110 object-cover opacity-40 blur-2xl" />
+                <span className="ov-chamfer absolute top-5 left-4 h-[176px] w-[132px] overflow-hidden shadow-[0_16px_32px_rgb(0_0_0/0.6)]">
+                  <Image src={cover} alt={`${data.name} cover art`} fill sizes="132px" className="object-cover" />
+                </span>
+              </>
+            )
+          )}
+          <div className="absolute inset-0 bg-linear-to-t from-ov-bg from-2% to-transparent to-55%" />
+        </div>
+        <div className="relative -mt-5 flex flex-col gap-3 px-4">
+          <div className="flex flex-wrap gap-1.5">
+            {(data.genres ?? []).slice(0, 2).map((g) => (
+              <Tag key={g.name} size="sm">
+                {g.name}
+              </Tag>
+            ))}
+            {unreleased && (
+              <Tag tone="teal" size="sm">
+                Unreleased
+              </Tag>
+            )}
+          </div>
+          <h1
+            className={cx(
+              "leading-[1.1] font-semibold tracking-[-0.025em] text-balance",
+              data.name.length > 40 ? "text-[22px]" : "text-[28px]"
+            )}
+          >
+            {data.name}
+          </h1>
+          <p className="text-sm text-ov-dim">
+            {[developer, data.release_dates?.[0]?.human || formatYear(data.first_release_date) || "TBA"]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+          <div className="grid grid-cols-3 border border-ov-border bg-ov-panel [&>*]:flex [&>*]:min-w-0 [&>*]:flex-col [&>*]:gap-1.5 [&>*]:px-3 [&>*]:py-2.5 [&>*:not(:last-child)]:border-r [&>*:not(:last-child)]:border-ov-border">
+            <div>
+              <Eyebrow>CRITIC</Eyebrow>
+              <span className="flex items-baseline gap-0.5">
+                <span
+                  className={cx(
+                    "font-orbitron text-2xl leading-none font-extrabold",
+                    score === null ? "text-ov-muted" : score >= 75 ? "text-ov-teal" : "text-ov-dim"
+                  )}
+                >
+                  {score ?? "TBA"}
+                </span>
+                {score !== null && <span className="font-orbitron text-micro text-ov-muted">/100</span>}
+              </span>
+              <span className="text-label text-ov-muted">{score === null ? "Not rated yet" : "Critic score"}</span>
+            </div>
+            <div style={consensus ? verdictVars(consensus.color) : undefined}>
+              <Eyebrow>PLAYERS SAY</Eyebrow>
+              <VerdictPips verdict={stats?.consensus ?? null} />
+              <span className={cx("truncate text-ui font-semibold", consensus ? "text-(--verdict)" : "text-ov-dim")}>
+                {consensus?.label ?? (unreleased ? "Not out yet" : "No verdicts")}
+              </span>
+            </div>
+            <div>
+              <Eyebrow>HYPE</Eyebrow>
+              <span className="font-orbitron text-2xl leading-none font-bold">{data.hypes ?? "—"}</span>
+              <span className="text-label text-ov-muted">hypes</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Desktop hero. Landscape art only; a portrait cover blown up to banner width
           looks soft, so games without it get a quiet gradient instead. */}
-      <section className="relative flex min-h-[540px] overflow-hidden">
+      <section className="relative hidden min-h-[540px] overflow-hidden lg:flex">
         {art ? (
           <Image src={art} alt="" fill priority sizes="100vw" className="object-cover object-[50%_30%]" />
         ) : (
@@ -196,7 +315,7 @@ export default function GamePage() {
                       className="flex items-center gap-2 text-base font-semibold text-(--verdict)"
                       style={verdictVars(consensus.color)}
                     >
-                      <span aria-hidden className="size-2 rotate-45 bg-(--verdict)" />
+                      <VerdictPips verdict={stats!.consensus} />
                       {consensus.label}
                     </span>
                     <span className="text-ui text-ov-dim">
@@ -220,8 +339,8 @@ export default function GamePage() {
       </section>
 
       <Tabs defaultValue="overview">
-        <div className="border-b border-ov-border">
-          <TabsList className="mx-auto max-w-[1440px] px-4 md:px-8">
+        <div className="sticky top-(--ov-topbar-h) z-20 mt-4 border-b border-ov-border bg-ov-bg/94 backdrop-blur-[14px] lg:static lg:mt-0 lg:bg-transparent lg:backdrop-blur-none">
+          <TabsList fill className="mx-auto max-w-[1440px] lg:px-8">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="reviews">
               Reviews
@@ -232,12 +351,13 @@ export default function GamePage() {
           </TabsList>
         </div>
 
-        <div className="mx-auto flex max-w-[1440px] flex-wrap items-start gap-14 px-4 pt-10 pb-24 md:px-8">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-start gap-14 px-4 pt-5 pb-16 lg:px-8 lg:pt-10 lg:pb-24">
           <div className="flex min-w-0 flex-[999_1_560px] flex-col">
-            <TabsContent value="overview" className="flex flex-col gap-12">
+            <TabsContent value="overview" className="flex flex-col gap-8 lg:gap-12">
+              {isMobile && where}
               <section className="flex flex-col gap-3.5">
                 <SubHeading>About</SubHeading>
-                <p className="max-w-[720px] text-lead leading-relaxed text-pretty text-ov-text">
+                <p className="max-w-[720px] text-body leading-relaxed text-pretty text-ov-text lg:text-lead">
                   {data.summary || data.storyline || "No description yet."}
                 </p>
               </section>
@@ -245,12 +365,13 @@ export default function GamePage() {
               {(trailer || shots.length > 0) && (
                 <section className="flex flex-col gap-3.5">
                   <SubHeading>{trailer ? "Trailer & screenshots" : "Screenshots"}</SubHeading>
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-[2fr_1fr_1fr] md:grid-rows-[150px_150px]">
+                  {/* Phones: a sideways snap scroller. Desktop: trailer plus a 2x2 grid. */}
+                  <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:grid-cols-[2fr_1fr_1fr] lg:grid-rows-[150px_150px] lg:gap-3 lg:px-0">
                     {trailer && (
                       <button
                         type="button"
                         onClick={() => setTrailerOpen(true)}
-                        className="ov-chamfer group col-span-2 aspect-video overflow-hidden bg-ov-raised md:col-span-1 md:row-span-2 md:aspect-auto"
+                        className="ov-chamfer group h-[169px] w-[300px] shrink-0 snap-start overflow-hidden bg-ov-raised lg:row-span-2 lg:h-auto lg:w-auto"
                       >
                         {(art ?? fullShots[0]) && (
                           <Image src={(art ?? fullShots[0])!} alt="" fill sizes="(min-width: 586px) 50vw, 100vw" className="object-cover" />
@@ -270,13 +391,13 @@ export default function GamePage() {
                         type="button"
                         onClick={() => setLightbox({ open: true, index: i })}
                         aria-label={`Open screenshot ${i + 1} of ${shots.length}`}
-                        className="group relative aspect-video overflow-hidden border border-ov-border transition-colors duration-150 hover:border-ov-border-strong md:aspect-auto"
+                        className="group relative h-[169px] w-[300px] shrink-0 snap-start overflow-hidden border border-ov-border transition-colors duration-150 hover:border-ov-border-strong lg:h-auto lg:w-auto"
                       >
                         <Image
                           src={igdbImage(shot.url, "t_screenshot_big")}
                           alt=""
                           fill
-                          sizes="(min-width: 586px) 25vw, 50vw"
+                          sizes="(min-width: 800px) 25vw, 300px"
                           className="object-cover transition-[filter] duration-200 group-hover:brightness-110"
                         />
                       </button>
@@ -288,13 +409,17 @@ export default function GamePage() {
               {related.length > 0 && (
                 <section className="flex flex-col gap-3.5">
                   <SubHeading>Similar games</SubHeading>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))]">
+                  <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] lg:gap-4 lg:px-0">
                     {related.map((game) => (
-                      <GameGridCard key={game.id} game={game} />
+                      <div key={game.id} className="w-[132px] shrink-0 snap-start lg:w-auto">
+                        <GameGridCard game={game} />
+                      </div>
                     ))}
                   </div>
                 </section>
               )}
+
+              {isMobile && facts}
             </TabsContent>
 
             <TabsContent value="reviews">
@@ -302,39 +427,51 @@ export default function GamePage() {
             </TabsContent>
           </div>
 
-          <aside aria-label="Game details" className="flex min-w-0 flex-[1_1_320px] flex-col gap-5 lg:max-w-[420px]">
-            <WhereToBuy slug={String(slug)} gameName={data.name} stores={data.stores ?? []} />
-            <dl className="ov-chamfer flex flex-col border border-ov-border bg-ov-panel px-5.5 pt-2 pb-4">
-              <FactRow label="Release">
-                {data.release_dates?.[0]?.human || formatYear(data.first_release_date) || "TBA"}
-              </FactRow>
-              {developer && <FactRow label="Developer">{developer}</FactRow>}
-              {data.platforms?.length ? (
-                <FactRow label="Platforms">
-                  <span className="flex flex-wrap gap-1.5">
-                    {data.platforms.map((p) => (
-                      <Tag key={p.name} size="sm">
-                        {p.name}
-                      </Tag>
-                    ))}
-                  </span>
-                </FactRow>
-              ) : null}
-              {data.genres?.length ? (
-                <FactRow label="Genres">
-                  <span className="flex flex-wrap gap-1.5">
-                    {data.genres.map((g) => (
-                      <Tag key={g.name} size="sm">
-                        {g.name}
-                      </Tag>
-                    ))}
-                  </span>
-                </FactRow>
-              ) : null}
-            </dl>
-          </aside>
+          {!isMobile && (
+            <aside aria-label="Game details" className="flex min-w-0 flex-[1_1_320px] flex-col gap-5 lg:max-w-[420px]">
+              {where}
+              {facts}
+            </aside>
+          )}
         </div>
       </Tabs>
+
+      {/* Phones: the tab bar gives way to the game's own actions. */}
+      {data.id && (
+        <div
+          className={cx(
+            "fixed inset-x-0 bottom-0 z-40 mx-auto grid max-w-[480px] gap-2 border-t border-ov-border bg-ov-bg/96 px-4 pt-2.5 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-[14px] lg:hidden",
+            trailer ? "grid-cols-3" : "grid-cols-2"
+          )}
+        >
+          {trailer && (
+            <Button variant="primary" size="lg" icon="play" className="px-2" onClick={() => setTrailerOpen(true)}>
+              Trailer
+            </Button>
+          )}
+          <Button
+            size="lg"
+            variant={wished ? "danger" : "secondary"}
+            icon={wished ? "heart-filled" : "heart"}
+            aria-pressed={wished}
+            chamfer={false}
+            onClick={() => toggleWish(data.id!)}
+          >
+            {wished ? "Saved" : "Wishlist"}
+          </Button>
+          <Button
+            size="lg"
+            variant="secondary"
+            aria-pressed={!!shelf}
+            iconRight="chevron-down"
+            chamfer={false}
+            onClick={() => setShelfSheet(true)}
+          >
+            {shelf ? SHELVES.find((x) => x.value === shelf)!.label : "Library"}
+          </Button>
+          <ShelfSheet gameId={data.id} gameName={data.name} open={shelfSheet} onOpenChange={setShelfSheet} />
+        </div>
+      )}
 
       {trailer && (
         <TrailerDialog videoId={trailer} title={data.name} open={trailerOpen} onOpenChange={setTrailerOpen} />

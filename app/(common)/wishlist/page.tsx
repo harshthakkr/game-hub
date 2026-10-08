@@ -6,7 +6,9 @@ import { loginHref, useCollection } from "@/context/CollectionContext";
 import { PageContainer } from "@/components/overdrive/PageShell";
 import { EmptyState } from "@/components/overdrive/EmptyState";
 import { WishlistSkeleton } from "@/components/overdrive/Skeletons";
-import { GameGridCard } from "@/components/overdrive/GameCards";
+import { GameGridCard, WishlistRow } from "@/components/overdrive/GameCards";
+import { SavedSwitcher } from "@/components/overdrive/SavedSwitcher";
+import { useIsMobile } from "@/utils/hooks/useMediaQuery";
 import { ChipGroup, Eyebrow, PageHeading, StatStrip } from "@/components/ui";
 
 const SORTS = [
@@ -22,6 +24,7 @@ export default function WishlistPage() {
   const { wishlist, ready, signedIn } = useCollection();
   const { games, loading } = useGamesByIds(wishlist, ready && signedIn);
   const [sort, setSort] = useState<Sort>("added");
+  const isMobile = useIsMobile();
 
   const sorted = useMemo(() => {
     if (sort === "added") return games;
@@ -38,6 +41,7 @@ export default function WishlistPage() {
   if (ready && !signedIn) {
     return (
       <PageContainer>
+        <SavedSwitcher />
         <PageHeading title="Wishlist" />
         <EmptyState
           icon="heart"
@@ -53,6 +57,7 @@ export default function WishlistPage() {
 
   return (
     <PageContainer>
+      <SavedSwitcher />
       <PageHeading
         title="Wishlist"
         description="Prices checked hourly on PlayStation Store and Steam."
@@ -85,14 +90,22 @@ export default function WishlistPage() {
         />
       ) : (
         <>
-          <div className="flex justify-end border-b border-ov-border pb-3.5">
+          <div className="-mx-4 flex overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:justify-end lg:border-b lg:border-ov-border lg:px-0 lg:pb-3.5">
             <ChipGroup label="Sort wishlist" variant="segmented" options={SORTS} value={sort} onValueChange={setSort} />
           </div>
-          <div className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
-            {sorted.map((game) => (
-              <GameGridCard key={game.id} game={game} />
-            ))}
-          </div>
+          {isMobile ? (
+            <div className="-mx-4 -mt-3 border-t border-ov-raised">
+              {sorted.map((game) => (
+                <WishlistRow key={game.id} game={game} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+              {sorted.map((game) => (
+                <GameGridCard key={game.id} game={game} />
+              ))}
+            </div>
+          )}
         </>
       )}
     </PageContainer>

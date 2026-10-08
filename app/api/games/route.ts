@@ -1,6 +1,6 @@
 import axios from "axios";
 import { getIgdbHeaders } from "@/lib/igdb";
-import { withPrices } from "@/lib/deals";
+import { bestPrices, withPrices } from "@/lib/deals";
 import { NextRequest, NextResponse } from "next/server";
 import { GameCardProps } from "@/utils/types";
 import { igdbCatalogQuery, type CatalogSort } from "@/utils/catalog";
@@ -35,13 +35,36 @@ export const GET = async (request: NextRequest) => {
       return NextResponse.json(await withPrices(gamesRes.data as GameCardProps[]));
     }
 
-    const { where, sort } = igdbCatalogQuery({
-      genre: params.get("genre") ?? undefined,
-      platform: params.get("platform") ?? undefined,
-      year: params.get("year") ?? undefined,
-      rating: params.get("rating") ?? undefined,
-      sort: (params.get("sort") ?? undefined) as CatalogSort | undefined,
-    });
+    // "On sale only" narrows to tracked games with a live discount first;
+    // the IGDB filters then apply within that set.
+    let saleIds: number[] | undefined;
+    if (params.get("sale") === "1") {
+      const prices = await bestPrices();
+      saleIds = [...prices.entries()].filter(([, p]) => p.discountPercent > 0).map(([id]) => id);
+      if (saleIds.length === 0) {
+        if (params.get("count") === "1") return NextResponse.json({ count: 0 });
+        return NextResponse.json([], { headers: { "X-Total-Count": "0" } });
+      }
+    }
+
+    const { where, sort } = igdbCatalogQuery(
+      {
+        genre: params.get("genre") ?? undefined,
+        platform: params.get("platform") ?? undefined,
+        year: params.get("year") ?? undefined,
+        rating: params.get("rating") ?? undefined,
+        sort: (params.get("sort") ?? undefined) as CatalogSort | undefined,
+      },
+      saleIds
+    );
+
+    // Count only: the phone filter sheet's live "Apply · N results".
+    if (params.get("count") === "1") {
+      const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/games/count`, `where ${where};`, {
+        headers,
+      });
+      return NextResponse.json({ count: data.count ?? 0 });
+    }
 
     const [gamesRes, countRes] = await Promise.all([
       axios.post(

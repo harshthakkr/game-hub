@@ -4,7 +4,8 @@ import axios from "axios";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { StoreId } from "@/utils/types";
 import { OvIcon } from "./OvIcon";
-import { Button, ChipGroup, Dialog, Eyebrow, Tag } from "@/components/ui";
+import { Button, ChipGroup, Dialog, Eyebrow, Sheet, Tag } from "@/components/ui";
+import { useIsMobile } from "@/utils/hooks/useMediaQuery";
 import { cx } from "@/utils/cx";
 
 const RANGES = [
@@ -14,19 +15,25 @@ const RANGES = [
 ] as const;
 type RangeKey = (typeof RANGES)[number]["value"];
 
-/// Line color per store: PS Store in the brand teal, Steam in sky.
+/// Series styling: PS Store solid teal, Steam dashed white, so the two lines
+/// differ by stroke pattern as well as colour.
 const STORE_STROKE: Record<StoreId, string> = {
   PLAYSTATION: "stroke-ov-teal",
-  STEAM: "stroke-ov-sky",
+  STEAM: "stroke-ov-white",
 };
+const STORE_DASH: Record<StoreId, string | undefined> = { PLAYSTATION: undefined, STEAM: "5 4" };
 const STORE_FILL: Record<StoreId, string> = {
   PLAYSTATION: "fill-ov-teal",
-  STEAM: "fill-ov-sky",
+  STEAM: "fill-ov-white",
 };
-const STORE_SWATCH: Record<StoreId, string> = {
-  PLAYSTATION: "bg-ov-teal",
-  STEAM: "bg-ov-sky",
-};
+
+function Swatch({ store }: { store: StoreId }) {
+  return (
+    <svg aria-hidden width="18" height="4" className="shrink-0">
+      <line x1="0" x2="18" y1="2" y2="2" strokeWidth={2.5} strokeDasharray={STORE_DASH[store]} className={STORE_STROKE[store]} />
+    </svg>
+  );
+}
 
 interface Series {
   store: StoreId;
@@ -90,6 +97,21 @@ export function PriceHistoryModal({
   slug: string;
   gameName: string;
 }) {
+  const isMobile = useIsMobile();
+  if (isMobile) {
+    return (
+      <Sheet
+        open={open}
+        onOpenChange={onOpenChange}
+        full
+        title={gameName}
+        subtitle="Price history · INR"
+        description={`Store price history for ${gameName}`}
+      >
+        <PriceHistoryBody slug={slug} />
+      </Sheet>
+    );
+  }
   return (
     <Dialog
       open={open}
@@ -108,6 +130,7 @@ function PriceHistoryBody({ slug }: { slug: string }) {
   const [range, setRange] = useState<RangeKey>("7d");
   const [series, setSeries] = useState<Series[] | null>(null);
   const [focus, setFocus] = useState<StoreId | null>(null);
+  const [hidden, setHidden] = useState<StoreId[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
@@ -156,16 +179,49 @@ function PriceHistoryBody({ slug }: { slug: string }) {
   const hasData = series?.some((s) => s.points.length > 0 || s.previous);
 
   return (
-    <div className="flex flex-col gap-5 px-6 pb-6">
-      {series && series.length > 1 && (
-        <ChipGroup
-          label="Store"
-          variant="segmented"
-          options={series.map((s) => ({ value: s.store, label: s.label }))}
-          value={active?.store ?? series[0].store}
-          onValueChange={(v) => setFocus(v as StoreId)}
-          className="w-max"
-        />
+    <div className="flex flex-col gap-4 p-4 lg:gap-5 lg:px-6 lg:pt-0 lg:pb-6">
+      {series && series.length > 0 && (
+        <div role="radiogroup" aria-label="Store for the stats" className="flex flex-col gap-2">
+          {series.map((sr) => {
+            const selected = active?.store === sr.store;
+            const isHidden = hidden.includes(sr.store);
+            return (
+              <div
+                key={sr.store}
+                className={cx(
+                  "flex border transition-opacity",
+                  selected ? "border-ov-teal-deep bg-ov-raised" : "border-ov-border",
+                  isHidden && "opacity-55"
+                )}
+              >
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => setFocus(sr.store)}
+                  className="flex h-12 min-w-0 flex-1 items-center gap-2.5 px-3 text-left"
+                >
+                  <Swatch store={sr.store} />
+                  <span className="flex-1 text-body font-medium">{sr.label}</span>
+                  <span className="font-orbitron text-sm font-bold">{sr.current?.formatted ?? "—"}</span>
+                </button>
+                {series.length > 1 && (
+                  <button
+                    type="button"
+                    aria-pressed={!isHidden}
+                    aria-label={`${isHidden ? "Show" : "Hide"} ${sr.label} line`}
+                    onClick={() =>
+                      setHidden((h) => (isHidden ? h.filter((x) => x !== sr.store) : [...h, sr.store]))
+                    }
+                    className="flex w-16 items-center justify-center border-l border-ov-border text-ui text-ov-dim hover:text-ov-white"
+                  >
+                    {isHidden ? "Show" : "Hide"}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
 
       <div className="grid grid-cols-2 border border-ov-border bg-ov-panel md:grid-cols-4 [&>*]:border-ov-border [&>*]:px-4 [&>*]:py-3 [&>*:not(:last-child)]:md:border-r">
@@ -210,13 +266,6 @@ function PriceHistoryBody({ slug }: { slug: string }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-4 text-ui text-ov-dim">
-          {series && series.length > 1 &&
-            series.map((s) => (
-              <span key={s.store} className="flex items-center gap-2">
-                <span aria-hidden className={cx("h-0.5 w-4", STORE_SWATCH[s.store])} />
-                {s.label}
-              </span>
-            ))}
           {onSale && current?.saleEndsAt && (
             <Tag tone="rose" size="sm">
               Sale ends {formatStamp(new Date(current.saleEndsAt))}
@@ -229,6 +278,7 @@ function PriceHistoryBody({ slug }: { slug: string }) {
           options={RANGES}
           value={range}
           onValueChange={setRange}
+          className="ml-auto"
         />
       </div>
 
@@ -246,7 +296,11 @@ function PriceHistoryBody({ slug }: { slug: string }) {
             here.
           </ChartMessage>
         ) : (
-          <PriceChart series={series} focus={active.store} hours={hours} />
+          <PriceChart
+            series={series.filter((sr) => !hidden.includes(sr.store) || sr.store === active.store)}
+            focus={active.store}
+            hours={hours}
+          />
         )}
       </div>
 
@@ -279,6 +333,17 @@ const CHART_HEIGHT = 240;
 const PAD = { top: 14, right: 14, bottom: 26, left: 64 };
 
 type Sample = { t: number; price: number; base: number | null; since?: string };
+
+/// A series' price at time t: the latest sample at or before it (prices hold
+/// until the next change). Null before the series starts.
+function priceAt(samples: Sample[], t: number) {
+  let value: number | null = null;
+  for (const s of samples) {
+    if (s.t > t) break;
+    value = s.price;
+  }
+  return value;
+}
 
 function toSamples(s: Series, start: number): Sample[] {
   // The sample from before the window anchors the line at its left edge.
@@ -426,9 +491,10 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
               d={pathFor(line.samples)}
               fill="none"
               className={STORE_STROKE[line.store]}
-              strokeWidth={2}
+              strokeWidth={line.store === focused.store ? 2.5 : 1.5}
+              strokeDasharray={STORE_DASH[line.store]}
               strokeLinejoin="round"
-              opacity={line.store === focused.store ? 1 : 0.35}
+              opacity={line.store === focused.store ? 1 : 0.6}
             />
           ))}
 
@@ -465,8 +531,9 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
               ? `${money(hovered.price)}, ${formatStamp(new Date(hovered.t))}`
               : `Latest ${money(latest.price)}`
           }
-          className="cursor-crosshair outline-none focus-visible:stroke-ov-teal-hover"
+          className="cursor-crosshair touch-none outline-none focus-visible:stroke-ov-teal-hover"
           onPointerMove={onMove}
+          onPointerDown={onMove}
           onPointerLeave={() => setHover(null)}
           onKeyDown={onKey}
           onBlur={() => setHover(null)}
@@ -478,15 +545,19 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
           className="pointer-events-none absolute top-2 flex -translate-x-1/2 -translate-y-full flex-col gap-0.5 border border-ov-border-strong bg-ov-bg px-2.5 py-2 whitespace-nowrap"
           style={{ left: tooltipLeft }}
         >
-          <span className="font-orbitron text-body font-bold">{money(hovered.price)}</span>
-          {hovered.base !== null && hovered.base > hovered.price && (
-            <s className="text-label text-ov-muted">{money(hovered.base)}</s>
-          )}
           <span className="text-label text-ov-dim">
-            {hovered.since
-              ? `Since ${formatStamp(new Date(hovered.since))}`
-              : formatStamp(new Date(hovered.t))}
+            {hovered.since ? `Since ${formatStamp(new Date(hovered.since))}` : formatStamp(new Date(hovered.t))}
           </span>
+          {lines.map((line) => {
+            const at = priceAt(line.samples, hovered.t);
+            return (
+              <span key={line.store} className="flex items-center gap-2">
+                <Swatch store={line.store} />
+                <span className="w-14 text-label text-ov-dim">{line.store === "STEAM" ? "Steam" : "PS Store"}</span>
+                <span className="font-orbitron text-ui font-bold">{at === null ? "—" : money(at)}</span>
+              </span>
+            );
+          })}
         </div>
       )}
     </div>

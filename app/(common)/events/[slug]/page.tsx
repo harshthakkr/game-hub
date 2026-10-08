@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSingleData } from "@/utils/hooks/useSingleData";
 import { EventPageProps } from "@/utils/types";
 import { PageContainer } from "@/components/overdrive/PageShell";
+import { useScreenTitle } from "@/components/overdrive/ScreenTitle";
 import { Button, Eyebrow, SectionHeader, StatStrip } from "@/components/ui";
 import { GameGridCard } from "@/components/overdrive/GameCards";
 import { EventDetailSkeleton } from "@/components/overdrive/Skeletons";
@@ -13,6 +14,7 @@ import { cx } from "@/utils/cx";
 
 export default function EventPage() {
   const { data, loading } = useSingleData<EventPageProps>("events");
+  useScreenTitle(data?.name);
 
   if (loading) return <EventDetailSkeleton />;
   if (!data?.name) {
@@ -43,9 +45,11 @@ export default function EventPage() {
 
   return (
     <PageContainer className="gap-10">
-      <Button asChild size="sm" variant="ghost" icon="chevron-left" className="w-max px-0">
-        <Link href="/events">All events</Link>
-      </Button>
+      <span className="hidden lg:contents">
+        <Button asChild size="sm" variant="ghost" icon="chevron-left" className="w-max">
+          <Link href="/events">All events</Link>
+        </Button>
+      </span>
 
       <div className="flex flex-wrap items-start gap-10">
         <div className="ov-chamfer relative aspect-video max-w-[600px] flex-[1_1_420px] overflow-hidden bg-ov-raised">

@@ -108,12 +108,29 @@ export function AIChat({
 
   const showChips = messages.every((m) => m.role !== "user");
 
+  const newChat = async () => {
+    abortRef.current?.abort();
+    await fetch("/api/ai", { method: "DELETE" }).catch(() => {});
+    setMessages([WELCOME]);
+  };
+
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-var(--ov-topbar-h))] max-w-[880px] flex-col gap-5 px-4 pt-8 md:px-8">
-      <h1 className="flex items-center gap-2 font-mono text-label tracking-[0.1em] text-ov-teal">
-        <OvIcon name="sparkles" className="text-sm" />
-        AI CONCIERGE
-      </h1>
+    <div className="mx-auto flex min-h-[calc(100dvh-var(--ov-topbar-h)-64px)] max-w-[880px] flex-col gap-4 px-4 pt-4 md:px-8 lg:min-h-[calc(100dvh-var(--ov-topbar-h))] lg:gap-5 lg:pt-8">
+      <div className="flex items-center gap-3">
+        <h1 className="flex items-center gap-2 font-mono text-label tracking-[0.1em] text-ov-teal">
+          <OvIcon name="sparkles" className="text-sm" />
+          AI CONCIERGE
+        </h1>
+        {!showChips && (
+          <button
+            type="button"
+            onClick={newChat}
+            className="ml-auto flex h-11 items-center border-ov-border-strong text-ui text-ov-dim hover:text-ov-white lg:h-auto lg:border lg:px-2.5 lg:py-1.5"
+          >
+            New chat
+          </button>
+        )}
+      </div>
 
       <div role="log" aria-label="Conversation" className="flex flex-1 flex-col gap-5 pb-3">
         {messages.map((msg, idx) => {
@@ -122,7 +139,7 @@ export function AIChat({
             return (
               <div
                 key={idx}
-                className="ov-chamfer-bl ov-chamfer-sm max-w-[75%] animate-ov-fade-up self-end bg-ov-teal px-4 py-3 text-body leading-normal font-medium text-ov-teal-ink"
+                className="ov-chamfer-bl ov-chamfer-sm max-w-[85%] animate-ov-fade-up self-end border border-ov-border-strong bg-ov-raised px-3.5 py-2.5 text-body leading-normal text-ov-white lg:max-w-[75%] lg:border-0 lg:bg-ov-teal lg:px-4 lg:py-3 lg:font-medium lg:text-ov-teal-ink"
               >
                 {msg.content}
               </div>
@@ -131,7 +148,7 @@ export function AIChat({
           return (
             <div
               key={idx}
-              className="max-w-[88%] animate-ov-fade-up self-start border border-ov-border bg-ov-panel px-4.5 py-4"
+              className="animate-ov-fade-up self-start lg:max-w-[88%] lg:border lg:border-ov-border lg:bg-ov-panel lg:px-4.5 lg:py-4"
             >
               {msg.content ? (
                 <div className={PROSE}>
@@ -152,15 +169,16 @@ export function AIChat({
         <div ref={endRef} />
       </div>
 
-      <div className="sticky bottom-0 flex flex-col gap-3 bg-linear-to-t from-ov-bg from-70% to-transparent pt-4 pb-7">
+      {/* Phones: pinned just above the tab bar. */}
+      <div className="sticky bottom-[calc(64px+env(safe-area-inset-bottom))] flex flex-col gap-2 bg-linear-to-t from-ov-bg from-75% to-transparent pt-3 pb-2.5 lg:bottom-0 lg:gap-3 lg:pt-4 lg:pb-7">
         {showChips && (
-          <div className="flex flex-wrap gap-2">
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
             {SUGGESTIONS.map((s) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => send(s)}
-                className="border border-ov-border bg-ov-raised px-3 py-1.5 text-sm text-ov-text transition-colors hover:border-ov-border-strong hover:text-ov-white"
+                className="h-11 shrink-0 border border-ov-border bg-ov-raised px-3.5 text-sm whitespace-nowrap text-ov-text transition-colors hover:border-ov-border-strong hover:text-ov-white lg:h-auto lg:py-1.5"
               >
                 {s}
               </button>
@@ -172,7 +190,7 @@ export function AIChat({
             e.preventDefault();
             send(query);
           }}
-          className="flex h-14 items-center gap-2.5 border border-ov-border-strong bg-ov-field pr-2 pl-4.5 focus-within:border-ov-teal"
+          className="flex h-[52px] items-center gap-2 border border-ov-border-strong bg-ov-field pr-1 pl-3.5 focus-within:border-ov-teal lg:h-14 lg:gap-2.5 lg:pr-2 lg:pl-4.5"
         >
           <input
             value={query}

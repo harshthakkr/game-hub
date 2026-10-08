@@ -19,7 +19,7 @@ export const GET = async () => {
   try {
     const [hero, byHype, byRating, releases] = await Promise.all([
       igdb(
-        `${CARD_FIELDS},summary,artworks.url,artworks.width,artworks.height,platforms.abbreviation,videos.video_id; where artworks != null & aggregated_rating >= 80 & first_release_date >= ${now - 540 * DAY} & first_release_date <= ${now}; sort hypes desc; limit 5;`
+        `${CARD_FIELDS},summary,artworks.url,artworks.width,artworks.height,screenshots.url,screenshots.width,screenshots.height,platforms.abbreviation,videos.video_id; where artworks != null & aggregated_rating >= 80 & first_release_date >= ${now - 540 * DAY} & first_release_date <= ${now}; sort hypes desc; limit 5;`
       ),
       igdb(
         `${CARD_FIELDS}; where cover != null & hypes != null & first_release_date >= ${now - 365 * DAY}; sort hypes desc; limit 12;`

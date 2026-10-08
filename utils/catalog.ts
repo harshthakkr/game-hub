@@ -56,12 +56,16 @@ export type CatalogFilters = {
   platform?: string;
   year?: string;
   rating?: string;
+  /// "1": only games currently discounted on a store we track.
+  sale?: string;
   sort?: CatalogSort;
 };
 
-/// IGDB `where` and `sort` clauses for a filter set. Unknown values are ignored.
-export function igdbCatalogQuery(filters: CatalogFilters) {
+/// IGDB `where` and `sort` clauses for a filter set. Unknown values are
+/// ignored. `ids` restricts the query to those games (the on-sale set).
+export function igdbCatalogQuery(filters: CatalogFilters, ids?: number[]) {
   const where = ["cover != null"];
+  if (ids) where.push(`id = (${ids.join(",")})`);
   const genre = GENRES.find((g) => g.value === filters.genre);
   const platform = PLATFORMS.find((p) => p.value === filters.platform);
   const years = YEARS.find((y) => y.value === filters.year);

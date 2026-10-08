@@ -26,31 +26,31 @@ export const VERDICTS: readonly VerdictMeta[] = [
     value: "SKIP",
     label: "Skip",
     blurb: "Not worth your time",
-    color: "var(--color-ov-rose)",
+    color: "var(--color-ov-verdict-1)",
   },
   {
     value: "TIMEPASS",
     label: "Timepass",
     blurb: "Fine on a slow weekend",
-    color: "var(--color-ov-dim)",
+    color: "var(--color-ov-verdict-2)",
   },
   {
     value: "WORTH_IT",
     label: "Worth it",
     blurb: "Solid — no regrets",
-    color: "var(--color-ov-sky)",
+    color: "var(--color-ov-verdict-3)",
   },
   {
     value: "GO_FOR_IT",
     label: "Go for it",
     blurb: "Buy it, play it",
-    color: "var(--color-ov-teal)",
+    color: "var(--color-ov-verdict-4)",
   },
   {
     value: "MASTERPIECE",
     label: "Masterpiece",
     blurb: "An all-timer",
-    color: "var(--color-ov-amber)",
+    color: "var(--color-ov-verdict-5)",
   },
 ] as const;
 
@@ -70,6 +70,11 @@ export function verdictMeta(verdict: string): VerdictMeta {
 /// Inline style that exposes a verdict's color as `--verdict`.
 export function verdictVars(color: string) {
   return { "--verdict": color } as CSSProperties;
+}
+
+/// 1-based rank of a verdict on the five-tier scale (Skip = 1).
+export function verdictRank(verdict: string) {
+  return VERDICTS.findIndex((v) => v.value === verdict) + 1;
 }
 
 export function isVerdict(value: unknown): value is Verdict {

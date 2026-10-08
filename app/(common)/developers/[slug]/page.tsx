@@ -3,6 +3,7 @@
 import { useSingleData } from "@/utils/hooks/useSingleData";
 import { DeveloperPageProps } from "@/utils/types";
 import { PageContainer } from "@/components/overdrive/PageShell";
+import { useScreenTitle } from "@/components/overdrive/ScreenTitle";
 import { PageHeading, SectionHeader } from "@/components/ui";
 import { GameGridCard } from "@/components/overdrive/GameCards";
 import { NoResults } from "@/components/overdrive/EmptyState";
@@ -13,6 +14,7 @@ import { abbrev } from "@/utils/overdrive";
 export default function Developer() {
   const { data, loading } = useSingleData<DeveloperPageProps>("developers");
   const { covered, sort, setSort, visible } = useGameFilterSort(data?.developed || []);
+  useScreenTitle(data?.name);
 
   if (loading) return <DeveloperDetailSkeleton />;
   if (!data?.name) {

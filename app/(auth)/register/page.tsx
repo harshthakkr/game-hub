@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { AuthPanel } from "@/components/AuthPanel";
 import type { AuthMode } from "@/components/AuthForm";
 import { CoverMarquee } from "@/components/overdrive/CoverMarquee";
+import { OvIcon } from "@/components/overdrive/OvIcon";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -31,7 +32,7 @@ export default async function Register({
     <div className="grid min-h-screen bg-ov-bg lg:grid-cols-2">
       {/* Cover-art panel. On phones it shrinks to a short banner so the form
           is the first thing in view. */}
-      <div className="relative h-40 overflow-hidden bg-ov-panel lg:h-auto">
+      <div className="relative h-[200px] overflow-hidden bg-ov-panel lg:h-auto">
         <div aria-hidden className="absolute -inset-10 -rotate-6 scale-110">
           <Suspense fallback={null}>
             <CoverMarquee />
@@ -40,7 +41,14 @@ export default async function Register({
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(5_7_14/0.55),var(--color-ov-bg)_98%),linear-gradient(0deg,rgb(5_7_14/0.9),rgb(5_7_14/0.2)_50%)]" />
         <Link
           href="/"
-          className="absolute top-6 left-6 font-orbitron text-xl font-extrabold tracking-[0.06em] text-ov-teal lg:top-9 lg:left-10"
+          aria-label="Close and keep browsing"
+          className="absolute top-1.5 right-1.5 flex size-11 items-center justify-center text-ov-white lg:hidden"
+        >
+          <OvIcon name="close" className="text-xl" />
+        </Link>
+        <Link
+          href="/"
+          className="absolute top-4 left-4 font-orbitron text-base font-extrabold tracking-[0.06em] text-ov-teal lg:top-9 lg:left-10 lg:text-xl"
         >
           GAME<span className="text-ov-faint">{"//"}</span>HUB
         </Link>
@@ -54,7 +62,7 @@ export default async function Register({
         </div>
       </div>
 
-      <main className="flex items-center justify-center px-6 py-12 lg:px-8">
+      <main className="relative -mt-3 flex justify-center px-4 pb-8 lg:mt-0 lg:items-center lg:px-8 lg:py-12">
         <AuthPanel initialMode={initialMode} callbackUrl={safeCallback} />
       </main>
     </div>

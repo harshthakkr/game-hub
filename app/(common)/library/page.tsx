@@ -8,14 +8,17 @@ import { PageContainer } from "@/components/overdrive/PageShell";
 import { EmptyState } from "@/components/overdrive/EmptyState";
 import { LibrarySkeleton } from "@/components/overdrive/Skeletons";
 import { ShelfMenu } from "@/components/overdrive/ShelfMenu";
-import { ChipGroup, PageHeading, Rating } from "@/components/ui";
+import { ChipGroup, IconButton, PageHeading, Rating } from "@/components/ui";
+import { SavedSwitcher } from "@/components/overdrive/SavedSwitcher";
+import { useIsMobile } from "@/utils/hooks/useMediaQuery";
 import { coverUrl } from "@/utils/overdrive";
 import Image from "next/image";
 
 type Tab = "ALL" | Shelf;
 
 export default function LibraryPage() {
-  const { library, shelfOf, ready, signedIn } = useCollection();
+  const { library, shelfOf, setShelf, ready, signedIn } = useCollection();
+  const isMobile = useIsMobile();
   const { games, loading } = useGamesByIds(library, ready && signedIn);
   const [tab, setTab] = useState<Tab>("ALL");
 
@@ -35,6 +38,7 @@ export default function LibraryPage() {
   if (ready && !signedIn) {
     return (
       <PageContainer>
+        <SavedSwitcher />
         <PageHeading title="Library" />
         <EmptyState
           icon="library"
@@ -50,11 +54,19 @@ export default function LibraryPage() {
 
   return (
     <PageContainer>
+      <SavedSwitcher />
       <PageHeading
         title="Library"
-        description="Games you own, on shelves: what you're playing, your backlog, and what you've finished."
+        description="Shelve games by where you are with them."
       />
-      <ChipGroup label="Shelf" variant="underline" options={tabs} value={tab} onValueChange={setTab} />
+      <ChipGroup
+        label="Shelf"
+        variant="underline"
+        options={tabs}
+        value={tab}
+        onValueChange={setTab}
+        className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:px-0"
+      />
 
       {visible.length === 0 ? (
         <EmptyState
@@ -64,11 +76,11 @@ export default function LibraryPage() {
           actionHref="/games"
         />
       ) : (
-        <div className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] lg:gap-x-5 lg:gap-y-7">
           {visible.map((game) => {
             const cover = coverUrl(game.cover);
             return (
-              <div key={game.id} className="flex min-w-0 flex-col gap-2.5">
+              <div key={game.id} className="relative flex min-w-0 flex-col gap-2.5">
                 <Link href={`/games/${game.slug}`} className="group flex flex-col gap-2.5">
                   <span className="ov-chamfer block aspect-[3/4] overflow-hidden bg-ov-raised">
                     {cover && (
@@ -82,11 +94,36 @@ export default function LibraryPage() {
                     )}
                   </span>
                   <span className="flex justify-between gap-2">
-                    <span className="truncate text-body font-semibold text-ov-white">{game.name}</span>
+                    <span className="line-clamp-2 min-h-9 text-sm leading-snug font-semibold text-ov-white lg:text-body">
+                      {game.name}
+                    </span>
                     <Rating value={game.aggregated_rating} className="text-ui" />
                   </span>
                 </Link>
-                {game.id && <ShelfMenu gameId={game.id} gameName={game.name} size="sm" className="w-full" />}
+                {game.id &&
+                  (isMobile ? (
+                    <ShelfMenu gameId={game.id} gameName={game.name} className="w-full" />
+                  ) : (
+                    <>
+                      {/* Desktop: a three-way shelf control; remove sits on the cover. */}
+                      <ChipGroup
+                        label={`Shelf for ${game.name}`}
+                        variant="segmented"
+                        options={SHELVES.map((x) => ({ value: x.value, label: x.label }))}
+                        value={shelfOf(game.id) ?? "BACKLOG"}
+                        onValueChange={(v) => setShelf(game.id!, v)}
+                        className="w-full [&>*]:flex-1 [&>*]:justify-center [&>*]:px-1"
+                      />
+                      <IconButton
+                        variant="overlay"
+                        icon="trash"
+                        label={`Remove ${game.name} from library`}
+                        onClick={() => setShelf(game.id!, null)}
+                        className="absolute top-2.5 right-2.5"
+                        iconClassName="text-sm"
+                      />
+                    </>
+                  ))}
               </div>
             );
           })}

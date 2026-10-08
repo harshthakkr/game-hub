@@ -164,3 +164,13 @@ export const POST = async (request: NextRequest) => {
     );
   }
 };
+
+/// "New chat": clears the signed-in player's stored conversation.
+export const DELETE = async () => {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Sign in required." }, { status: 401 });
+  }
+  await prisma.chatMessage.deleteMany({ where: { userId: session.user.id } });
+  return NextResponse.json({ ok: true });
+};

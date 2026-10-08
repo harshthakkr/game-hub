@@ -195,13 +195,23 @@ export function igdbImage(url: string, size: string) {
   return `https:${url.replace("t_thumb", size)}`;
 }
 
-/// Widest landscape image from a list, for heroes and banners. Portrait box
-/// art upscaled into a wide hero looks blurry, so callers fall back to a
-/// designed treatment rather than the cover when this returns null.
-export function landscapeArt(list?: { url: string; width?: number; height?: number }[]) {
-  const wide = (list ?? []).filter((i) => !i.width || !i.height || i.width >= i.height);
-  wide.sort((a, b) => (b.width ?? 0) - (a.width ?? 0));
-  return wide[0] ? igdbImage(wide[0].url, "t_1080p") : null;
+type Art = { url: string; width?: number; height?: number };
+
+/// Best landscape image for heroes and banners, searching the lists in order
+/// (e.g. artworks, then screenshots): first the largest image shaped like key
+/// art (roughly 4:3 to 21:9) in any list, else any landscape image. Ultra-wide
+/// strips (logo banners) crop to almost nothing in a hero, and portrait box
+/// art upscaled into one looks blurry, so callers fall back to a designed
+/// treatment rather than the cover when this returns null.
+export function landscapeArt(...lists: (Art[] | undefined)[]) {
+  const ratio = (i: Art) => (i.width && i.height ? i.width / i.height : 16 / 9);
+  const largest = (items: Art[]) => [...items].sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0];
+  for (const list of lists) {
+    const keyArt = (list ?? []).filter((i) => ratio(i) >= 1.3 && ratio(i) <= 2.4);
+    if (keyArt.length) return igdbImage(largest(keyArt).url, "t_1080p");
+  }
+  const wide = lists.flatMap((l) => l ?? []).filter((i) => ratio(i) >= 1);
+  return wide.length ? igdbImage(largest(wide).url, "t_1080p") : null;
 }
 
 function duration(seconds: number) {

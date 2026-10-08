@@ -45,9 +45,18 @@
   --color-ov-deal: #4ade80;
   --color-ov-deal-ink: #052e14;
 
-  /* Warnings (spoilers) and the review verdict scale. */
+  /* Warnings: spoilers. */
   --color-ov-amber: #fbbf24;
-  --color-ov-sky: #38bdf8;
+
+  /* Review verdicts, worst to best. Hues step slate, blue, teal, violet,
+     orchid, avoiding amber (spoilers), rose (wishlist, live) and green
+     (discounts); each clears 6.5:1 on panel. The 5-bar meter carries the
+     rank without colour. */
+  --color-ov-verdict-1: #8e97a8;
+  --color-ov-verdict-2: #6aa7f8;
+  --color-ov-verdict-3: #2dd4bf;
+  --color-ov-verdict-4: #b197fc;
+  --color-ov-verdict-5: #f08bef;
 
   /* Type scale. micro is the mono caps label size; Tailwind's xs (12) /
      sm (14) / base (16) / lg (18) / xl (20) / 4xl (36) fill the gaps. */
@@ -76,11 +85,17 @@
 
   --shadow-ov-pop: 0 24px 48px rgb(0 0 0 / 0.55);
 
-  --animate-ov-pop: ov-pop 0.14s ease-out both;
-  --animate-ov-fade-up: ov-fade-up 0.25s ease-out both;
+  /* Entrances fill `backwards`, not `both`: a finished animation must not
+     leave a transform behind, or fixed-position descendants (the phone action
+     bar) would be positioned against the animated element instead of the
+     viewport. */
+  --animate-ov-pop: ov-pop 0.14s ease-out backwards;
+  --animate-ov-fade-up: ov-fade-up 0.25s ease-out backwards;
   --animate-ov-fade-out: ov-fade-out 0.15s ease-in both;
   --animate-ov-pop-out: ov-pop-out 0.1s ease-in both;
   --animate-ov-pulse: ov-pulse 2s ease-in-out infinite;
+  --animate-ov-sheet-in: ov-sheet-in 0.25s ease-out backwards;
+  --animate-ov-sheet-out: ov-sheet-in 0.2s ease-in reverse both;
   --animate-ov-shimmer: ov-shimmer 1.2s linear infinite;
   --animate-ov-think: ov-think 0.8s linear infinite;
   --animate-ov-scrollup: ov-scrollup 26s linear infinite;
@@ -128,6 +143,12 @@
     }
   }
 
+  @keyframes ov-sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+
   @keyframes ov-shimmer {
     from {
       background-position: -400px 0;
@@ -160,9 +181,16 @@
 }
 
 /* Sticky header height (plus its 1px rule), for layouts that fill or stick
-   below it. Below xl the header carries a second row: the nav strip. */
+   below it: the 56px phone bar, then the desktop bar, which carries a second
+   row (the nav strip) between lg and xl. */
 :root {
-  --ov-topbar-h: 109px;
+  --ov-topbar-h: 57px;
+}
+
+@media (width >= 800px) {
+  :root {
+    --ov-topbar-h: 109px;
+  }
 }
 
 @media (width >= 1080px) {

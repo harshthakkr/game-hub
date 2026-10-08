@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Orbitron } from "next/font/google";
 import "./globals.css";
 
@@ -23,6 +23,12 @@ export const metadata: Metadata = {
   title: "GAME//HUB",
   description:
     "Discover games, track PlayStation Store and Steam prices in INR, and follow every showcase.",
+};
+
+export const viewport: Viewport = {
+  // Lets the tab bar and sheets pad themselves with env(safe-area-inset-*).
+  viewportFit: "cover",
+  themeColor: "#05070e",
 };
 
 export default function RootLayout({

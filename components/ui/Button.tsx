@@ -35,7 +35,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
 
 const SIZES: Record<ButtonSize, { box: string; icon: string }> = {
   sm: { box: "h-8 gap-1.5 px-3 text-ui", icon: "text-sm" },
-  md: { box: "h-10 gap-2 px-4 text-sm", icon: "text-base" },
+  /// 44px on phones (minimum touch target), 40px with a pointer.
+  md: { box: "h-11 gap-2 px-4 text-sm lg:h-10", icon: "text-base" },
   lg: { box: "h-12 gap-2.5 px-6 text-body", icon: "text-base" },
 };
 

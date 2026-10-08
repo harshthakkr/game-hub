@@ -4,6 +4,7 @@ import { GameCardProps } from "@/utils/types";
 import { GameGridCard } from "./GameCards";
 import { LoadMoreButton, NoResults } from "./EmptyState";
 import { PageContainer } from "./PageShell";
+import { useScreenTitle } from "./ScreenTitle";
 import { PageHeading } from "@/components/ui";
 import { CatalogueSkeleton, GameTileSkeletons } from "./Skeletons";
 import { GameFilterBar, useGameFilterSort } from "./GameFilterBar";
@@ -26,6 +27,7 @@ export function GameCatalogue({
   onLoadMore?: () => void;
 }) {
   const { covered, sort, setSort, visible } = useGameFilterSort(games);
+  useScreenTitle(title);
 
   if (loading) return <CatalogueSkeleton />;
 

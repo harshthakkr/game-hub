@@ -11,7 +11,7 @@ import { formatEventDate } from "@/utils/overdrive";
 import { ChipGroup, SectionHeader } from "@/components/ui";
 import { HeroCarousel } from "@/components/overdrive/HeroCarousel";
 import { EventCard } from "@/components/overdrive/EventCard";
-import { CompactRow, DealCard, MiniCard, RankedCard } from "@/components/overdrive/GameCards";
+import { CompactRow, DealCard, MiniCard, RankedCard, RankedRow } from "@/components/overdrive/GameCards";
 import { OvIcon } from "@/components/overdrive/OvIcon";
 import { DiscoverSkeleton } from "@/components/overdrive/Skeletons";
 
@@ -55,7 +55,7 @@ function ConciergePrompt() {
   return (
     <section
       aria-labelledby="concierge-heading"
-      className="ov-chamfer grid items-center gap-8 border border-ov-teal-deep bg-ov-panel px-5 py-6 md:grid-cols-2 md:px-8 md:py-7"
+      className="ov-chamfer grid items-center gap-4 border border-ov-teal-deep bg-ov-panel px-4 py-4.5 lg:grid-cols-2 lg:gap-8 lg:px-8 lg:py-7"
     >
       <div className="flex flex-col gap-2">
         <span className="flex items-center gap-2 font-mono text-label tracking-[0.1em] text-ov-teal">
@@ -65,7 +65,7 @@ function ConciergePrompt() {
         <h2 id="concierge-heading" className="text-section font-semibold tracking-[-0.01em]">
           Not sure what to play next?
         </h2>
-        <p className="text-body leading-normal text-ov-dim">
+        <p className="hidden text-body leading-normal text-ov-dim lg:block">
           Describe a mood, a budget or a game you loved, and get picks from the catalogue.
         </p>
       </div>
@@ -93,13 +93,13 @@ function ConciergePrompt() {
             <OvIcon name="arrow-up" className="text-lg" />
           </button>
         </form>
-        <div className="flex flex-wrap gap-2">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
           {CONCIERGE_PROMPTS.map((prompt) => (
             <button
               key={prompt}
               type="button"
               onClick={() => ask(prompt)}
-              className="border border-ov-border bg-ov-raised px-3 py-1.5 text-sm text-ov-text transition-colors duration-150 hover:border-ov-border-strong hover:text-ov-white"
+              className="h-11 shrink-0 border border-ov-border bg-ov-raised px-3 text-sm whitespace-nowrap text-ov-text transition-colors duration-150 hover:border-ov-border-strong hover:text-ov-white lg:h-auto lg:py-1.5"
             >
               {prompt}
             </button>
@@ -111,6 +111,8 @@ function ConciergePrompt() {
 }
 
 const GRID = "grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6";
+/// Phones: a sideways snap scroller bleeding to the screen edges. Desktop: a grid.
+const SHELF = "-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:snap-none lg:gap-5 lg:overflow-visible lg:px-0";
 
 export default function DiscoverPage() {
   const discover = useJson<DiscoverData>("/api/discover");
@@ -131,7 +133,7 @@ export default function DiscoverPage() {
     <div className="animate-ov-fade-up">
       {data && <HeroCarousel games={data.hero} />}
 
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-16 px-4 pt-6 pb-24 md:px-8">
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-9 px-4 pt-6 pb-16 md:px-8 lg:gap-16 lg:pb-24">
         {discover.failed && (
           <p role="alert" className="border border-ov-rose-deep bg-ov-rose-wash px-4 py-3 text-sm text-ov-rose-soft">
             Couldn&apos;t load Discover right now. Refresh to try again.
@@ -143,11 +145,13 @@ export default function DiscoverPage() {
             <SectionHeader
               index="01"
               title="Live & upcoming events"
-              action={<SectionLink href="/events">All events</SectionLink>}
+              action={<SectionLink href="/events">All<span className="hidden lg:inline"> events</span></SectionLink>}
             />
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className={`${SHELF} lg:grid-cols-2 xl:grid-cols-4`}>
               {events.data!.slice(0, 4).map((event) => (
-                <EventCard key={event.id} event={event} />
+                <div key={event.id} className="w-[272px] shrink-0 snap-start lg:w-auto">
+                  <EventCard event={event} />
+                </div>
               ))}
             </div>
           </section>
@@ -158,9 +162,11 @@ export default function DiscoverPage() {
         <section className="flex flex-col gap-5" aria-label="Price drops">
           <SectionHeader index="02" title="Price drops" meta="Games we track · updated hourly" />
           {deals.data && deals.data.length > 0 ? (
-            <div className={GRID}>
+            <div className={`${SHELF} lg:grid-cols-4 xl:grid-cols-6`}>
               {deals.data.slice(0, 6).map((game) => (
-                <DealCard key={game.id} game={game} />
+                <div key={game.id} className="w-[140px] shrink-0 snap-start lg:w-auto">
+                  <DealCard game={game} />
+                </div>
               ))}
             </div>
           ) : (
@@ -192,9 +198,16 @@ export default function DiscoverPage() {
                 />
               }
             />
-            <div className={GRID}>
-              {trending.slice(0, 6).map((game, i) => (
-                <RankedCard key={game.id} game={game} rank={i + 1} />
+            <div className="hidden lg:block">
+              <div className={GRID}>
+                {trending.slice(0, 6).map((game, i) => (
+                  <RankedCard key={game.id} game={game} rank={i + 1} />
+                ))}
+              </div>
+            </div>
+            <div className="-mt-2 lg:hidden">
+              {trending.slice(0, 5).map((game, i) => (
+                <RankedRow key={game.id} game={game} rank={i + 1} />
               ))}
             </div>
           </section>

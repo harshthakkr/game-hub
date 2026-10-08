@@ -23,15 +23,15 @@ export function SectionHeader({
   return (
     <div
       className={cx(
-        "flex flex-wrap items-baseline gap-x-3.5 gap-y-1 border-b border-ov-border pb-3.5",
+        "flex flex-wrap items-baseline gap-x-2.5 gap-y-1 lg:gap-x-3.5 lg:border-b lg:border-ov-border lg:pb-3.5",
         className
       )}
     >
       {index && <span className="font-mono text-ui text-ov-muted">{index}</span>}
-      <Heading className="text-section font-semibold tracking-[-0.01em] text-ov-white">
+      <Heading className="text-lg font-semibold tracking-[-0.01em] text-ov-white lg:text-section">
         {title}
       </Heading>
-      {meta && <span className="text-sm text-ov-muted">{meta}</span>}
+      {meta && <span className="order-last w-full text-ui text-ov-muted lg:order-none lg:w-auto lg:text-sm">{meta}</span>}
       {action && <div className="ml-auto text-sm font-medium">{action}</div>}
     </div>
   );
@@ -56,12 +56,12 @@ export function PageHeading({
   return (
     <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
       <div className="flex flex-col gap-2">
-        <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-ov-white md:text-page">
+        <h1 className="text-[28px] font-semibold tracking-[-0.02em] text-ov-white lg:text-page lg:tracking-[-0.03em]">
           {title}
         </h1>
-        {description && <p className="text-body text-ov-dim">{description}</p>}
+        {description && <p className="text-sm text-ov-dim lg:text-body">{description}</p>}
       </div>
-      {children && <div className="ml-auto">{children}</div>}
+      {children && <div className="w-full lg:ml-auto lg:w-auto">{children}</div>}
     </div>
   );
 }
@@ -102,7 +102,7 @@ export function StatStrip({ children, className }: { children: ReactNode; classN
   return (
     <div
       className={cx(
-        "flex w-max max-w-full flex-wrap border border-ov-border bg-ov-panel/80 [&>*]:border-ov-border [&>*]:px-5 [&>*]:py-3 [&>*:not(:last-child)]:border-r",
+        "grid w-full auto-cols-fr grid-flow-col border border-ov-border bg-ov-panel/80 lg:flex lg:w-max lg:max-w-full lg:flex-wrap [&>*]:min-w-0 [&>*]:border-ov-border [&>*]:px-3 [&>*]:py-2.5 lg:[&>*]:px-5 lg:[&>*]:py-3 [&>*:not(:last-child)]:border-r",
         className
       )}
     >

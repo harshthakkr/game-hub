@@ -18,7 +18,8 @@ export const Input = forwardRef<
     <input
       ref={ref}
       aria-invalid={invalid || undefined}
-      className={cx(BASE, "h-12 px-3.5 text-body", border(invalid), className)}
+      // 16px on phones: iOS zooms the page into any field smaller than that.
+      className={cx(BASE, "h-12 px-3.5 text-base lg:text-body", border(invalid), className)}
       {...props}
     />
   );
@@ -35,7 +36,7 @@ export const Textarea = forwardRef<
       className={cx(
         BASE,
         "resize-y",
-        size === "sm" ? "px-3 py-2 text-sm leading-normal" : "px-3.5 py-3 text-body leading-normal",
+        size === "sm" ? "px-3 py-2 text-base leading-normal lg:text-sm" : "px-3.5 py-3 text-base leading-normal lg:text-body",
         border(invalid),
         className
       )}

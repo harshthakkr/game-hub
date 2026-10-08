@@ -17,10 +17,10 @@ type CollectionKey = "wishlist" | "library";
 
 export type Shelf = "PLAYING" | "BACKLOG" | "FINISHED";
 
-export const SHELVES: { value: Shelf; label: string }[] = [
-  { value: "PLAYING", label: "Playing" },
-  { value: "BACKLOG", label: "Backlog" },
-  { value: "FINISHED", label: "Finished" },
+export const SHELVES: { value: Shelf; label: string; detail: string; marker: string }[] = [
+  { value: "PLAYING", label: "Playing", detail: "In progress right now", marker: "bg-ov-teal" },
+  { value: "BACKLOG", label: "Backlog", detail: "Own it, not started yet", marker: "bg-ov-muted" },
+  { value: "FINISHED", label: "Finished", detail: "Rolled the credits", marker: "bg-ov-white" },
 ];
 
 type CollectionState = Record<CollectionKey, number[]> & {

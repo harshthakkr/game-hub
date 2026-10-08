@@ -3,6 +3,7 @@
 import { VERDICTS, verdictMeta, verdictVars, type Verdict } from "@/utils/reviews";
 import type { ReviewStats } from "@/utils/types";
 import { Eyebrow } from "@/components/ui";
+import { VerdictPips } from "./VerdictPips";
 import { cx } from "@/utils/cx";
 
 /// Consensus card: the modal verdict plus a distribution bar per tier. Rows
@@ -32,7 +33,7 @@ export function VerdictMeter({
             className="flex items-center gap-3 text-[30px] leading-none font-semibold tracking-[-0.02em] text-(--verdict)"
             style={verdictVars(consensus.color)}
           >
-            <span aria-hidden className="size-3 rotate-45 bg-(--verdict)" />
+            <VerdictPips verdict={stats.consensus} size="lg" />
             {consensus.label}
           </p>
           <p className="text-sm text-ov-dim">
@@ -59,11 +60,14 @@ export function VerdictMeter({
               aria-label={`${tier.label}: ${count} ${count === 1 ? "review" : "reviews"}`}
               style={verdictVars(tier.color)}
               className={cx(
-                "grid grid-cols-[96px_minmax(0,1fr)_44px] items-center gap-3 border px-2 py-[7px] text-left transition-colors duration-150 hover:bg-ov-field disabled:cursor-default disabled:opacity-40",
+                "grid min-h-11 grid-cols-[128px_minmax(0,1fr)_44px] items-center gap-3 border px-2 lg:min-h-0 lg:py-[7px] text-left transition-colors duration-150 hover:bg-ov-field disabled:cursor-default disabled:opacity-40",
                 active ? "border-(--verdict) bg-ov-field" : "border-transparent"
               )}
             >
-              <span className="text-sm text-ov-text">{tier.label}</span>
+              <span className="flex items-center gap-2 text-sm text-ov-text">
+                <VerdictPips verdict={tier.value} />
+                {tier.label}
+              </span>
               <span className="h-2 bg-ov-raised">
                 <span className="block h-full bg-(--verdict) transition-[width] duration-300" style={{ width: `${width}%` }} />
               </span>
