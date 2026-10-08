@@ -8,6 +8,7 @@ import {
   GENRES,
   PLATFORMS,
   RATINGS,
+  DEFAULT_SORT,
   SORTS,
   YEARS,
   type CatalogFilters,
@@ -64,7 +65,7 @@ function useCatalogParams() {
     year: params.get("year") ?? undefined,
     rating: params.get("rating") ?? undefined,
     sale: params.get("sale") ?? undefined,
-    sort: (params.get("sort") as CatalogSort | null) ?? "rating",
+    sort: (params.get("sort") as CatalogSort | null) ?? DEFAULT_SORT,
   };
   const view: "grid" | "list" = params.get("view") === "list" ? "list" : "grid";
 
@@ -75,7 +76,7 @@ function useCatalogParams() {
         const isDefault =
           value === null ||
           value === ANY ||
-          (key === "sort" && value === "rating") ||
+          (key === "sort" && value === DEFAULT_SORT) ||
           (key === "view" && value === "grid");
         if (isDefault) next.delete(key);
         else next.set(key, value);
@@ -288,7 +289,7 @@ function Catalogue() {
   });
   if (filters.sale === "1") active.push({ key: "sale", label: "On sale" });
   const clearAll = () => set({ genre: null, platform: null, year: null, rating: null, sale: null });
-  const sortLabel = SORTS.find((o) => o.value === filters.sort)?.label ?? "Rating";
+  const sortLabel = SORTS.find((o) => o.value === filters.sort)?.label ?? "Popularity";
 
   return (
     <div className="mx-auto grid max-w-[1440px] items-start gap-10 px-4 pt-5 pb-16 md:px-8 lg:pt-10 lg:pb-24 xl:grid-cols-[232px_minmax(0,1fr)]">
@@ -410,7 +411,7 @@ function Catalogue() {
               <SheetOption
                 key={o.value}
                 label={o.label}
-                selected={(filters.sort ?? "rating") === o.value}
+                selected={(filters.sort ?? DEFAULT_SORT) === o.value}
                 onSelect={() => {
                   set({ sort: o.value });
                   setSortSheet(false);
@@ -462,7 +463,7 @@ function Catalogue() {
             label="Sort by"
             variant="segmented"
             options={SORTS}
-            value={filters.sort ?? "rating"}
+            value={filters.sort ?? DEFAULT_SORT}
             onValueChange={(v) => set({ sort: v })}
           />
           <ChipGroup

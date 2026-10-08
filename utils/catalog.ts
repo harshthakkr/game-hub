@@ -43,13 +43,15 @@ export const RATINGS = [
 ] as const;
 
 export const SORTS = [
-  { value: "rating", label: "Rating" },
   { value: "popularity", label: "Popularity" },
+  { value: "rating", label: "Rating" },
   { value: "date", label: "Newest" },
   { value: "az", label: "A–Z" },
 ] as const;
 
 export type CatalogSort = (typeof SORTS)[number]["value"];
+/// What the catalogue opens on (and what a URL without ?sort= means).
+export const DEFAULT_SORT: CatalogSort = "popularity";
 
 export type CatalogFilters = {
   genre?: string;
@@ -70,7 +72,7 @@ export function igdbCatalogQuery(filters: CatalogFilters, ids?: number[]) {
   const platform = PLATFORMS.find((p) => p.value === filters.platform);
   const years = YEARS.find((y) => y.value === filters.year);
   const rating = RATINGS.find((r) => r.value === filters.rating);
-  const sort = SORTS.find((s) => s.value === filters.sort)?.value ?? "rating";
+  const sort = SORTS.find((s) => s.value === filters.sort)?.value ?? DEFAULT_SORT;
 
   if (genre) where.push(`genres = (${genre.id})`);
   if (platform) where.push(`platforms = (${platform.id})`);
