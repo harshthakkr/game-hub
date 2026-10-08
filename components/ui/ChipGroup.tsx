@@ -32,7 +32,7 @@ const ITEM: Record<ChipGroupVariant, string> = {
   list: "flex items-center justify-between gap-3 px-2.5 py-2 text-left text-sm text-ov-dim hover:text-ov-white data-[state=on]:bg-ov-raised data-[state=on]:text-ov-white data-[state=on]:shadow-[inset_2px_0_0_var(--color-ov-teal)]",
   /// Tab-like strip.
   underline:
-    "-mb-px border-b-2 border-transparent py-3 text-sm font-medium text-ov-dim hover:text-ov-white data-[state=on]:border-ov-teal data-[state=on]:text-ov-white",
+    "-mb-px inline-flex items-baseline gap-2 border-b-2 border-transparent py-3 text-sm font-medium text-ov-dim hover:text-ov-white data-[state=on]:border-ov-teal data-[state=on]:text-ov-white",
 };
 
 /// Single-choice set of options: filters, sort orders, view modes, ranges.
