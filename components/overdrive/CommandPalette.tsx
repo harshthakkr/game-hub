@@ -162,7 +162,10 @@ function CommandPalette({
       shouldFilter={false}
       overlayClassName="fixed inset-0 z-[110] bg-[rgb(2_3_8/0.72)] backdrop-blur-[4px] data-[state=open]:animate-ov-fade-up"
       // Phones: a full-screen search page. Desktop: a centred palette.
-      contentClassName="fixed inset-0 z-[110] flex flex-col bg-ov-bg data-[state=open]:animate-ov-fade-up lg:inset-auto lg:top-[12vh] lg:left-1/2 lg:max-h-[70vh] lg:w-[min(640px,calc(100%-32px))] lg:-translate-x-1/2 lg:border lg:border-ov-border-strong lg:bg-ov-field lg:shadow-ov-pop lg:data-[state=open]:animate-ov-pop"
+      // cmdk wraps input + list in its own [cmdk-root] element; it has to join
+      // the flex column (flex-1 + min-h-0), or the list grows past the
+      // palette's max height instead of scrolling inside it.
+      contentClassName="fixed inset-0 z-[110] flex flex-col overflow-hidden bg-ov-bg [&_[cmdk-root]]:flex [&_[cmdk-root]]:min-h-0 [&_[cmdk-root]]:flex-1 [&_[cmdk-root]]:flex-col data-[state=open]:animate-ov-fade-up lg:inset-auto lg:top-[12vh] lg:left-1/2 lg:max-h-[70vh] lg:w-[min(640px,calc(100%-32px))] lg:-translate-x-1/2 lg:border lg:border-ov-border-strong lg:bg-ov-field lg:shadow-ov-pop lg:data-[state=open]:animate-ov-pop"
     >
       <div className="flex shrink-0 items-center gap-1.5 border-b border-ov-border py-1.5 pr-1.5 pl-4 lg:h-14 lg:gap-3 lg:p-0 lg:px-4">
         <div className="flex h-11 min-w-0 flex-1 items-center gap-2.5 border border-ov-border-strong bg-ov-field px-3 lg:h-full lg:border-0 lg:bg-transparent lg:px-0">
