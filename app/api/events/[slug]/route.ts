@@ -1,18 +1,16 @@
-import axios from "axios";
-import { getIgdbHeaders } from "@/lib/igdb";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { igdb } from "@/lib/igdb";
+import { publicJson, safeSlug } from "@/lib/http";
 
 export const GET = async (
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) => {
-  const { slug } = await params;
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/events`,
+  const slug = safeSlug((await params).slug);
+  const events = await igdb<unknown[]>(
+    "/events",
     `fields name,description,start_time,end_time,event_logo.url,games.id,games.name,games.slug,games.cover.url,games.aggregated_rating,games.first_release_date,games.genres.name,games.hypes,live_stream_url; where slug = "${slug}";`,
-    {
-      headers: await getIgdbHeaders(),
-    }
+    { revalidate: 600 }
   );
-  return NextResponse.json(res.data[0]);
+  return publicJson(events[0] ?? null, 600);
 };

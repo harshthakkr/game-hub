@@ -52,7 +52,23 @@ export const STORES: Record<
   },
 };
 
-/// Registers (or bumps) a store listing for a game the user is looking at.
+/// A listing with its latest snapshot, or null if the game isn't tracked on
+/// that store yet. Read-only, so the game page can be cached.
+export function findListing(gameId: number, store: PriceStore) {
+  return prisma.priceListing.findUnique({
+    where: { gameId_store: { gameId, store } },
+    include: { snapshots: { orderBy: { fetchedAt: "desc" }, take: 1 } },
+  });
+}
+
+/// Puts the game's listings in the hot tier: called when someone opens the
+/// page (a beacon from the browser, so page renders stay cacheable).
+export function markViewed(gameSlug: string) {
+  return prisma.priceListing.updateMany({ where: { gameSlug }, data: { lastViewedAt: new Date() } });
+}
+
+/// Registers (or bumps) a store listing for a game the user is looking at,
+/// returning it with its latest snapshot.
 export function trackListing(
   game: { id: number; slug: string },
   store: PriceStore,
@@ -62,6 +78,7 @@ export function trackListing(
     where: { gameId_store: { gameId: game.id, store } },
     create: { store, gameId: game.id, gameSlug: game.slug, externalId },
     update: { lastViewedAt: new Date(), gameSlug: game.slug, externalId },
+    include: { snapshots: { orderBy: { fetchedAt: "desc" }, take: 1 } },
   });
 }
 

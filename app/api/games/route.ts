@@ -1,5 +1,5 @@
-import axios from "axios";
-import { getIgdbHeaders } from "@/lib/igdb";
+import { igdb } from "@/lib/igdb";
+import { publicJson } from "@/lib/http";
 import { bestPrices, withPrices } from "@/lib/deals";
 import { NextRequest, NextResponse } from "next/server";
 import { GameCardProps } from "@/utils/types";
@@ -18,8 +18,6 @@ export const GET = async (request: NextRequest) => {
   const ids = params.get("ids");
   const offset = Math.max(0, Number(params.get("offset")) || 0);
 
-  const headers = await getIgdbHeaders();
-
   try {
     if (ids) {
       const idList = ids
@@ -27,12 +25,11 @@ export const GET = async (request: NextRequest) => {
         .map((id) => Number(id.trim()))
         .filter((id) => Number.isInteger(id) && id > 0);
       if (idList.length === 0) return NextResponse.json([]);
-      const gamesRes = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/games`,
-        `${FIELDS}; where id = (${idList.join(",")}); limit ${idList.length};`,
-        { headers }
+      const games = await igdb<GameCardProps[]>(
+        "/games",
+        `${FIELDS}; where id = (${idList.join(",")}); limit ${idList.length};`
       );
-      return NextResponse.json(await withPrices(gamesRes.data as GameCardProps[]));
+      return publicJson(await withPrices(games), 300);
     }
 
     // "On sale only" narrows to tracked games with a live discount first;
@@ -60,27 +57,21 @@ export const GET = async (request: NextRequest) => {
 
     // Count only: the phone filter sheet's live "Apply · N results".
     if (params.get("count") === "1") {
-      const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/games/count`, `where ${where};`, {
-        headers,
-      });
-      return NextResponse.json({ count: data.count ?? 0 });
+      const data = await igdb<{ count?: number }>("/games/count", `where ${where};`);
+      return publicJson({ count: data.count ?? 0 }, 3600);
     }
 
-    const [gamesRes, countRes] = await Promise.all([
-      axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/games`,
-        `${FIELDS}; sort ${sort}; limit ${PAGE_SIZE}; offset ${offset}; where ${where};`,
-        { headers }
+    const [games, countRes] = await Promise.all([
+      igdb<GameCardProps[]>(
+        "/games",
+        `${FIELDS}; sort ${sort}; limit ${PAGE_SIZE}; offset ${offset}; where ${where};`
       ),
       // The total only matters for the first page's "N games" heading.
-      offset === 0
-        ? axios
-            .post(`${process.env.NEXT_PUBLIC_BASE_URL}/games/count`, `where ${where};`, { headers })
-            .catch(() => null)
-        : null,
+      offset === 0 ? igdb<{ count?: number }>("/games/count", `where ${where};`).catch(() => null) : null,
     ]);
-    const response = NextResponse.json(await withPrices(gamesRes.data as GameCardProps[]));
-    const total = countRes?.data?.count;
+    // Prices on the cards refresh hourly, so a 5-minute CDN copy is plenty.
+    const response = publicJson(await withPrices(games), 300);
+    const total = countRes?.count;
     if (typeof total === "number") response.headers.set("X-Total-Count", String(total));
     return response;
   } catch {

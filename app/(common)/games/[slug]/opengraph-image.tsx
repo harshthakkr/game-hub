@@ -31,13 +31,13 @@ export default async function OpenGraphImage({ params }: { params: Promise<{ slu
     (
       <div style={{ width: "100%", height: "100%", display: "flex", background: "#05070e", color: "#e6ebf2", position: "relative" }}>
         {art && (
-          // eslint-disable-next-line @next/next/no-img-element
+           
           <img src={art} alt="" width={1200} height={630} style={{ position: "absolute", inset: 0, objectFit: "cover", opacity: 0.45 }} />
         )}
         <div style={{ position: "absolute", inset: 0, display: "flex", background: "linear-gradient(90deg, #05070e 25%, rgba(5,7,14,0.6) 70%, rgba(5,7,14,0.2))" }} />
         <div style={{ position: "relative", display: "flex", alignItems: "flex-end", gap: 48, padding: 64, width: "100%" }}>
           {cover && (
-            // eslint-disable-next-line @next/next/no-img-element
+             
             <img src={cover} alt="" width={300} height={400} style={{ objectFit: "cover", border: "2px solid #2c3749" }} />
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>

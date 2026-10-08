@@ -27,9 +27,13 @@ let pending: Pending | null = null;
 const NAMES = { cover: "game-cover", title: "game-title" } as const;
 const MAX_WAIT_MS = 800;
 
-function nameTargets(scope: ParentNode | null) {
+function nameTargets(scope: Element | null) {
   if (!scope) return;
   for (const el of scope.querySelectorAll<HTMLElement>("[data-vt]")) {
+    // Skip covers/titles of cards nested in the scope (a game page's
+    // "Similar games"): only the scope's own cover and title take part.
+    const card = el.closest("[data-vt-card]");
+    if (card && card !== scope) continue;
     const name = NAMES[el.dataset.vt as keyof typeof NAMES];
     // getClientRects is empty for display:none (e.g. the other breakpoint's hero).
     if (name && el.getClientRects().length) el.style.viewTransitionName = name;

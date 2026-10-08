@@ -9,6 +9,12 @@ import sharp from "sharp";
 /// the heaviest bucket. Greyscale covers return null (callers fall back to
 /// teal).
 export async function coverAccent(coverUrl: string): Promise<string | null> {
+  // A cover never changes, so its hue is computed once and kept.
+  const { unstable_cache } = await import("next/cache");
+  return unstable_cache(() => extractAccent(coverUrl), ["cover-accent", coverUrl], { revalidate: false })();
+}
+
+async function extractAccent(coverUrl: string): Promise<string | null> {
   try {
     const src = coverUrl.startsWith("//") ? `https:${coverUrl}` : coverUrl;
     const res = await fetch(src.replace(/\/t_[a-z0-9_]+\//, "/t_cover_small/"), {

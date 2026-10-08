@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { STORES, formatPrice } from "@/lib/prices";
+import { publicJson } from "@/lib/http";
 
 const RANGES = { "24h": 24, "7d": 24 * 7, "30d": 24 * 30 } as const;
 type Range = keyof typeof RANGES;
@@ -63,5 +64,6 @@ export const GET = async (
     })
   );
 
-  return NextResponse.json({ range, series });
+  // Prices change hourly at most; a 5-minute shared copy is plenty.
+  return publicJson({ range, series }, 300);
 };

@@ -1,5 +1,5 @@
-import axios from "axios";
-import { getIgdbHeaders } from "@/lib/igdb";
+import { igdb, igdbNow } from "@/lib/igdb";
+import { publicJson } from "@/lib/http";
 import { NextRequest, NextResponse } from "next/server";
 
 const FIELDS = "fields name,slug,event_logo.url,description,start_time,end_time";
@@ -17,7 +17,8 @@ const PAGE = 20;
 export const GET = async (request: NextRequest) => {
   const params = request.nextUrl.searchParams;
   const offset = Math.max(0, Number(params.get("offset")) || 0);
-  const now = Math.floor(Date.now() / 1000);
+  // Rounded to 5 minutes so the query (and its cache entry) is stable.
+  const now = igdbNow();
   const page = `limit ${PAGE}; offset ${offset};`;
   const from = Number(params.get("from")) || 0;
   const to = Number(params.get("to")) || 0;
@@ -42,10 +43,7 @@ export const GET = async (request: NextRequest) => {
   }
 
   try {
-    const res = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/events`, query, {
-      headers: await getIgdbHeaders(),
-    });
-    return NextResponse.json(res.data);
+    return publicJson(await igdb("/events", query, { revalidate: 600 }), 300);
   } catch {
     return NextResponse.json({ error: "Failed to load events" }, { status: 500 });
   }
