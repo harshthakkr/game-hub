@@ -23,3 +23,5 @@ export { PasswordInput } from "./PasswordInput";
 export { Spinner } from "./Spinner";
 export { ToastProvider, useToast } from "./Toast";
 export { Sheet, SheetOption } from "./Sheet";
+
+export { GAME_GRID, NESTED_SECTIONS, SECTIONS, Section, tileGrid } from "./Layout";

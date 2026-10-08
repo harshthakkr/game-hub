@@ -34,6 +34,7 @@ import {
   TabsList,
   TabsTrigger,
   Tag,
+  NESTED_SECTIONS,
 } from "@/components/ui";
 import { cx } from "@/utils/cx";
 import { heroPending, useHeroArrival } from "@/utils/heroNav";
@@ -182,7 +183,7 @@ export function GameView({ data, slug }: { data: GamePageProps; slug: string }) 
           <div className="absolute inset-0 bg-linear-to-t from-ov-bg from-2% to-transparent to-55%" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_100%,color-mix(in_oklch,var(--game-accent)_22%,transparent),transparent_60%)]" />
         </div>
-        <div className="relative -mt-5 flex flex-col gap-3 px-4">
+        <div className="relative -mt-5 flex flex-col gap-3 px-4 md:px-8">
           <div className="flex flex-wrap gap-1.5">
             {(data.genres ?? []).slice(0, 2).map((g) => (
               <Tag key={g.name} size="sm">
@@ -368,11 +369,11 @@ export function GameView({ data, slug }: { data: GamePageProps; slug: string }) 
 
         {/* Desktop: content + sidebar as a grid, so "Where to buy" stays beside
             the content on narrow desktops/tablets instead of wrapping below it. */}
-        <div className="mx-auto flex max-w-[1440px] flex-col gap-14 px-4 pt-5 pb-16 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,300px)] lg:items-start lg:gap-8 lg:px-8 lg:pt-10 lg:pb-24 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] xl:gap-14">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-10 px-4 pt-6 pb-12 md:px-8 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,300px)] lg:items-start lg:gap-8 lg:px-8 lg:pt-10 lg:pb-24 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] xl:gap-14">
           <div className="flex min-w-0 flex-col">
-            <TabsContent value="overview" className="flex flex-col gap-8 lg:gap-12">
+            <TabsContent value="overview" className={NESTED_SECTIONS}>
               {isMobile && where}
-              <section className="flex flex-col gap-3.5">
+              <section className="flex flex-col gap-4 lg:gap-5">
                 <SubHeading>About</SubHeading>
                 <p className="max-w-[720px] font-body text-body leading-relaxed text-pretty text-ov-text lg:text-lead">
                   {data.summary || data.storyline || "No description yet."}
@@ -380,10 +381,10 @@ export function GameView({ data, slug }: { data: GamePageProps; slug: string }) 
               </section>
 
               {(trailer || shots.length > 0) && (
-                <section className="flex flex-col gap-3.5">
+                <section className="flex flex-col gap-4 lg:gap-5">
                   <SubHeading>{trailer ? "Trailer & screenshots" : "Screenshots"}</SubHeading>
                   {/* Phones: a sideways snap scroller. Desktop: trailer plus a 2x2 grid. */}
-                  <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-2.5 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:grid-cols-[2fr_1fr_1fr] lg:grid-rows-[150px_150px] lg:gap-3 lg:px-0">
+                  <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-2.5 overflow-x-auto px-4 [scrollbar-width:none] md:-mx-8 md:scroll-px-8 md:px-8 lg:mx-0 lg:grid lg:grid-cols-[2fr_1fr_1fr] lg:grid-rows-[150px_150px] lg:gap-3 lg:px-0">
                     {trailer && (
                       <button
                         type="button"
@@ -424,11 +425,11 @@ export function GameView({ data, slug }: { data: GamePageProps; slug: string }) 
               )}
 
               {related.length > 0 && (
-                <section className="flex flex-col gap-3.5">
+                <section className="flex flex-col gap-4 lg:gap-5">
                   <SubHeading>Similar games</SubHeading>
                   {/* Fixed column counts, each showing a whole number of rows:
                       3 cols × 3 rows, 4 × 2, 5 × 2. No lone card on the last row. */}
-                  <div className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:px-0 xl:grid-cols-4 2xl:grid-cols-5">
+                  <div className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 [scrollbar-width:none] md:-mx-8 md:scroll-px-8 md:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:px-0 xl:grid-cols-4 2xl:grid-cols-5">
                     {related.map((game, i) => (
                       <div
                         key={game.id}
@@ -466,8 +467,9 @@ export function GameView({ data, slug }: { data: GamePageProps; slug: string }) 
       {data.id && (
         <div
           className={cx(
-            "fixed inset-x-0 bottom-0 z-40 mx-auto grid max-w-[480px] gap-2 border-t border-ov-border bg-ov-bg/96 px-4 pt-2.5 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-[14px] lg:hidden",
-            trailer ? "grid-cols-3" : "grid-cols-2"
+            // Full-width background; the buttons stay a centred group on tablets.
+            "fixed inset-x-0 bottom-0 z-40 grid justify-center gap-2 border-t border-ov-border bg-ov-bg/96 px-4 pt-2.5 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-[14px] lg:hidden",
+            trailer ? "grid-cols-[repeat(3,minmax(0,200px))]" : "grid-cols-[repeat(2,minmax(0,240px))]"
           )}
         >
           {trailer && (

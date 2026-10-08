@@ -1,4 +1,5 @@
 import { cx } from "@/utils/cx";
+import { GAME_GRID, tileGrid } from "@/components/ui/Layout";
 
 /// Placeholder block with a slow left-to-right shimmer. Decorative: loading
 /// regions announce themselves via aria-busy on their container instead.
@@ -50,7 +51,8 @@ export function GameTileSkeletons({ count = 8 }: { count?: number }) {
   );
 }
 
-const GRID = "grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]";
+// Same grid as the real pages, so content lands where the bones were.
+const GRID = GAME_GRID;
 
 export function GameGridSkeleton({ count = 8 }: { count?: number }) {
   return (
@@ -216,7 +218,7 @@ export function EventsSkeleton() {
   return (
     <Frame>
       <HeadingBones />
-      <div className="grid gap-5 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+      <div className={tileGrid(280)}>
         <EventTileSkeletons count={6} />
       </div>
     </Frame>
@@ -252,7 +254,7 @@ function TileGridSkeleton() {
   return (
     <Frame>
       <HeadingBones />
-      <div className="grid gap-4 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
+      <div className={tileGrid(240, 2)}>
         <PanelTileSkeletons count={8} />
       </div>
     </Frame>

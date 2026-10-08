@@ -346,7 +346,7 @@ export function WishlistRow({ game }: { game: GameCardProps }) {
   const discount = discountLabel(game.price);
   const note = saleNote(game.price);
   return (
-    <div data-vt-card className="relative grid grid-cols-[60px_minmax(0,1fr)_44px] items-center gap-3 border-b border-ov-raised py-3 pr-1.5 pl-4">
+    <div data-vt-card className="relative grid grid-cols-[60px_minmax(0,1fr)_44px] items-center gap-3 border-b border-ov-raised py-3 pr-1.5 pl-4 md:pr-6 md:pl-8">
       {cover ? (
         <Image data-vt="cover" src={cover} alt="" width={60} height={80} className="h-20 w-[60px] object-cover" />
       ) : (

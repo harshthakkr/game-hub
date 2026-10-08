@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { GameCardProps } from "@/utils/types";
 import { PageContainer } from "@/components/overdrive/PageShell";
-import { PageHeading } from "@/components/ui";
+import { PageHeading, GAME_GRID } from "@/components/ui";
 import { GameGridCard } from "@/components/overdrive/GameCards";
 import { SearchSkeleton } from "@/components/overdrive/Skeletons";
 import { NoResults } from "@/components/overdrive/EmptyState";
@@ -39,7 +39,7 @@ function SearchResults() {
       />
 
       {results.length > 0 ? (
-        <div className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+        <div className={GAME_GRID}>
           {results.map((game) => (
             <GameGridCard key={game.id || game.slug} game={game} />
           ))}

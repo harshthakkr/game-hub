@@ -9,7 +9,7 @@ import { WishlistSkeleton } from "@/components/overdrive/Skeletons";
 import { GameGridCard, WishlistRow } from "@/components/overdrive/GameCards";
 import { SavedSwitcher } from "@/components/overdrive/SavedSwitcher";
 import { useIsMobile } from "@/utils/hooks/useMediaQuery";
-import { ChipGroup, Eyebrow, PageHeading, StatStrip } from "@/components/ui";
+import { ChipGroup, Eyebrow, PageHeading, StatStrip, GAME_GRID } from "@/components/ui";
 
 const SORTS = [
   { value: "added", label: "Recently added" },
@@ -42,7 +42,7 @@ export default function WishlistPage() {
     return (
       <PageContainer>
         <SavedSwitcher />
-        <PageHeading title="Wishlist" />
+        <PageHeading title="Wishlist" titleHiddenOnPhone />
         <EmptyState
           icon="heart"
           title="Sign in to see your wishlist"
@@ -60,6 +60,7 @@ export default function WishlistPage() {
       <SavedSwitcher />
       <PageHeading
         title="Wishlist"
+        titleHiddenOnPhone
         description="Prices checked hourly on PlayStation Store and Steam."
       >
         {wishlist.length > 0 && (
@@ -89,24 +90,25 @@ export default function WishlistPage() {
           actionHref="/games"
         />
       ) : (
-        <>
-          <div className="-mx-4 flex overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:justify-end lg:border-b lg:border-ov-border lg:px-0 lg:pb-3.5">
+        // Sort sits with the list it sorts: 12px on phones, a page gap on desktop.
+        <div className="flex flex-col gap-3 lg:gap-8">
+          <div className="-mx-4 flex overflow-x-auto px-4 [scrollbar-width:none] md:-mx-8 md:px-8 lg:mx-0 lg:justify-end lg:border-b lg:border-ov-border lg:px-0 lg:pb-4">
             <ChipGroup label="Sort wishlist" variant="segmented" options={SORTS} value={sort} onValueChange={setSort} />
           </div>
           {isMobile ? (
-            <div className="-mx-4 -mt-3 border-t border-ov-raised">
+            <div className="-mx-4 border-t border-ov-raised md:-mx-8">
               {sorted.map((game) => (
                 <WishlistRow key={game.id} game={game} />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+            <div className={GAME_GRID}>
               {sorted.map((game) => (
                 <GameGridCard key={game.id} game={game} />
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
     </PageContainer>
   );

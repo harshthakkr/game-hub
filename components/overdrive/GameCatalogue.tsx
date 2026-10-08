@@ -5,7 +5,7 @@ import { GameGridCard } from "./GameCards";
 import { LoadMoreButton, NoResults } from "./EmptyState";
 import { PageContainer } from "./PageShell";
 import { useScreenTitle } from "./ScreenTitle";
-import { PageHeading } from "@/components/ui";
+import { PageHeading, GAME_GRID } from "@/components/ui";
 import { CatalogueSkeleton, GameTileSkeletons } from "./Skeletons";
 import { GameFilterBar, useGameFilterSort } from "./GameFilterBar";
 
@@ -38,11 +38,11 @@ export function GameCatalogue({
         <NoResults description="No games found here yet. Check back later." />
       ) : (
         <>
-          <div className="flex justify-end border-b border-ov-border pb-3.5">
+          <div className="flex justify-end border-b border-ov-border pb-4">
             <GameFilterBar sort={sort} setSort={setSort} />
           </div>
 
-          <div className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+          <div className={GAME_GRID}>
             {visible.map((game) => (
               <GameGridCard key={game.id || game.slug} game={game} />
             ))}

@@ -7,7 +7,7 @@ import { PageContainer } from "@/components/overdrive/PageShell";
 import { LoadMoreButton, NoResults } from "@/components/overdrive/EmptyState";
 import { EventsSkeleton, EventTileSkeletons } from "@/components/overdrive/Skeletons";
 import { EventCard } from "@/components/overdrive/EventCard";
-import { ChipGroup, PageHeading } from "@/components/ui";
+import { ChipGroup, PageHeading, tileGrid } from "@/components/ui";
 import { eventTiming } from "@/utils/overdrive";
 
 const FILTERS = [
@@ -57,7 +57,7 @@ export default function Events() {
     <PageContainer>
       <PageHeading title="Events" description="Showcases and broadcasts, in your local time.">
         {liveCount > 0 && (
-          <span className="flex items-center gap-2 border border-ov-rose-deep px-2.5 py-1.5 text-ui font-semibold text-ov-rose-soft">
+          <span className="flex w-max items-center gap-2 border border-ov-rose-deep px-2.5 py-1.5 text-ui font-semibold text-ov-rose-soft">
             <span aria-hidden className="size-[7px] animate-ov-pulse rounded-full bg-ov-rose" />
             {liveCount} live now
           </span>
@@ -69,11 +69,11 @@ export default function Events() {
         options={FILTERS}
         value={filter}
         onValueChange={setFilter}
-        className="border-b border-ov-border pb-3.5"
+        className="border-b border-ov-border pb-4"
       />
 
       {loading ? (
-        <div className="grid gap-5 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+        <div className={tileGrid(280)}>
           <EventTileSkeletons count={6} />
         </div>
       ) : events.length === 0 ? (
@@ -82,7 +82,7 @@ export default function Events() {
           description={EMPTY[filter].description}
         />
       ) : (
-        <div className="grid gap-5 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+        <div className={tileGrid(280)}>
           {events.map((event) => (
             <EventCard key={event.id} event={event} showStart />
           ))}

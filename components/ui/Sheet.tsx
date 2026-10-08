@@ -5,8 +5,10 @@ import { Dialog as RadixDialog, VisuallyHidden } from "radix-ui";
 import { cx } from "@/utils/cx";
 import { IconButton } from "./IconButton";
 
-/// Bottom sheet for phones: filters, sort, shelf picker, price history.
-/// Radix Dialog underneath, so it traps focus, closes on Escape or a tap on
+/// Filters, sort, shelf picker, price history. Phones get a full-width
+/// bottom sheet; from tablet width (586px) it becomes a centred panel, since
+/// a bottom sheet stretched across a tablet spreads short option lists thin.
+/// (Desktop, 800px+, uses Dialog/Menu instead.) Radix Dialog underneath, so it traps focus, closes on Escape or a tap on
 /// the scrim, locks page scroll and returns focus to whatever opened it.
 export function Sheet({
   open,
@@ -50,14 +52,17 @@ export function Sheet({
             }
           }}
           className={cx(
-            "fixed inset-x-0 bottom-0 z-[100] mx-auto flex max-w-[480px] flex-col border-t border-ov-border-strong bg-ov-field pb-[env(safe-area-inset-bottom)] focus:outline-none data-[state=closed]:animate-ov-sheet-out data-[state=open]:animate-ov-sheet-in",
-            full ? "top-5" : "max-h-[88dvh]"
+            "fixed inset-x-0 bottom-0 z-[100] flex flex-col border-t border-ov-border-strong bg-ov-field pb-[env(safe-area-inset-bottom)] focus:outline-none data-[state=closed]:animate-ov-sheet-out data-[state=open]:animate-ov-sheet-in",
+            // Tablet: centred with inset-0 + margin auto, not a translate, so
+            // the pop animation's transform can't knock it off centre.
+            "md:inset-0 md:m-auto md:w-[min(560px,calc(100%-64px))] md:border md:pb-0 md:shadow-ov-pop md:data-[state=closed]:animate-ov-pop-out md:data-[state=open]:animate-ov-pop",
+            full ? "top-5 md:h-fit md:max-h-[88dvh]" : "max-h-[88dvh] md:h-fit md:max-h-[80dvh]"
           )}
         >
-          <div aria-hidden className="flex justify-center pt-2">
+          <div aria-hidden className="flex justify-center pt-2 md:hidden">
             <span className="h-1 w-9 bg-ov-border-strong" />
           </div>
-          <div className="flex items-start gap-1 border-b border-ov-border py-1.5 pr-1.5 pl-4">
+          <div className="flex items-start gap-1 border-b border-ov-border py-1.5 pr-1.5 pl-4 md:py-2.5 md:pl-5">
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-2">
               <RadixDialog.Title className="text-lg font-semibold text-ov-white">{title}</RadixDialog.Title>
               {subtitle && <p className="truncate text-ui text-ov-muted">{subtitle}</p>}

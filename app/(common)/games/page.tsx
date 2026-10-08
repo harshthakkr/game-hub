@@ -22,7 +22,7 @@ import {
 } from "@/components/overdrive/Skeletons";
 import { LoadMoreButton } from "@/components/overdrive/EmptyState";
 import { OvIcon } from "@/components/overdrive/OvIcon";
-import { Button, ChipGroup, Eyebrow, IconButton, Select, Sheet, SheetOption, Switch, type ChipOption } from "@/components/ui";
+import { Button, ChipGroup, Eyebrow, IconButton, Select, Sheet, SheetOption, Switch, type ChipOption, GAME_GRID } from "@/components/ui";
 import { cx } from "@/utils/cx";
 
 const ANY = "any";
@@ -292,7 +292,7 @@ function Catalogue() {
   const sortLabel = SORTS.find((o) => o.value === filters.sort)?.label ?? "Popularity";
 
   return (
-    <div className="mx-auto grid max-w-[1440px] items-start gap-10 px-4 pt-5 pb-16 md:px-8 lg:pt-10 lg:pb-24 xl:grid-cols-[232px_minmax(0,1fr)]">
+    <div className="mx-auto grid max-w-[1440px] items-start gap-10 px-4 pt-5 pb-12 md:px-8 lg:pt-10 lg:pb-24 xl:grid-cols-[232px_minmax(0,1fr)]">
       {/* Desktop: every filter visible in a sticky rail. */}
       <aside
         aria-label="Filters"
@@ -324,7 +324,8 @@ function Catalogue() {
         </Switch>
       </aside>
 
-      <div className="flex min-w-0 flex-col gap-4 lg:gap-5">
+      {/* Page blocks: heading → toolbar → results, 24/32 apart. */}
+      <div className="flex min-w-0 flex-col gap-6 lg:gap-8">
         <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
           <h1 className="font-orbitron text-[24px] leading-tight font-bold tracking-[0.04em] uppercase lg:text-[34px]">
             {catalogueTitle(filters)}
@@ -339,8 +340,8 @@ function Catalogue() {
 
         {/* Phones: a sticky Filters / Sort / view bar opening sheets, with the
             applied filters as a scrollable row of removable chips. */}
-        <div className="sticky top-(--ov-topbar-h) z-20 -mx-4 border-b border-ov-border bg-ov-bg/94 backdrop-blur-[14px] lg:hidden">
-          <div className="flex gap-2 px-4 py-2">
+        <div className="sticky top-(--ov-topbar-h) z-20 -mx-4 border-b md:-mx-8 border-ov-border bg-ov-bg/94 backdrop-blur-[14px] lg:hidden">
+          <div className="flex gap-2 px-4 py-2 md:px-8">
             <button
               type="button"
               onClick={() => setFilterSheet(true)}
@@ -370,7 +371,7 @@ function Catalogue() {
             />
           </div>
           {active.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+            <div className="flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:px-8">
               {active.map((chip) => (
                 <button
                   key={chip.key}
@@ -435,7 +436,7 @@ function Catalogue() {
           ))}
         </div>
 
-        <div className="hidden flex-wrap items-center gap-3 border-b border-ov-border pb-3.5 lg:flex">
+        <div className="hidden flex-wrap items-center gap-3 border-b border-ov-border pb-4 lg:flex">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
             {active.map((chip) => (
               <span
@@ -498,7 +499,7 @@ function Catalogue() {
             </Button>
           </div>
         ) : view === "grid" ? (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] lg:gap-x-5 lg:gap-y-7">
+          <div className={GAME_GRID}>
             {games.map((game) => (
               <GameGridCard key={game.id ?? game.slug} game={game} />
             ))}

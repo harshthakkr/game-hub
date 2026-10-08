@@ -55,7 +55,8 @@ export function LoadMoreButton({
   loading?: boolean;
 }) {
   return (
-    <div className="mt-8 flex justify-center">
+    // No margin: the page's own block gap places it under the grid.
+    <div className="flex justify-center">
       <Button
         variant="secondary"
         onClick={onClick}

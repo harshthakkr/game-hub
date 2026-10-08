@@ -38,17 +38,54 @@ export function AIChat({
     initialMessages?.length ? initialMessages : [WELCOME]
   );
   const [streaming, setStreaming] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
+  const logRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const sentInitial = useRef(false);
+  // Stick to the bottom: follow the conversation as it grows (streaming,
+  // keyboard opening) unless the reader has scrolled up to read; reaching
+  // the bottom again, or sending, turns following back on. Scrolls are
+  // instant: smooth ones fire scroll events mid-way that look like the
+  // reader scrolling away.
+  const following = useRef(true);
+  const scrollToEnd = useCallback(() => {
+    window.scrollTo({ top: document.documentElement.scrollHeight });
+  }, []);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, streaming]);
+    // Judge intent by direction: only scrolling *up* means the reader left
+    // the bottom. (A gap check alone races: our own scroll's event lands a
+    // frame later, after more text has streamed in, and reads as "away".)
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const { scrollHeight } = document.documentElement;
+      if (y < lastY - 2) following.current = false;
+      else if (scrollHeight - (y + window.innerHeight) < 80) following.current = true;
+      lastY = y;
+    };
+    const onViewportResize = () => following.current && scrollToEnd();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.visualViewport?.addEventListener("resize", onViewportResize);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.visualViewport?.removeEventListener("resize", onViewportResize);
+    };
+  }, [scrollToEnd]);
+
+  // Any growth of the conversation (a streamed chunk, a new message, a
+  // table rendering) keeps it pinned while following.
+  useEffect(() => {
+    const log = logRef.current;
+    if (!log) return;
+    const observer = new ResizeObserver(() => following.current && scrollToEnd());
+    observer.observe(log);
+    return () => observer.disconnect();
+  }, [scrollToEnd]);
 
   const send = useCallback(
     async (text: string) => {
       if (!text.trim() || streaming) return;
+      following.current = true;
       const next = [...messages, { role: "user", content: text.trim() }];
       setMessages([...next, { role: "assistant", content: "" }]);
       setQuery("");
@@ -132,7 +169,7 @@ export function AIChat({
         )}
       </div>
 
-      <div role="log" aria-label="Conversation" className="flex flex-1 flex-col gap-5 pb-3">
+      <div ref={logRef} role="log" aria-label="Conversation" className="flex flex-1 flex-col gap-5 pb-3">
         {messages.map((msg, idx) => {
           const last = idx === messages.length - 1;
           if (msg.role === "user") {
@@ -166,13 +203,12 @@ export function AIChat({
             </div>
           );
         })}
-        <div ref={endRef} />
       </div>
 
       {/* Phones: pinned just above the tab bar. */}
       <div className="sticky bottom-[calc(64px+env(safe-area-inset-bottom))] flex flex-col gap-2 bg-linear-to-t from-ov-bg from-75% to-transparent pt-3 pb-2.5 lg:bottom-0 lg:gap-3 lg:pt-4 lg:pb-7">
         {showChips && (
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] md:-mx-8 md:px-8 lg:mx-0 lg:flex-wrap lg:px-0">
             {SUGGESTIONS.map((s) => (
               <button
                 key={s}

@@ -37,7 +37,7 @@ export function EventCard({ event, showStart = false }: { event: EventCardProps;
       <div className="flex flex-1 flex-col gap-3 p-4 pb-[18px]">
         <Link
           href={`/events/${event.slug}`}
-          className="min-h-[42px] text-base font-semibold leading-snug text-ov-white outline-none before:absolute before:inset-0"
+          className="text-base sm:min-h-[42px] font-semibold leading-snug text-ov-white outline-none before:absolute before:inset-0"
         >
           {event.name}
         </Link>

@@ -16,19 +16,26 @@ export function PageShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-/// Standard page frame: the shared max width and gutters, with room for the
-/// page's own vertical rhythm.
+/// Standard page frame: the shared max width, gutters and vertical rhythm.
+/// `rhythm`: "blocks" (default) for a heading → toolbar → content page,
+/// "sections" for a page made of sections (the style guide).
 export function PageContainer({
   children,
+  rhythm = "blocks",
   className,
 }: {
   children: React.ReactNode;
+  rhythm?: "blocks" | "sections";
   className?: string;
 }) {
   return (
     <div
       className={cx(
-        "mx-auto flex max-w-[1440px] flex-col gap-7 px-4 pt-8 pb-24 md:px-8 md:pt-10",
+        // Spacing roles (components/ui/Layout.tsx): gutter 16/32, page top
+        // 20/40, bottom 48/96 (the phone tab bar's room is added by <main>),
+        // and 24/32 between the page's blocks (40/64 between sections).
+        "mx-auto flex max-w-[1440px] flex-col px-4 pt-5 pb-12 md:px-8 lg:pt-10 lg:pb-24",
+        rhythm === "blocks" ? "gap-6 lg:gap-8" : "gap-10 lg:gap-16",
         className
       )}
     >

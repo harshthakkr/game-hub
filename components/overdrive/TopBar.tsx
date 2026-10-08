@@ -200,7 +200,9 @@ export function BottomTabBar() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 mx-auto grid max-w-[480px] grid-cols-5 border-t border-ov-border bg-ov-bg/96 pb-[env(safe-area-inset-bottom)] backdrop-blur-[14px] lg:hidden"
+      // Background spans the screen; the five tabs stay a compact centred
+      // group on tablets (capped columns) rather than spreading apart.
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-[repeat(5,minmax(0,112px))] justify-center border-t border-ov-border bg-ov-bg/96 pb-[env(safe-area-inset-bottom)] backdrop-blur-[14px] lg:hidden"
     >
       {TABS.map((tab) => {
         const active = tab.match(pathname);

@@ -23,7 +23,7 @@ export function SectionHeader({
   return (
     <div
       className={cx(
-        "flex flex-wrap items-baseline gap-x-2.5 gap-y-1 lg:gap-x-3.5 lg:border-b lg:border-ov-border lg:pb-3.5",
+        "flex flex-wrap items-baseline gap-x-2.5 gap-y-1 lg:gap-x-3.5 lg:border-b lg:border-ov-border lg:pb-4",
         className
       )}
     >
@@ -47,21 +47,37 @@ export function SubHeading({ children, className }: { children: ReactNode; class
 export function PageHeading({
   title,
   note,
+  titleHiddenOnPhone = false,
   description,
   children,
 }: {
   title: ReactNode;
   /// Readout after the title, e.g. "16,698 titles". Rendered as "// note".
   note?: ReactNode;
+  /// Phones only: keep the H1 for screen readers but hide it visually, when
+  /// something above already names the page (Wishlist/Library switcher).
+  titleHiddenOnPhone?: boolean;
   description?: ReactNode;
   /// Right-aligned extras (stats, actions).
   children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
+    <div
+      className={cx(
+        "flex flex-wrap items-end gap-x-6 gap-y-4",
+        // Nothing else to show: drop the whole block on phones, or its empty
+        // box would still take a gap in the page's flex column.
+        titleHiddenOnPhone && !note && !description && !children && "max-lg:sr-only"
+      )}
+    >
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h1 className="font-orbitron text-[24px] leading-tight font-bold tracking-[0.04em] text-ov-white uppercase lg:text-[34px]">
+          <h1
+            className={cx(
+              "font-orbitron text-[24px] leading-tight font-bold tracking-[0.04em] text-ov-white uppercase lg:text-[34px]",
+              titleHiddenOnPhone && "max-lg:sr-only"
+            )}
+          >
             {title}
           </h1>
           {note && (

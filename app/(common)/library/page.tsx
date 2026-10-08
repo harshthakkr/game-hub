@@ -8,7 +8,7 @@ import { PageContainer } from "@/components/overdrive/PageShell";
 import { EmptyState } from "@/components/overdrive/EmptyState";
 import { LibrarySkeleton } from "@/components/overdrive/Skeletons";
 import { ShelfMenu } from "@/components/overdrive/ShelfMenu";
-import { ChipGroup, IconButton, PageHeading, Rating } from "@/components/ui";
+import { ChipGroup, IconButton, PageHeading, Rating, GAME_GRID } from "@/components/ui";
 import { SavedSwitcher } from "@/components/overdrive/SavedSwitcher";
 import { useIsMobile } from "@/utils/hooks/useMediaQuery";
 import { coverUrl } from "@/utils/overdrive";
@@ -39,7 +39,7 @@ export default function LibraryPage() {
     return (
       <PageContainer>
         <SavedSwitcher />
-        <PageHeading title="Library" />
+        <PageHeading title="Library" titleHiddenOnPhone />
         <EmptyState
           icon="library"
           title="Sign in to see your library"
@@ -57,6 +57,7 @@ export default function LibraryPage() {
       <SavedSwitcher />
       <PageHeading
         title="Library"
+        titleHiddenOnPhone
         description="Shelve games by where you are with them."
       />
       <ChipGroup
@@ -65,7 +66,7 @@ export default function LibraryPage() {
         options={tabs}
         value={tab}
         onValueChange={setTab}
-        className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:px-0"
+        className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] md:-mx-8 md:px-8 lg:mx-0 lg:px-0"
       />
 
       {visible.length === 0 ? (
@@ -76,7 +77,7 @@ export default function LibraryPage() {
           actionHref="/games"
         />
       ) : (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] lg:gap-x-5 lg:gap-y-7">
+        <div className={GAME_GRID}>
           {visible.map((game) => {
             const cover = coverUrl(game.cover);
             return (

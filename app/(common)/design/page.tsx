@@ -82,16 +82,18 @@ const OPTIONS = [
 /// same components the app uses, so it can never drift from production.
 export default function DesignSystemPage() {
   return (
-    <PageContainer className="gap-14">
-      <PageHeading
-        title="Design system"
-        description="Overdrive tokens and components, rendered live from production code."
-      />
-      <p className="-mt-8 max-w-[680px] text-body leading-relaxed text-ov-dim">
+    <PageContainer rhythm="sections">
+      <div className="flex flex-col gap-3">
+        <PageHeading
+          title="Design system"
+          description="Overdrive tokens and components, rendered live from production code."
+        />
+        <p className="max-w-[680px] text-body leading-relaxed text-ov-dim">
         Values come from the theme tokens in <code className="font-mono text-ov-teal">globals.css</code>; every
         component below is the one the app ships. Interactive primitives (tabs, select, menu, dialog, toggle
         groups, checkbox, switch, toast) are built on Radix for keyboard and screen-reader behaviour.
       </p>
+      </div>
 
       <Section index="01" title="Color">
         <ColorTokens />
@@ -244,7 +246,7 @@ export default function DesignSystemPage() {
 
 function Section({ index, title, children }: { index: string; title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-5" aria-label={title}>
+    <section className="flex flex-col gap-4 lg:gap-5" aria-label={title}>
       <SectionHeader index={index} title={title} />
       {children}
     </section>

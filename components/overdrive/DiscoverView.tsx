@@ -114,7 +114,7 @@ function ConciergePrompt() {
 /// cover can stay ~130px+, so six games always fill whole rows.
 const GRID = "grid grid-cols-2 gap-5 md:grid-cols-3 min-[940px]:grid-cols-6";
 /// Phones: a sideways snap scroller bleeding to the screen edges. Desktop: a grid.
-const SHELF = "-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:snap-none lg:gap-5 lg:overflow-visible lg:px-0";
+const SHELF = "-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 [scrollbar-width:none] md:-mx-8 md:scroll-px-8 md:px-8 lg:mx-0 lg:grid lg:snap-none lg:gap-5 lg:overflow-visible lg:px-0";
 
 /// Discover. The hero/trending/releases data is server-rendered and passed
 /// in (so the hero art is in the first HTML); events, deals and the
@@ -137,7 +137,9 @@ export function DiscoverView({ initial }: { initial: DiscoverData | null }) {
       <h1 className="sr-only">Discover games</h1>
       {data && <HeroCarousel games={data.hero} />}
 
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-9 px-4 pt-6 pb-16 md:px-8 lg:gap-16 lg:pb-24">
+      {/* The hero is the first section, so the next one starts a full
+          section gap below it. */}
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-10 px-4 pt-10 pb-12 md:px-8 lg:gap-16 lg:pt-16 lg:pb-24">
         {discover.failed && (
           <p role="alert" className="border border-ov-rose-deep bg-ov-rose-wash px-4 py-3 text-sm text-ov-rose-soft">
             Couldn&apos;t load Discover right now. Refresh to try again.
@@ -145,7 +147,7 @@ export function DiscoverView({ initial }: { initial: DiscoverData | null }) {
         )}
 
         {(events.data?.length ?? 0) > 0 && (
-          <section className="flex flex-col gap-5" aria-label="Live and upcoming events">
+          <section className="flex flex-col gap-4 lg:gap-5" aria-label="Live and upcoming events">
             <SectionHeader
               index="01"
               title="Live & upcoming events"
@@ -163,7 +165,7 @@ export function DiscoverView({ initial }: { initial: DiscoverData | null }) {
 
         <ConciergePrompt />
 
-        <section className="flex flex-col gap-5" aria-label="Price drops">
+        <section className="flex flex-col gap-4 lg:gap-5" aria-label="Price drops">
           <SectionHeader index="02" title="Price drops" meta="Popular games on PS Store and Steam · checked daily" />
           {deals.data && deals.data.length > 0 ? (
             <div className={`${SHELF} lg:grid-cols-3 min-[940px]:grid-cols-6`}>
@@ -185,7 +187,7 @@ export function DiscoverView({ initial }: { initial: DiscoverData | null }) {
         </section>
 
         {data && (
-          <section className="flex flex-col gap-5" aria-label="Trending">
+          <section className="flex flex-col gap-4 lg:gap-5" aria-label="Trending">
             <SectionHeader
               index="03"
               title="Trending"
@@ -221,7 +223,7 @@ export function DiscoverView({ initial }: { initial: DiscoverData | null }) {
           // Two columns only when there's a wishlist panel to pair with, and
           // only once each half is wide enough for the release rows.
           <div className={cx("grid gap-10", showWishlist && "xl:grid-cols-2")}>
-            <section className="flex min-w-0 flex-col gap-5" aria-label="New releases">
+            <section className="flex min-w-0 flex-col gap-4 lg:gap-5" aria-label="New releases">
               <SectionHeader
                 index="04"
                 title="New releases"
@@ -244,7 +246,7 @@ export function DiscoverView({ initial }: { initial: DiscoverData | null }) {
             </section>
 
             {showWishlist && (
-              <section className="flex min-w-0 flex-col gap-5" aria-label="From your wishlist">
+              <section className="flex min-w-0 flex-col gap-4 lg:gap-5" aria-label="From your wishlist">
                 <SectionHeader
                   index="05"
                   title="From your wishlist"

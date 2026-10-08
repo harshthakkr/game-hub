@@ -7,7 +7,7 @@ import { PageContainer } from "@/components/overdrive/PageShell";
 import { LoadMoreButton, NoResults } from "@/components/overdrive/EmptyState";
 import { DevelopersSkeleton, PanelTileSkeletons } from "@/components/overdrive/Skeletons";
 import { abbrev } from "@/utils/overdrive";
-import { PageHeading, Panel } from "@/components/ui";
+import { PageHeading, Panel, tileGrid } from "@/components/ui";
 
 export default function Developers() {
   const { data, hasMore, loading, loadingMore, handlePagination } = useData<CardProps>(
@@ -24,9 +24,9 @@ export default function Developers() {
         <NoResults description="No developers found right now. Check back later." />
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]">
+          <div className={tileGrid(260)}>
             {data.map((d) => (
-              <Panel asChild key={d.id} cut="none" interactive className="flex items-center gap-3.5 p-3.5 hover:border-ov-teal">
+              <Panel asChild key={d.id} cut="none" interactive className="flex items-center gap-3 p-3 hover:border-ov-teal lg:gap-4 lg:p-4">
                 <Link href={`/developers/${d.slug}`}>
                   <span className="ov-chamfer ov-chamfer-sm flex size-11 shrink-0 items-center justify-center border border-ov-border-strong bg-ov-raised font-orbitron text-sm font-bold text-ov-white">
                     {abbrev(d.name)}
