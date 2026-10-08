@@ -24,7 +24,7 @@ const GROUP: Record<ChipGroupVariant, string> = {
 const ITEM: Record<ChipGroupVariant, string> = {
   /// Joined buttons: sort orders, view modes, ranges.
   segmented:
-    "inline-flex items-center gap-1.5 px-3 py-1.5 text-ui font-medium text-ov-dim hover:text-ov-white data-[state=on]:bg-ov-raised data-[state=on]:text-ov-white",
+    "inline-flex items-center gap-1.5 px-3 py-1.5 text-ui font-medium text-ov-dim hover:text-ov-white data-[state=on]:bg-ov-raised data-[state=on]:text-ov-white data-[state=on]:shadow-[inset_0_-2px_0_var(--color-ov-teal)]",
   /// Standalone filter pills.
   pill:
     "inline-flex items-center gap-1.5 border border-ov-border px-2.5 py-1.5 text-ui text-ov-text hover:border-ov-border-strong hover:text-ov-white data-[state=on]:border-ov-teal-deep data-[state=on]:bg-ov-teal/8 data-[state=on]:text-ov-teal-hover",

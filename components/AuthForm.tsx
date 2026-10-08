@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import axios from "axios";
 import { USERNAME_HINT, USERNAME_PATTERN } from "@/utils/reviews";
-import { Button, FieldLabel, Input } from "@/components/ui";
+import { Button, FieldLabel, Input, PasswordInput } from "@/components/ui";
 
 export type AuthMode = "signup" | "login";
 
@@ -101,18 +101,17 @@ export function AuthForm({
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="you@example.com"
+        placeholder="player@grid.io"
         autoComplete="email"
         className="mb-3.5"
       />
 
       <FieldLabel htmlFor="auth-password">Password</FieldLabel>
-      <Input
+      <PasswordInput
         id="auth-password"
-        type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        placeholder="At least 8 characters"
+        placeholder={isSignup ? "At least 8 characters" : "••••••••"}
         autoComplete={isSignup ? "new-password" : "current-password"}
         className="mb-5"
       />

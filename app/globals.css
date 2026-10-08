@@ -102,9 +102,10 @@
   --animate-ov-draw: ov-draw 0.7s cubic-bezier(0.3, 0.8, 0.3, 1) backwards;
   --animate-ov-shimmer: ov-shimmer 1.2s linear infinite;
   --animate-ov-think: ov-think 0.8s linear infinite;
-  --animate-ov-scrollup: ov-scrollup 26s linear infinite;
-  --animate-ov-scrollup-slow: ov-scrollup 34s linear infinite;
-  --animate-ov-scrolldown: ov-scrollup 30s linear infinite reverse;
+  /* Sign-in cover wall: ~18px/s, slow enough to read as ambient. */
+  --animate-ov-scrollup: ov-scrollup 110s linear infinite;
+  --animate-ov-scrollup-slow: ov-scrollup 135s linear infinite;
+  --animate-ov-scrolldown: ov-scrollup 120s linear infinite reverse;
 
   /* All breakpoints in px: Tailwind orders variants by value, and mixing px
      with the default rem values breaks that ordering. */

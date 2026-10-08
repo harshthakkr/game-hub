@@ -2,14 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SignIn } from "@/components/SignIn";
 import { AuthForm, type AuthMode } from "@/components/AuthForm";
-import { ChipGroup } from "@/components/ui";
-
-const MODES = [
-  { value: "login" as AuthMode, label: "Sign in" },
-  { value: "signup" as AuthMode, label: "Create account" },
-];
 
 export function AuthPanel({
   initialMode,
@@ -18,35 +13,40 @@ export function AuthPanel({
   initialMode: AuthMode;
   callbackUrl?: string;
 }) {
-  const [mode, setMode] = useState<AuthMode>(initialMode);
+  const router = useRouter();
+  const params = useSearchParams();
+  const [mode, setModeState] = useState<AuthMode>(initialMode);
   const isSignup = mode === "signup";
 
+  // Keep ?mode= in sync so a refresh or a shared link lands on the same form.
+  const setMode = (next: AuthMode) => {
+    setModeState(next);
+    const query = new URLSearchParams(params);
+    query.set("mode", next);
+    router.replace(`?${query}`, { scroll: false });
+  };
+
   return (
-    <div className="flex w-full max-w-[420px] animate-ov-fade-up flex-col gap-5.5">
-      <ChipGroup
-        label="Account"
-        variant="segmented"
-        options={MODES}
-        value={mode}
-        onValueChange={setMode}
-        className="w-full lg:w-max [&>*]:h-11 [&>*]:flex-1 [&>*]:justify-center lg:[&>*]:h-auto lg:[&>*]:flex-none"
-      />
-      <div className="flex flex-col gap-2">
-        <h1 className="text-[26px] font-semibold tracking-[-0.02em] lg:text-[32px]">
-          {isSignup ? "Create your account" : "Welcome back"}
+    <div className="flex w-full max-w-[400px] animate-ov-fade-up flex-col gap-5">
+      <div className="flex flex-col gap-3">
+        <p className="font-hud text-label font-semibold tracking-[0.18em] text-ov-teal">
+          {isSignup ? "JOIN THE GRID" : "WELCOME BACK"}
+        </p>
+        <h1 className="font-orbitron text-[30px] leading-none font-bold tracking-[0.04em] uppercase lg:text-[36px]">
+          {isSignup ? "Sign up" : "Sign in"}
         </h1>
         <p className="text-body leading-normal text-ov-dim">
           {isSignup
-            ? "Track prices, keep a wishlist and library, and review the games you play."
+            ? "Track prices on PlayStation Store and Steam, and keep your wishlist and library in sync."
             : "Pick up where you left off: your library, wishlist and reviews are waiting."}
         </p>
       </div>
 
-      <SignIn callbackUrl={callbackUrl} />
+      <SignIn label={isSignup ? "Sign up with Google" : "Sign in with Google"} callbackUrl={callbackUrl} />
 
-      <div className="flex items-center gap-3 text-ui text-ov-muted">
+      <div className="flex items-center gap-3 font-hud text-label font-semibold tracking-[0.18em] text-ov-muted">
         <span className="h-px flex-1 bg-ov-border" />
-        or with email
+        OR
         <span className="h-px flex-1 bg-ov-border" />
       </div>
 

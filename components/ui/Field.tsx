@@ -56,7 +56,7 @@ export function FieldLabel({
   className?: string;
 }) {
   return (
-    <label htmlFor={htmlFor} className={cx("mb-1.5 block text-ui font-medium text-ov-text", className)}>
+    <label htmlFor={htmlFor} className={cx("mb-1.5 block font-hud text-label font-semibold tracking-label text-ov-dim uppercase", className)}>
       {children}
     </label>
   );

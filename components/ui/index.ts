@@ -19,6 +19,7 @@ export {
   Rating,
 } from "./Typography";
 export { Input, Textarea, FieldLabel, CharCount } from "./Field";
+export { PasswordInput } from "./PasswordInput";
 export { Spinner } from "./Spinner";
 export { ToastProvider, useToast } from "./Toast";
 export { Sheet, SheetOption } from "./Sheet";
