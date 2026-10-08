@@ -164,7 +164,7 @@ export function DiscoverView({ initial }: { initial: DiscoverData | null }) {
         <ConciergePrompt />
 
         <section className="flex flex-col gap-5" aria-label="Price drops">
-          <SectionHeader index="02" title="Price drops" meta="Games we track · updated hourly" />
+          <SectionHeader index="02" title="Price drops" meta="Popular games on PS Store and Steam · checked daily" />
           {deals.data && deals.data.length > 0 ? (
             <div className={`${SHELF} lg:grid-cols-3 min-[940px]:grid-cols-6`}>
               {deals.data.slice(0, 6).map((game) => (

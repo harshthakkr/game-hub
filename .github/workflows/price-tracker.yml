@@ -1,19 +1,57 @@
 name: Price tracker
 
-# Refreshes tracked PS Store prices every hour. GitHub may delay scheduled runs
-# by a few minutes under load, which is fine for hourly sampling.
+# Hourly price sweep, run as a script straight against the database (so it
+# isn't bound by the 60s serverless limit and doesn't depend on the deploy).
+#
+# - Hot listings (wishlisted, in a library, or viewed in the last 14 days)
+#   are re-checked every run.
+# - The rest of the tracked catalogue is re-checked once a day.
+# - Once a day (the 21:xx UTC run, ~03:00 IST) the popular catalogue is
+#   seeded from IGDB first, so popular games have prices before anyone
+#   opens them.
+#
+# Scheduled workflows only run from the default branch.
+# Repository secrets: DATABASE_URL, IGDB_CLIENT_ID, IGDB_CLIENT_SECRET.
 on:
   schedule:
     - cron: "7 * * * *"
   workflow_dispatch:
+    inputs:
+      seed:
+        description: Seed the popular catalogue before sweeping
+        type: boolean
+        default: false
+
+# Never overlap two sweeps.
+concurrency:
+  group: price-tracker
+  cancel-in-progress: false
 
 jobs:
-  refresh:
+  sweep:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 30
     steps:
-      - name: Refresh prices
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Sweep prices
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_CLIENT_ID: ${{ secrets.IGDB_CLIENT_ID }}
+          NEXT_PUBLIC_CLIENT_SECRET: ${{ secrets.IGDB_CLIENT_SECRET }}
+          NEXT_PUBLIC_BASE_URL: https://api.igdb.com/v4
+          SEED_LIMIT: 2000
+          BUDGET_MINUTES: 20
         run: |
-          curl --fail-with-body --silent --show-error --max-time 90 \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ secrets.APP_URL }}/api/cron/prices"
+          if [ "$(date -u +%H)" = "21" ] || [ "${{ inputs.seed }}" = "true" ]; then
+            npx tsx scripts/price-sweep.ts --seed
+          else
+            npx tsx scripts/price-sweep.ts
+          fi

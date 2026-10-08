@@ -1,19 +1,31 @@
 import { prisma } from "@/lib/prisma";
 import { fetchPsStorePrice, psStoreConceptUrl } from "@/lib/psStore";
-import { fetchSteamPrice, steamAppUrl } from "@/lib/steam";
+import { fetchSteamPrice, fetchSteamPrices, STEAM_BATCH_SIZE, steamAppUrl, type StorePrice } from "@/lib/steam";
 import type { PriceListing, PriceSnapshot, PriceStore } from "@/app/generated/prisma";
 
-/// A listing counts as fresh for this long; the hourly cron refreshes anything
-/// older, and a page view triggers a background refresh past it.
+/// Two refresh tiers:
+/// - hot: on someone's wishlist/library, or opened in the last 14 days —
+///   re-checked hourly (a page view past the TTL also refreshes it);
+/// - catalogue: every other tracked listing (incl. the seeded popular set) —
+///   re-checked daily.
 export const PRICE_TTL_MS = 55 * 60 * 1000;
-/// Games nobody has opened (or collected) for this long stop being polled.
-const ACTIVE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
-/// Hourly samples are kept this long, which is plenty for the 30-day view.
-const RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
-const CRON_CONCURRENCY = 4;
+const CATALOGUE_TTL_MS = 23 * 60 * 60 * 1000;
+const HOT_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+/// Snapshots are stored only when a price changes, so history is small; older
+/// rows are pruned, but never a listing's latest (that's its current price).
+const RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
 
 export const isStale = (fetchedAt: Date | null | undefined) =>
   !fetchedAt || Date.now() - fetchedAt.getTime() > PRICE_TTL_MS;
+
+// IGDB's external_games.external_game_source enum: 1 identifies a Steam
+// store listing, with the Steam app id carried in `uid`; 36 is a PlayStation
+// Store listing, whose `uid` is a region-independent concept id. PS first:
+// that's the order stores are shown in.
+export const STORE_SOURCES: { source: number; store: PriceStore }[] = [
+  { source: 36, store: "PLAYSTATION" },
+  { source: 1, store: "STEAM" },
+];
 
 /// Per-store plumbing: how to fetch a price, where the product page lives, and
 /// what to call the store in the UI.
@@ -60,98 +72,184 @@ export function latestSnapshot(listingId: string) {
   });
 }
 
-/// Scrapes the store once and records a snapshot. Failures are stored on the
-/// listing rather than thrown, so one broken game never stalls a cron run.
+/// Records one check of a listing. A snapshot is written only when the price
+/// differs from the latest one (prices hold between changes, which is how the
+/// chart draws them); every check still stamps lastFetchedAt.
+async function recordPrice(
+  listingId: string,
+  price: StorePrice | null,
+  missing: string,
+  now: Date
+): Promise<PriceSnapshot | null> {
+  if (!price) {
+    await prisma.priceListing.update({
+      where: { id: listingId },
+      data: { lastFetchedAt: now, lastError: missing },
+    });
+    return null;
+  }
+  const latest = await latestSnapshot(listingId);
+  const unchanged =
+    latest &&
+    latest.price === price.price &&
+    latest.basePrice === price.basePrice &&
+    latest.isFree === price.isFree &&
+    latest.currency === price.currency &&
+    (latest.saleEndsAt?.getTime() ?? null) === (price.saleEndsAt?.getTime() ?? null);
+  const listingUpdate = prisma.priceListing.update({
+    where: { id: listingId },
+    data: {
+      lastFetchedAt: now,
+      lastError: null,
+      // Steam's batch endpoint has no names; keep the one we already have.
+      ...(price.productName ? { productName: price.productName } : {}),
+    },
+  });
+  if (unchanged) {
+    await listingUpdate;
+    return latest;
+  }
+  const [snapshot] = await prisma.$transaction([
+    prisma.priceSnapshot.create({
+      data: {
+        listingId,
+        fetchedAt: now,
+        currency: price.currency,
+        basePrice: price.basePrice,
+        price: price.price,
+        isFree: price.isFree,
+        saleEndsAt: price.saleEndsAt,
+      },
+    }),
+    listingUpdate,
+  ]);
+  return snapshot;
+}
+
+async function recordError(listingId: string, error: unknown, now: Date) {
+  await prisma.priceListing
+    .update({
+      where: { id: listingId },
+      data: { lastFetchedAt: now, lastError: (error as Error).message.slice(0, 500) },
+    })
+    .catch(() => {});
+}
+
+/// Fetches one listing from its store and records the result. Failures are
+/// stored on the listing rather than thrown, so one broken game never stalls
+/// a sweep.
 export async function refreshListing(
   listing: Pick<PriceListing, "id" | "externalId" | "store">
 ): Promise<PriceSnapshot | null> {
   const now = new Date();
   const store = STORES[listing.store];
   try {
-    const price = await store.fetch(listing.externalId);
-    if (!price) {
-      await prisma.priceListing.update({
-        where: { id: listing.id },
-        data: { lastFetchedAt: now, lastError: store.missing },
-      });
-      return null;
-    }
-    const [snapshot] = await prisma.$transaction([
-      prisma.priceSnapshot.create({
-        data: {
-          listingId: listing.id,
-          fetchedAt: now,
-          currency: price.currency,
-          basePrice: price.basePrice,
-          price: price.price,
-          isFree: price.isFree,
-          saleEndsAt: price.saleEndsAt,
-        },
-      }),
-      prisma.priceListing.update({
-        where: { id: listing.id },
-        data: { lastFetchedAt: now, lastError: null, productName: price.productName },
-      }),
-    ]);
-    return snapshot;
+    return await recordPrice(listing.id, await store.fetch(listing.externalId), store.missing, now);
   } catch (error) {
-    await prisma.priceListing
-      .update({
-        where: { id: listing.id },
-        data: { lastFetchedAt: now, lastError: (error as Error).message.slice(0, 500) },
-      })
-      .catch(() => {});
+    await recordError(listing.id, error, now);
     return null;
   }
 }
 
-/// Refreshes every active listing that has gone stale, oldest first, stopping
-/// once `budgetMs` is spent so the serverless function never times out — any
-/// leftovers are simply first in line next hour.
-export async function refreshDueListings(budgetMs: number) {
-  const startedAt = Date.now();
+type DueListing = Pick<PriceListing, "id" | "externalId" | "store">;
+
+/// Listings due a check, hot tier first, each oldest first.
+async function dueListings(now: number) {
   const collected = await prisma.collectionItem.findMany({
     distinct: ["gameId"],
     select: { gameId: true },
   });
-  const due = await prisma.priceListing.findMany({
-    where: {
-      AND: [
-        {
-          OR: [
-            { lastViewedAt: { gte: new Date(startedAt - ACTIVE_WINDOW_MS) } },
-            { gameId: { in: collected.map((c) => c.gameId) } },
-          ],
-        },
-        {
-          OR: [
-            { lastFetchedAt: null },
-            { lastFetchedAt: { lt: new Date(startedAt - PRICE_TTL_MS) } },
-          ],
-        },
-      ],
-    },
-    orderBy: { lastFetchedAt: { sort: "asc", nulls: "first" } },
-    select: { id: true, externalId: true, store: true },
+  const hot = {
+    OR: [
+      { lastViewedAt: { gte: new Date(now - HOT_WINDOW_MS) } },
+      { gameId: { in: collected.map((c) => c.gameId) } },
+    ],
+  };
+  const staleFor = (ttl: number) => ({
+    OR: [{ lastFetchedAt: null }, { lastFetchedAt: { lt: new Date(now - ttl) } }],
   });
+  const select = { id: true, externalId: true, store: true } as const;
+  const orderBy = { lastFetchedAt: { sort: "asc", nulls: "first" } } as const;
+  const [hotDue, catalogueDue] = await Promise.all([
+    prisma.priceListing.findMany({ where: { AND: [hot, staleFor(PRICE_TTL_MS)] }, orderBy, select }),
+    prisma.priceListing.findMany({
+      where: { AND: [{ NOT: hot }, staleFor(CATALOGUE_TTL_MS)] },
+      orderBy,
+      select,
+    }),
+  ]);
+  return { hot: hotDue.length, due: [...hotDue, ...catalogueDue] };
+}
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/// Refreshes every due listing until `budgetMs` is spent; leftovers are first
+/// in line next run. Steam goes in batches of 100 (one request each); the PS
+/// Store has no bulk API, so it's one page per game, kept gentle with a small
+/// worker pool and a pause between pages.
+export async function refreshDueListings(
+  budgetMs: number,
+  { psConcurrency = 2, psDelayMs = 400 }: { psConcurrency?: number; psDelayMs?: number } = {}
+) {
+  const startedAt = Date.now();
+  const inBudget = () => Date.now() - startedAt < budgetMs;
+  const { hot, due } = await dueListings(startedAt);
   let refreshed = 0;
   let failed = 0;
-  const queue = [...due];
+
+  const steam = due.filter((l) => l.store === "STEAM");
+  const ps = due.filter((l) => l.store === "PLAYSTATION");
+
+  for (let i = 0; i < steam.length && inBudget(); i += STEAM_BATCH_SIZE) {
+    const batch = steam.slice(i, i + STEAM_BATCH_SIZE);
+    const now = new Date();
+    try {
+      const prices = await fetchSteamPrices(batch.map((l) => l.externalId));
+      for (const listing of batch) {
+        const price = prices.get(listing.externalId);
+        // Free or not sold in India: only the single lookup can tell which.
+        const ok = price
+          ? await recordPrice(listing.id, price, STORES.STEAM.missing, now)
+          : await refreshListing(listing);
+        if (ok) refreshed++;
+        else failed++;
+      }
+    } catch (error) {
+      for (const listing of batch) await recordError(listing.id, error, now);
+      failed += batch.length;
+    }
+    await sleep(1000);
+  }
+
+  const queue: DueListing[] = [...ps];
   const worker = async () => {
-    while (queue.length && Date.now() - startedAt < budgetMs) {
+    while (queue.length && inBudget()) {
       const listing = queue.shift()!;
       if (await refreshListing(listing)) refreshed++;
       else failed++;
+      await sleep(psDelayMs);
     }
   };
-  await Promise.all(Array.from({ length: CRON_CONCURRENCY }, worker));
+  await Promise.all(Array.from({ length: psConcurrency }, worker));
 
-  const { count: pruned } = await prisma.priceSnapshot.deleteMany({
-    where: { fetchedAt: { lt: new Date(startedAt - RETENTION_MS) } },
-  });
+  // Old snapshots go, except each listing's newest (its current price).
+  const pruned = await prisma.$executeRaw`
+    DELETE FROM "PriceSnapshot" s
+    WHERE s."fetchedAt" < ${new Date(startedAt - RETENTION_MS)}
+      AND EXISTS (
+        SELECT 1 FROM "PriceSnapshot" n
+        WHERE n."listingId" = s."listingId" AND n."fetchedAt" > s."fetchedAt"
+      )`;
 
-  return { due: due.length, refreshed, failed, skipped: queue.length, pruned };
+  return {
+    due: due.length,
+    hot,
+    refreshed,
+    failed,
+    skipped: due.length - refreshed - failed,
+    pruned,
+    seconds: Math.round((Date.now() - startedAt) / 1000),
+  };
 }
 
 const inr = new Intl.NumberFormat("en-IN", {

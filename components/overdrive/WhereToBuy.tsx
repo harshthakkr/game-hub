@@ -12,6 +12,9 @@ import { PriceHistoryModal } from "./PriceHistoryModal";
 type Series = {
   store: StoreListing["store"];
   lastFetchedAt: string | null;
+  /// The price just before the window (prices are stored only on change, so
+  /// a week with no change has no points of its own).
+  previous: { t: string; price: number } | null;
   points: { t: string; price: number }[];
 };
 
@@ -104,7 +107,8 @@ export function WhereToBuy({
       {stores.map((store) => {
         const isCheapest = store === cheapest;
         const off = discountLabel(store.price);
-        const points = trend.find((s) => s.store === store.store)?.points ?? [];
+        const week = trend.find((s) => s.store === store.store);
+        const points = [...(week?.previous ? [week.previous] : []), ...(week?.points ?? [])];
         const note = trendNote(points);
         return (
           <div

@@ -9,18 +9,12 @@ import {
   latestSnapshot,
   refreshListing,
   summarizeSnapshot,
+  STORE_SOURCES,
   trackListing,
 } from "@/lib/prices";
 import type { PriceStore } from "@/app/generated/prisma";
 import type { GamePageProps } from "@/utils/types";
 
-// IGDB's external_games.external_game_source enum: 1 identifies a Steam
-// store listing, with the Steam app id carried in `uid`; 36 is a PlayStation
-// Store listing, whose `uid` is a region-independent concept id.
-const SOURCES: { source: number; store: PriceStore }[] = [
-  { source: 36, store: "PLAYSTATION" },
-  { source: 1, store: "STEAM" },
-];
 const FIRST_FETCH_TIMEOUT_MS = 6000;
 
 /// Tracks the game's listing on one store and returns its latest known price.
@@ -69,7 +63,7 @@ export const getGame = cache(async (slug: string): Promise<GamePageProps | null>
     external_game_source: number;
     uid: string;
   }[];
-  const listed = SOURCES.flatMap(({ source, store }) => {
+  const listed = STORE_SOURCES.flatMap(({ source, store }) => {
     const externalId = externalGames.find((g) => g.external_game_source === source)?.uid;
     return externalId ? [{ store, externalId }] : [];
   });

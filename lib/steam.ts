@@ -47,3 +47,34 @@ export async function fetchSteamPrice(appId: string): Promise<StorePrice | null>
     saleEndsAt: null,
   };
 }
+
+/// Steam allows multi-app lookups only with filters=price_overview, so this is
+/// the bulk path for the daily sweep: up to 100 apps per request.
+export const STEAM_BATCH_SIZE = 100;
+
+/// Prices for a batch of apps. An app missing from the result (free, or not
+/// sold in India — the batch endpoint can't tell which) should be retried
+/// with fetchSteamPrice, which can. No product names here: the batch filter
+/// leaves them out. Throws on network/API failure.
+export async function fetchSteamPrices(appIds: string[]): Promise<Map<string, StorePrice>> {
+  const { data } = await axios.get(
+    `https://store.steampowered.com/api/appdetails?appids=${appIds.map(encodeURIComponent).join(",")}&cc=in&filters=price_overview`,
+    { timeout: 15000 }
+  );
+  const prices = new Map<string, StorePrice>();
+  for (const appId of appIds) {
+    const overview = data?.[appId]?.data?.price_overview as
+      | { currency: string; initial: number; final: number }
+      | undefined;
+    if (!overview) continue;
+    prices.set(appId, {
+      productName: null,
+      currency: overview.currency,
+      basePrice: Math.round(overview.initial / 100),
+      price: Math.round(overview.final / 100),
+      isFree: false,
+      saleEndsAt: null,
+    });
+  }
+  return prices;
+}

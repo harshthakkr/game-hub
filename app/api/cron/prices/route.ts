@@ -5,7 +5,8 @@ import { refreshDueListings } from "@/lib/prices";
 export const maxDuration = 60;
 const BUDGET_MS = 45_000;
 
-/// Hit hourly by the scheduler (see .github/workflows/price-tracker.yml).
+/// Manual trigger for a short price sweep (the scheduled sweep runs as a
+/// script in .github/workflows/price-tracker.yml, without the 60s limit).
 /// Guarded by CRON_SECRET so the public can't trigger scrapes.
 export const GET = async (request: NextRequest) => {
   const secret = process.env.CRON_SECRET;

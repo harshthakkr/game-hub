@@ -81,7 +81,7 @@ function formatStamp(date: Date) {
   });
 }
 
-/// Modal with the hourly price trail for every store we track the game on.
+/// Modal with the price trail for every store we track the game on.
 /// The body mounts only while open, so history is fetched on each opening.
 export function PriceHistoryModal({
   open,
@@ -335,7 +335,7 @@ function toSamples(s: Series, start: number): Sample[] {
 }
 
 /// Step-line chart: a store price holds until the next sample shows a change,
-/// so steps read truer than diagonals between hourly points. Every store is
+/// so steps read truer than diagonals between points. Every store is
 /// drawn; the focused one is bright and carries the fill, low line and the
 /// scrubber. The plot is a focusable slider: arrow keys step through samples.
 function PriceChart({ series, focus }: { series: Series[]; focus: StoreId }) {
