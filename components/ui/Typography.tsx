@@ -27,7 +27,7 @@ export function SectionHeader({
         className
       )}
     >
-      {index && <span className="font-mono text-ui text-ov-muted">{index}</span>}
+      {index && <span className="font-hud text-ui font-semibold text-ov-teal">{index}</span>}
       <Heading className="text-lg font-semibold tracking-[-0.01em] text-ov-white lg:text-section">
         {title}
       </Heading>
@@ -42,13 +42,17 @@ export function SubHeading({ children, className }: { children: ReactNode; class
   return <h2 className={cx("text-xl font-semibold text-ov-white", className)}>{children}</h2>;
 }
 
-/// Page title block: big title plus a one-line description.
+/// Page title block: an Orbitron caps title (the logo's voice) with an
+/// optional "// note" readout beside it, then a one-line description.
 export function PageHeading({
   title,
+  note,
   description,
   children,
 }: {
   title: ReactNode;
+  /// Readout after the title, e.g. "16,698 titles". Rendered as "// note".
+  note?: ReactNode;
   description?: ReactNode;
   /// Right-aligned extras (stats, actions).
   children?: ReactNode;
@@ -56,9 +60,17 @@ export function PageHeading({
   return (
     <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
       <div className="flex flex-col gap-2">
-        <h1 className="text-[28px] font-semibold tracking-[-0.02em] text-ov-white lg:text-page lg:tracking-[-0.03em]">
-          {title}
-        </h1>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="font-orbitron text-[24px] leading-tight font-bold tracking-[0.04em] text-ov-white uppercase lg:text-[34px]">
+            {title}
+          </h1>
+          {note && (
+            <span className="font-hud text-ui text-ov-muted lg:text-body">
+              <span aria-hidden className="text-ov-teal">{"// "}</span>
+              {note}
+            </span>
+          )}
+        </div>
         {description && <p className="text-sm text-ov-dim lg:text-body">{description}</p>}
       </div>
       {children && <div className="w-full lg:ml-auto lg:w-auto">{children}</div>}
@@ -66,10 +78,26 @@ export function PageHeading({
   );
 }
 
-/// Mono caps caption that names a value or field group ("CRITIC", "GENRE").
-export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
+/// Caps caption that names a value or field group ("CRITIC", "GENRE").
+/// `tick` adds the HUD accent bar, for labels that head a group of controls
+/// or a panel ("▍FILTERS", "▍WHERE TO BUY"), not for labels over values.
+export function Eyebrow({
+  children,
+  tick = false,
+  className,
+}: {
+  children: ReactNode;
+  tick?: boolean;
+  className?: string;
+}) {
   return (
-    <div className={cx("font-mono text-micro uppercase tracking-label text-ov-muted", className)}>
+    <div
+      className={cx(
+        "font-hud text-micro font-semibold uppercase tracking-label text-ov-muted",
+        tick && "flex items-center gap-2 text-ov-dim before:h-3 before:w-[3px] before:bg-ov-teal",
+        className
+      )}
+    >
       {children}
     </div>
   );

@@ -35,7 +35,8 @@ export const Textarea = forwardRef<
       aria-invalid={invalid || undefined}
       className={cx(
         BASE,
-        "resize-y",
+        // Long-form writing (reviews, comments) reads in the body face.
+        "resize-y font-body",
         size === "sm" ? "px-3 py-2 text-base leading-normal lg:text-sm" : "px-3.5 py-3 text-base leading-normal lg:text-body",
         border(invalid),
         className
@@ -76,7 +77,7 @@ export function CharCount({
   return (
     <span
       className={cx(
-        "font-mono text-label",
+        "font-hud text-label",
         count > max ? "text-ov-rose" : "text-ov-muted",
         className
       )}

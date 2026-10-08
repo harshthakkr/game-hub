@@ -40,7 +40,7 @@ export function MenuHeader({ children }: { children: ReactNode }) {
 /// Mono caps caption above a group of items.
 export function MenuLabel({ children }: { children: ReactNode }) {
   return (
-    <DropdownMenu.Label className="px-2.5 py-2 font-mono text-micro uppercase tracking-label text-ov-muted">
+    <DropdownMenu.Label className="px-2.5 py-2 font-hud text-micro uppercase tracking-label text-ov-muted">
       {children}
     </DropdownMenu.Label>
   );

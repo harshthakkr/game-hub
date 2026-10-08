@@ -86,7 +86,7 @@ export default function EventPage() {
             </div>
           </StatStrip>
           {data.description && (
-            <p className="max-w-[620px] text-base leading-relaxed text-pretty text-ov-text">{data.description}</p>
+            <p className="max-w-[620px] font-body text-base leading-relaxed text-pretty text-ov-text">{data.description}</p>
           )}
           {(data.live_stream_url || calendarUrl) && (
             <div className="flex flex-wrap gap-3">

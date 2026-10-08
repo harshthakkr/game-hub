@@ -80,7 +80,7 @@ export function ReviewCard({
           <Avatar author={review.author} size={32} />
         </span>
         <span className="text-sm font-semibold text-ov-white">{displayName(review.author)}</span>
-        {review.isMine && <span className="font-mono text-micro tracking-label text-ov-teal">YOU</span>}
+        {review.isMine && <span className="font-hud text-micro tracking-label text-ov-teal">YOU</span>}
         <span className="text-ui text-ov-muted">
           {relativeTime(review.createdAt)}
           {review.updatedAt !== review.createdAt && " · edited"}
@@ -92,7 +92,7 @@ export function ReviewCard({
 
       {veiled ? (
         <div className="relative max-w-[720px]">
-          <p aria-hidden className="line-clamp-3 select-none text-body leading-relaxed text-ov-text blur-[7px]">
+          <p aria-hidden className="line-clamp-3 select-none font-body text-body leading-relaxed text-ov-text blur-[7px]">
             {review.body}
           </p>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -108,7 +108,7 @@ export function ReviewCard({
         </div>
       ) : (
         <p
-          className={`max-w-[720px] whitespace-pre-wrap text-body leading-relaxed text-pretty text-ov-text ${
+          className={`max-w-[720px] whitespace-pre-wrap font-body text-body leading-relaxed text-pretty text-ov-text ${
             clamped ? "line-clamp-[7]" : ""
           }`}
         >

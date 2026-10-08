@@ -50,7 +50,7 @@ export function Lightbox({
       >
         <div className="flex shrink-0 items-center gap-4 px-4 py-3.5 lg:px-7">
           <span className="truncate text-body font-semibold text-ov-white">{alt}</span>
-          <span className="ml-auto font-mono text-ui text-ov-dim">
+          <span className="ml-auto font-hud text-ui text-ov-dim">
             {index + 1} / {count}
           </span>
           <DialogClose asChild>

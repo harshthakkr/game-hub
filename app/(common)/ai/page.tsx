@@ -1,7 +1,13 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
 import { AIChat } from "@/components/overdrive/AIChat";
+
+export const metadata: Metadata = {
+  title: "AI Concierge",
+  description: "Ask for game recommendations by mood, budget or a game you loved.",
+};
 
 export default async function AIPage({
   searchParams,

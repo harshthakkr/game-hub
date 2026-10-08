@@ -25,7 +25,7 @@ export function EventCard({ event, showStart = false }: { event: EventCardProps;
           className={cx(
             "absolute top-3 left-3 flex items-center gap-1.5 border px-2 py-0.5 text-label font-semibold",
             live
-              ? "border-ov-rose bg-ov-rose text-white"
+              ? "border-ov-rose-strong bg-ov-rose-strong text-white"
               : "border-ov-border-strong bg-ov-bg/82 text-ov-white",
             timing.state === "past" && "text-ov-dim"
           )}
@@ -67,7 +67,7 @@ export function EventCard({ event, showStart = false }: { event: EventCardProps;
               })}
               target="_blank"
               rel="noreferrer"
-              aria-label={`Add ${event.name} to Google Calendar`}
+              aria-label={`Add to calendar: ${event.name} (Google Calendar)`}
               className="relative z-10 flex h-[34px] items-center gap-1.5 border border-ov-border-strong px-3 text-ui font-medium whitespace-nowrap text-ov-text transition-colors duration-150 hover:bg-ov-raised hover:text-ov-white"
             >
               <OvIcon name="calendar-add" className="text-sm" />

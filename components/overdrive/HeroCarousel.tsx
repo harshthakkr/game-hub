@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCollection } from "@/context/CollectionContext";
 import type { HeroGame } from "@/utils/types";
 import { developerName, formatYear, landscapeArt } from "@/utils/overdrive";
 import { discountLabel } from "@/utils/price";
 import { Button, Eyebrow, IconButton, Rating } from "@/components/ui";
 import { cx } from "@/utils/cx";
 import { TrailerDialog } from "./TrailerDialog";
+import { useWishToggle } from "./GameCards";
 
 const SLIDE_MS = 7000;
 
@@ -44,7 +44,6 @@ export function HeroCarousel({ games }: { games: HeroGame[] }) {
   const reducedMotion = usePrefersReducedMotion();
   const rootRef = useRef<HTMLElement>(null);
   const touchX = useRef<number | null>(null);
-  const { isWished, toggleWish } = useCollection();
 
   const autoplay = !paused && !hovering && !reducedMotion && !trailerOpen && slides.length > 1;
 
@@ -54,11 +53,12 @@ export function HeroCarousel({ games }: { games: HeroGame[] }) {
     return () => clearTimeout(timer);
   }, [autoplay, index, slides.length]);
 
-  if (slides.length === 0) return null;
   const game = slides[Math.min(index, slides.length - 1)];
+  const { wished, popClass, toggle: toggleWished } = useWishToggle(game?.id);
+
+  if (!game) return null;
   const art = landscapeArt(game.artworks, game.screenshots)!;
   const trailer = game.videos?.[0]?.video_id;
-  const wished = game.id ? isWished(game.id) : false;
   const platforms = (game.platforms ?? [])
     .map((p) => p.abbreviation)
     .filter(Boolean)
@@ -112,7 +112,7 @@ export function HeroCarousel({ games }: { games: HeroGame[] }) {
           aria-label={`${index + 1} of ${slides.length}: ${game.name}`}
           className="flex flex-col gap-3 px-4 pt-[212px] lg:absolute lg:top-[88px] lg:left-8 lg:w-[min(600px,calc(100%-64px))] lg:gap-5 lg:p-0"
         >
-          <span className="flex items-center gap-2.5 font-mono text-micro tracking-[0.1em] text-ov-teal lg:text-label">
+          <span className="flex items-center gap-2.5 font-hud text-micro tracking-[0.1em] text-ov-teal lg:text-label">
             <span aria-hidden className="h-px w-4 bg-ov-teal lg:w-5" />
             {kicker(game)}
           </span>
@@ -127,7 +127,7 @@ export function HeroCarousel({ games }: { games: HeroGame[] }) {
               .join(" · ")}
           </p>
           {game.summary && (
-            <p className="line-clamp-3 hidden text-lead leading-relaxed text-pretty text-ov-text lg:block">
+            <p className="line-clamp-3 hidden font-body text-lead leading-relaxed text-pretty text-ov-text lg:block">
               {game.summary}
             </p>
           )}
@@ -165,10 +165,11 @@ export function HeroCarousel({ games }: { games: HeroGame[] }) {
                   icon={wished ? "heart-filled" : "heart"}
                   label={wished ? `Remove ${game.name} from wishlist` : `Add ${game.name} to wishlist`}
                   aria-pressed={wished}
-                  onClick={() => toggleWish(game.id!)}
+                  onClick={toggleWished}
                   size="xl"
                   className={cx(
                     "border lg:hidden",
+                    popClass,
                     wished ? "border-ov-rose-deep bg-ov-rose-wash" : "border-ov-border-strong bg-ov-raised"
                   )}
                   iconClassName="text-lg text-ov-rose"
@@ -179,7 +180,8 @@ export function HeroCarousel({ games }: { games: HeroGame[] }) {
                     variant={wished ? "danger" : "secondary"}
                     icon={wished ? "heart-filled" : "heart"}
                     aria-pressed={wished}
-                    onClick={() => toggleWish(game.id!)}
+                    className={popClass}
+                    onClick={toggleWished}
                   >
                     {wished ? "Wishlisted" : "Wishlist"}
                   </Button>
@@ -212,7 +214,7 @@ export function HeroCarousel({ games }: { games: HeroGame[] }) {
                   onClick={() => setIndex(i)}
                   aria-label={`Show ${s.name}`}
                   aria-current={i === index ? "true" : undefined}
-                  className="flex h-11 flex-1 items-center px-0.5 lg:h-auto lg:flex-none lg:py-2"
+                  className="flex h-11 flex-1 items-center px-0.5 lg:h-6 lg:flex-none lg:px-1.5"
                 >
                   <span
                     className={cx(
@@ -225,7 +227,7 @@ export function HeroCarousel({ games }: { games: HeroGame[] }) {
             </div>
             <span className="pl-2 font-orbitron text-ui font-bold text-ov-white lg:order-1 lg:pl-0 lg:text-sm" aria-hidden>
               {String(index + 1).padStart(2, "0")}
-              <span className="text-ov-faint"> / {String(slides.length).padStart(2, "0")}</span>
+              <span className="text-ov-muted"> / {String(slides.length).padStart(2, "0")}</span>
             </span>
           </div>
         )}

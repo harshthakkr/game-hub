@@ -47,7 +47,8 @@ function NavLinks({ pathname, className }: { pathname: string; className?: strin
     <nav
       aria-label="Primary"
       className={cx(
-        "flex min-w-0 overflow-x-auto text-sm font-medium [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        // Caps, tracked: the nav speaks in the HUD voice.
+        "flex min-w-0 overflow-x-auto text-ui font-semibold tracking-[0.08em] uppercase [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         className
       )}
     >
@@ -98,7 +99,7 @@ function CountLink({
       )}
     >
       <OvIcon name={icon} className={cx("text-lg", icon === "heart" && "text-ov-rose")} />
-      <span className="font-mono text-ui">{count}</span>
+      <span className="font-hud text-ui">{count}</span>
     </Link>
   );
 }
@@ -155,7 +156,7 @@ function PhoneTopBar({ pathname }: { pathname: string }) {
         ) : (
           <Link
             href={`/register?mode=login&callbackUrl=${encodeURIComponent(pathname)}`}
-            className="flex h-11 items-center px-2.5 text-sm font-semibold text-ov-teal"
+            className="flex h-11 items-center px-2.5 text-ui font-semibold tracking-[0.08em] text-ov-teal uppercase"
           >
             Sign in
           </Link>
@@ -260,8 +261,8 @@ export function TopBar() {
             className="mr-2 hidden h-[38px] w-60 items-center gap-2.5 border border-ov-border bg-ov-field px-3 text-sm text-ov-muted transition-colors duration-150 hover:border-ov-border-strong hover:text-ov-dim xl:flex"
           >
             <OvIcon name="search" className="text-base" />
-            <span className="flex-1 text-left">Search games</span>
-            <kbd className="border border-ov-border-strong px-1.5 font-mono text-label text-ov-dim">
+            <span className="flex-1 text-left">Search the grid</span>
+            <kbd className="border border-ov-border-strong px-1.5 font-hud text-label text-ov-dim">
               ⌘K
             </kbd>
           </button>

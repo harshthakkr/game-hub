@@ -114,7 +114,7 @@ export default function DesignSystemPage() {
           </Panel>
           <Panel className="flex flex-col gap-2 p-5">
             <Eyebrow>LABELS · GEIST MONO</Eyebrow>
-            <span className="font-mono text-base">PRICE HISTORY · 24H</span>
+            <span className="font-hud text-base">PRICE HISTORY · 24H</span>
           </Panel>
           <Panel className="flex flex-col gap-2 p-5">
             <Eyebrow>NUMERALS · ORBITRON</Eyebrow>
@@ -190,7 +190,7 @@ export default function DesignSystemPage() {
           <TabsList className="border-b border-ov-border">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="reviews">
-              Reviews <span className="bg-ov-raised px-1.5 font-mono text-label text-ov-dim">551</span>
+              Reviews <span className="bg-ov-raised px-1.5 font-hud text-label text-ov-dim">551</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="pt-4 text-sm text-ov-text">

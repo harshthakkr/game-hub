@@ -51,7 +51,7 @@ export default function Developer() {
       )}
 
       {data.description && (
-        <p className="max-w-[720px] text-base leading-relaxed text-ov-text">{data.description}</p>
+        <p className="max-w-[720px] font-body text-base leading-relaxed text-ov-text">{data.description}</p>
       )}
 
       <section className="flex flex-col gap-5" aria-label="Games">

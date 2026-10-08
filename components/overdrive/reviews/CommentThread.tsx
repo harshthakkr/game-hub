@@ -145,7 +145,7 @@ function CommentRow({
               {relativeTime(comment.createdAt)}
             </span>
           </div>
-          <p className="mt-1 whitespace-pre-wrap text-ui leading-[1.75] text-ov-text">
+          <p className="mt-1 whitespace-pre-wrap font-body text-ui leading-[1.75] text-ov-text">
             {comment.body}
           </p>
           <div className="mt-1.5 flex items-center gap-4">

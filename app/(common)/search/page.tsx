@@ -34,8 +34,8 @@ function SearchResults() {
   return (
     <PageContainer>
       <PageHeading
-        title={`Results for “${q}”`}
-        description={`${results.length} ${results.length === 1 ? "game" : "games"}`}
+        title="Search"
+        note={`${results.length} ${results.length === 1 ? "hit" : "hits"} for “${q}”`}
       />
 
       {results.length > 0 ? (

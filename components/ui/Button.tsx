@@ -16,28 +16,28 @@ export type ButtonSize = "sm" | "md" | "lg";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   /// The one call to action per view.
-  primary: "bg-ov-teal font-semibold text-ov-teal-ink hover:bg-ov-teal-hover",
+  primary: "bg-ov-teal text-ov-teal-ink hover:bg-ov-teal-hover",
   /// Solid neutral; pressed (aria-pressed) turns it teal for "saved" toggles.
   secondary:
-    "border border-ov-border-strong bg-ov-raised font-medium text-ov-white hover:border-ov-faint aria-pressed:border-ov-teal-deep aria-pressed:text-ov-teal-hover",
+    "border border-ov-border-strong bg-ov-raised text-ov-white hover:border-ov-faint aria-pressed:border-ov-teal-deep aria-pressed:text-ov-teal-hover",
   /// Transparent neutral, for secondary actions on busy surfaces.
   outline:
-    "border border-ov-border-strong font-medium text-ov-text hover:bg-ov-raised hover:text-ov-white",
+    "border border-ov-border-strong text-ov-text hover:bg-ov-raised hover:text-ov-white",
   /// Text-only, for low-emphasis actions like Cancel.
-  ghost: "font-medium text-ov-dim hover:text-ov-white",
+  ghost: "text-ov-dim hover:text-ov-white",
   /// Destructive or "remove"; also the pressed state of a wishlist toggle.
   danger:
-    "border border-ov-rose-deep bg-ov-rose-wash font-medium text-ov-rose-soft hover:border-ov-rose",
-  live: "bg-ov-rose font-semibold text-white hover:brightness-110",
+    "border border-ov-rose-deep bg-ov-rose-wash text-ov-rose-soft hover:border-ov-rose",
+  live: "bg-ov-rose-strong text-white hover:brightness-110",
   /// Third-party sign-in ("Continue with Google"): a light, neutral fill.
-  light: "bg-ov-white font-semibold text-ov-bg hover:bg-white",
+  light: "bg-ov-white text-ov-bg hover:bg-white",
 };
 
 const SIZES: Record<ButtonSize, { box: string; icon: string }> = {
-  sm: { box: "h-8 gap-1.5 px-3 text-ui", icon: "text-sm" },
+  sm: { box: "h-8 gap-1.5 px-3 text-label", icon: "text-sm" },
   /// 44px on phones (minimum touch target), 40px with a pointer.
-  md: { box: "h-11 gap-2 px-4 text-sm lg:h-10", icon: "text-base" },
-  lg: { box: "h-12 gap-2.5 px-6 text-body", icon: "text-base" },
+  md: { box: "h-11 gap-2 px-4 text-ui lg:h-10", icon: "text-base" },
+  lg: { box: "h-12 gap-2.5 px-6 text-sm", icon: "text-base" },
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -84,7 +84,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={asChild ? undefined : disabled || loading}
       aria-busy={loading || undefined}
       className={cx(
-        "inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-[filter,background-color,border-color,color,scale] duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40",
+        // Caps + tracking: buttons are HUD controls. Sizes step down one
+        // notch to compensate for the taller caps.
+        "inline-flex shrink-0 items-center justify-center font-semibold tracking-[0.06em] whitespace-nowrap uppercase transition-[filter,background-color,border-color,color,scale] duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40",
         cut && "ov-chamfer ov-chamfer-sm",
         s.box,
         VARIANTS[variant],

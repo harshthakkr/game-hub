@@ -31,8 +31,8 @@ export function ShelfMenu({
     <Button
       size={size}
       variant="secondary"
-      aria-pressed={!!shelf}
-      aria-label={shelf ? `${gameName}: in library, ${label}. Change shelf` : `Add ${gameName} to library`}
+      // Starts with the visible text (voice control users say what they see).
+      aria-label={shelf ? `${label}: ${gameName} is in your library, change shelf` : `Add to library: ${gameName}`}
       icon={shelf ? "check" : undefined}
       iconRight="chevron-down"
       className={className}
@@ -61,7 +61,7 @@ export function ShelfMenu({
           sideOffset={8}
           className="z-50 w-60 origin-(--radix-dropdown-menu-content-transform-origin) border border-ov-border-strong bg-ov-field p-1.5 shadow-ov-pop data-[state=closed]:animate-ov-pop-out data-[state=open]:animate-ov-pop"
         >
-          <DropdownMenu.Label className="px-2.5 py-2 font-mono text-micro uppercase tracking-label text-ov-muted">
+          <DropdownMenu.Label className="px-2.5 py-2 font-hud text-micro uppercase tracking-label text-ov-muted">
             Save to shelf
           </DropdownMenu.Label>
           <DropdownMenu.RadioGroup

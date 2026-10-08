@@ -30,7 +30,7 @@ export function SavedSwitcher() {
             )}
           >
             {item.label}
-            <span className="font-mono text-label text-ov-dim">{item.count}</span>
+            <span className="font-hud text-label text-ov-dim">{item.count}</span>
           </Link>
         );
       })}

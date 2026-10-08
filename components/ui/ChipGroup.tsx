@@ -78,7 +78,7 @@ export function ChipGroup<T extends string>({
             {option.label}
           </span>
           {option.count !== undefined && (
-            <span className="font-mono text-label text-ov-muted">{option.count}</span>
+            <span className="font-hud text-label text-ov-muted">{option.count}</span>
           )}
         </ToggleGroup.Item>
       ))}

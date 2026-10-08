@@ -119,7 +119,7 @@ function useGameSearch(query: string) {
 }
 
 const GROUP_HEADING =
-  "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-micro [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-label [&_[cmdk-group-heading]]:text-ov-muted";
+  "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:font-hud [&_[cmdk-group-heading]]:text-micro [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-label [&_[cmdk-group-heading]]:text-ov-muted";
 
 const ITEM =
   "flex min-h-[52px] cursor-pointer items-center gap-3 px-3 py-2 text-body lg:min-h-0 lg:text-sm text-ov-text data-[selected=true]:bg-ov-raised data-[selected=true]:text-ov-white data-[selected=true]:shadow-[inset_2px_0_0_var(--color-ov-teal)]";
@@ -182,7 +182,7 @@ function CommandPalette({
         >
           Cancel
         </button>
-        <kbd className="hidden border border-ov-border-strong px-1.5 py-0.5 font-mono text-micro text-ov-dim lg:block">
+        <kbd className="hidden border border-ov-border-strong px-1.5 py-0.5 font-hud text-micro text-ov-dim lg:block">
           ESC
         </kbd>
       </div>
@@ -205,7 +205,7 @@ function CommandPalette({
                     <span className="h-[37px] w-7 shrink-0 bg-ov-raised" />
                   )}
                   <span className="min-w-0 flex-1 truncate font-medium">{game.name}</span>
-                  <span className="font-mono text-micro text-ov-dim">GAME</span>
+                  <span className="font-hud text-micro text-ov-dim">GAME</span>
                 </Command.Item>
               );
             })}
@@ -250,7 +250,7 @@ function CommandPalette({
                         .join(" · ")}
                     </span>
                   </span>
-                  <span className="font-mono text-micro text-ov-dim">GAME</span>
+                  <span className="font-hud text-micro text-ov-dim">GAME</span>
                 </Command.Item>
               );
             })}
@@ -268,7 +268,7 @@ function CommandPalette({
               <span className="min-w-0 flex-1 truncate">
                 Ask the Concierge: <span className="text-ov-white">“{trimmed}”</span>
               </span>
-              <span className="font-mono text-micro text-ov-dim">ASK</span>
+              <span className="font-hud text-micro text-ov-dim">ASK</span>
             </Command.Item>
           </Command.Group>
         )}
@@ -284,7 +284,7 @@ function CommandPalette({
               >
                 <OvIcon name={page.icon} className="text-base text-ov-muted" />
                 <span className="flex-1">{page.label}</span>
-                <span className="font-mono text-micro text-ov-dim">PAGE</span>
+                <span className="font-hud text-micro text-ov-dim">PAGE</span>
               </Command.Item>
             ))}
           </Command.Group>
@@ -301,7 +301,7 @@ function CommandPalette({
               >
                 <OvIcon name="list" className="text-base text-ov-muted" />
                 <span className="flex-1">{g.label}</span>
-                <span className="font-mono text-micro text-ov-dim">GENRE</span>
+                <span className="font-hud text-micro text-ov-dim">GENRE</span>
               </Command.Item>
             ))}
           </Command.Group>

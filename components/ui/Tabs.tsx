@@ -44,7 +44,8 @@ export function TabsTrigger({ className, ...props }: ComponentProps<typeof Radix
 export function TabsContent({ className, ...props }: ComponentProps<typeof RadixTabs.Content>) {
   return (
     <RadixTabs.Content
-      className={cx("outline-none data-[state=active]:animate-ov-fade-up", className)}
+      // No outline-none: Radix makes the panel a tab stop, so it needs the ring.
+      className={cx("outline-offset-4 data-[state=active]:animate-ov-fade-up", className)}
       {...props}
     />
   );

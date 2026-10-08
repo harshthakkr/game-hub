@@ -92,7 +92,7 @@ export function WhereToBuy({
       className="ov-chamfer flex flex-col gap-2.5 lg:gap-3.5 lg:border lg:border-ov-border lg:bg-ov-panel lg:p-5.5"
     >
       <h2 id="where-to-buy">
-        <Eyebrow>WHERE TO BUY</Eyebrow>
+        <Eyebrow tick>WHERE TO BUY</Eyebrow>
       </h2>
 
       {stores.length === 0 && (
@@ -117,7 +117,7 @@ export function WhereToBuy({
             <div className="flex items-center gap-2">
               <span className="text-body font-semibold">{store.label}</span>
               {isCheapest && (
-                <span className="bg-ov-teal px-1.5 py-0.5 font-mono text-micro font-medium tracking-label text-ov-teal-ink">
+                <span className="bg-ov-teal px-1.5 py-0.5 font-hud text-micro font-medium tracking-label text-ov-teal-ink">
                   CHEAPEST
                 </span>
               )}

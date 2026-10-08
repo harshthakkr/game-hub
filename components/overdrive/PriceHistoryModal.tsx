@@ -305,7 +305,7 @@ function PriceHistoryBody({ slug }: { slug: string }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-ov-border pt-4">
-        <span className="flex items-center gap-1.5 font-mono text-label text-ov-muted">
+        <span className="flex items-center gap-1.5 font-hud text-label text-ov-muted">
           <OvIcon name="clock" className="text-sm" />
           Checked {timeAgo(active?.lastFetchedAt ?? null)} · hourly · INR
         </span>
@@ -457,7 +457,7 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
                 y={y(v)}
                 textAnchor="end"
                 dominantBaseline="middle"
-                className="fill-ov-muted font-mono text-micro"
+                className="fill-ov-muted font-hud text-micro"
               >
                 {money(Math.round(v))}
               </text>
@@ -469,34 +469,37 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
               x={x(t)}
               y={CHART_HEIGHT - 6}
               textAnchor={i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle"}
-              className="fill-ov-muted font-mono text-micro"
+              className="fill-ov-muted font-hud text-micro"
             >
               {i === xTicks.length - 1 ? "NOW" : formatTick(new Date(t), hours)}
             </text>
           ))}
 
-          {focused.store === "PLAYSTATION" && <path d={area} fill="url(#ov-price-fill)" />}
-          <line
-            x1={PAD.left}
-            x2={PAD.left + plotW}
-            y1={y(low)}
-            y2={y(low)}
-            className="stroke-ov-deal"
-            strokeDasharray="4 5"
-            opacity={0.6}
-          />
-          {lines.map((line) => (
-            <path
-              key={line.store}
-              d={pathFor(line.samples)}
-              fill="none"
-              className={STORE_STROKE[line.store]}
-              strokeWidth={line.store === focused.store ? 2.5 : 1.5}
-              strokeDasharray={STORE_DASH[line.store]}
-              strokeLinejoin="round"
-              opacity={line.store === focused.store ? 1 : 0.6}
+          {/* Keyed by range: switching range redraws the lines. */}
+          <g key={hours} className="animate-ov-draw">
+            {focused.store === "PLAYSTATION" && <path d={area} fill="url(#ov-price-fill)" />}
+            <line
+              x1={PAD.left}
+              x2={PAD.left + plotW}
+              y1={y(low)}
+              y2={y(low)}
+              className="stroke-ov-deal"
+              strokeDasharray="4 5"
+              opacity={0.6}
             />
-          ))}
+            {lines.map((line) => (
+              <path
+                key={line.store}
+                d={pathFor(line.samples)}
+                fill="none"
+                className={STORE_STROKE[line.store]}
+                strokeWidth={line.store === focused.store ? 2.5 : 1.5}
+                strokeDasharray={STORE_DASH[line.store]}
+                strokeLinejoin="round"
+                opacity={line.store === focused.store ? 1 : 0.6}
+              />
+            ))}
+          </g>
 
           {hovered && (
             <g pointerEvents="none">

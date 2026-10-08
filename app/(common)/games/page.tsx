@@ -229,7 +229,7 @@ function FilterSheet({
       <div className="flex flex-col gap-5.5 p-4">
         {FILTERS.map((f) => (
           <div key={f.key} className="flex flex-col gap-2.5">
-            <Eyebrow>{f.label}</Eyebrow>
+            <Eyebrow tick>{f.label}</Eyebrow>
             <div role="radiogroup" aria-label={f.label.toLowerCase()} className="flex flex-wrap gap-2">
               {withAny(f.options, "Any").map((o) => {
                 const on = (staged[f.key] ?? ANY) === o.value;
@@ -273,7 +273,7 @@ function FilterSheet({
 
 function catalogueTitle(filters: CatalogFilters) {
   const genre = GENRES.find((g) => g.value === filters.genre);
-  return genre ? `${genre.label} games` : "All games";
+  return genre ? genre.label : "Catalogue";
 }
 
 function Catalogue() {
@@ -298,7 +298,7 @@ function Catalogue() {
         className="sticky top-[calc(var(--ov-topbar-h)+32px)] hidden flex-col gap-7 xl:flex"
       >
         <div className="flex flex-col gap-2">
-          <Eyebrow>GENRE</Eyebrow>
+          <Eyebrow tick>GENRE</Eyebrow>
           <ChipGroup
             label="Genre"
             variant="list"
@@ -309,7 +309,7 @@ function Catalogue() {
         </div>
         {FILTERS.slice(1).map((f) => (
           <div key={f.key} className="flex flex-col gap-2.5">
-            <Eyebrow>{f.label}</Eyebrow>
+            <Eyebrow tick>{f.label}</Eyebrow>
             <ChipGroup
               label={f.label.toLowerCase()}
               options={withAny(f.options, "Any")}
@@ -325,15 +325,13 @@ function Catalogue() {
 
       <div className="flex min-w-0 flex-col gap-4 lg:gap-5">
         <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-          <h1 className="text-[28px] font-semibold tracking-[-0.02em] lg:text-4xl">
+          <h1 className="font-orbitron text-[24px] leading-tight font-bold tracking-[0.04em] uppercase lg:text-[34px]">
             {catalogueTitle(filters)}
           </h1>
           {total !== null && !loading && !failed && (
-            <span className="flex items-baseline gap-2" aria-live="polite">
-              <span className="font-orbitron text-base font-bold text-ov-teal">
-                {total.toLocaleString("en-IN")}
-              </span>
-              <span className="text-sm text-ov-muted">{total === 1 ? "game" : "games"}</span>
+            <span className="font-hud text-ui text-ov-muted lg:text-body" aria-live="polite">
+              <span aria-hidden className="text-ov-teal">{"// "}</span>
+              {total.toLocaleString("en-IN")} {total === 1 ? "title" : "titles"}
             </span>
           )}
         </div>
@@ -350,7 +348,7 @@ function Catalogue() {
               <OvIcon name="list" className="text-base" />
               Filters
               {active.length > 0 && (
-                <span className="bg-ov-teal px-1.5 font-mono text-label text-ov-teal-ink">{active.length}</span>
+                <span className="bg-ov-teal px-1.5 font-hud text-label text-ov-teal-ink">{active.length}</span>
               )}
             </button>
             <button
@@ -509,7 +507,7 @@ function Catalogue() {
           <div>
             <div
               aria-hidden
-              className="hidden grid-cols-[48px_minmax(0,1fr)_120px_52px_110px_36px_150px] gap-x-4 px-2.5 pb-2.5 font-mono text-micro tracking-label text-ov-muted lg:grid"
+              className="hidden grid-cols-[48px_minmax(0,1fr)_120px_52px_110px_36px_150px] gap-x-4 px-2.5 pb-2.5 font-hud text-micro tracking-label text-ov-muted lg:grid"
             >
               <span />
               <span>TITLE</span>

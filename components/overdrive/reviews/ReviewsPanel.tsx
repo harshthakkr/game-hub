@@ -227,7 +227,7 @@ export function ReviewsPanel({
           </p>
         ) : (
           <>
-            <p className="font-mono text-label text-ov-muted" aria-live="polite">
+            <p className="font-hud text-label text-ov-muted" aria-live="polite">
               {reviews.length} of {total} {total === 1 ? "review" : "reviews"}
             </p>
             <div className="flex flex-col gap-5">

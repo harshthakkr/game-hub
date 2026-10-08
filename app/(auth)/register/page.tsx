@@ -4,6 +4,9 @@ import type { AuthMode } from "@/components/AuthForm";
 import { CoverMarquee } from "@/components/overdrive/CoverMarquee";
 import { OvIcon } from "@/components/overdrive/OvIcon";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Sign in", robots: { index: false } };
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -32,7 +35,7 @@ export default async function Register({
     <div className="grid min-h-screen bg-ov-bg lg:grid-cols-2">
       {/* Cover-art panel. On phones it shrinks to a short banner so the form
           is the first thing in view. */}
-      <div className="relative h-[200px] overflow-hidden bg-ov-panel lg:h-auto">
+      <aside aria-label="About GAME//HUB" className="relative h-[200px] overflow-hidden bg-ov-panel lg:h-auto">
         <div aria-hidden className="absolute -inset-10 -rotate-6 scale-110">
           <Suspense fallback={null}>
             <CoverMarquee />
@@ -60,7 +63,7 @@ export default async function Register({
             Track PlayStation Store and Steam prices in INR, follow live events and keep your library in one place.
           </p>
         </div>
-      </div>
+      </aside>
 
       <main className="relative -mt-3 flex justify-center px-4 pb-8 lg:mt-0 lg:items-center lg:px-8 lg:py-12">
         <AuthPanel initialMode={initialMode} callbackUrl={safeCallback} />

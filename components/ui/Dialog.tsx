@@ -67,7 +67,7 @@ export function Dialog({
             <div className="flex shrink-0 items-start gap-3 px-6 pt-6 pb-2">
               <div className="min-w-0 flex-1">
                 {eyebrow && (
-                  <div className="font-mono text-label uppercase tracking-label text-ov-muted">
+                  <div className="font-hud text-label uppercase tracking-label text-ov-muted">
                     {eyebrow}
                   </div>
                 )}

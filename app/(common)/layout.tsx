@@ -20,9 +20,16 @@ export default function Layout({
           <CommandPaletteProvider>
             <ScreenTitleProvider>
               <PageShell>
+                {/* First tab stop: jump past the nav. Visible only when focused. */}
+                <a
+                  href="#main"
+                  className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[200] focus:bg-ov-teal focus:px-4 focus:py-2.5 focus:text-ui focus:font-semibold focus:text-ov-teal-ink"
+                >
+                  Skip to content
+                </a>
                 <TopBar />
                 {/* Clear the phone tab bar (64px + safe area). */}
-                <main className="pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0">{children}</main>
+                <main id="main" tabIndex={-1} className="outline-none pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0">{children}</main>
                 <BottomTabBar />
               </PageShell>
             </ScreenTitleProvider>

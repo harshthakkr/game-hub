@@ -45,6 +45,8 @@ export interface GamePageProps {
   videos: { video_id: string }[];
   /// Stores the game is listed on, PS Store first, with tracked prices.
   stores: StoreListing[];
+  /// Vivid hue from the cover (lib/accent.ts) for the hero's ambient light.
+  accent?: string | null;
   hypes?: number;
   genres: { name: string }[];
   involved_companies: {

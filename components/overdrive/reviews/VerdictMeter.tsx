@@ -71,7 +71,7 @@ export function VerdictMeter({
               <span className="h-2 bg-ov-raised">
                 <span className="block h-full bg-(--verdict) transition-[width] duration-300" style={{ width: `${width}%` }} />
               </span>
-              <span className="text-right font-mono text-label text-ov-dim">{count}</span>
+              <span className="text-right font-hud text-label text-ov-dim">{count}</span>
             </button>
           );
         })}

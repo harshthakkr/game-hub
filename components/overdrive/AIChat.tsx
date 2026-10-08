@@ -22,7 +22,7 @@ const WELCOME = {
 type Message = { role: string; content: string };
 
 const PROSE =
-  "prose prose-invert max-w-none text-body leading-relaxed text-ov-text break-words prose-p:my-2.5 prose-headings:mt-5 prose-headings:mb-2 prose-headings:font-semibold prose-headings:text-ov-white prose-h1:text-lg prose-h2:text-base prose-h3:text-body prose-a:text-ov-teal prose-a:underline-offset-2 hover:prose-a:text-ov-teal-hover prose-strong:font-semibold prose-strong:text-ov-white prose-ul:my-2.5 prose-ol:my-2.5 prose-li:my-1 prose-li:marker:text-ov-teal prose-blockquote:border-ov-teal prose-blockquote:text-ov-dim prose-code:bg-ov-bg prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-ov-teal-hover prose-code:before:content-none prose-code:after:content-none prose-pre:border prose-pre:border-ov-border prose-pre:bg-ov-bg prose-table:text-ui prose-th:border-ov-border prose-th:text-ov-white prose-td:border-ov-border";
+  "prose prose-invert max-w-none font-body text-body leading-relaxed text-ov-text break-words prose-p:my-2.5 prose-headings:mt-5 prose-headings:mb-2 prose-headings:font-semibold prose-headings:text-ov-white prose-h1:text-lg prose-h2:text-base prose-h3:text-body prose-a:text-ov-teal prose-a:underline-offset-2 hover:prose-a:text-ov-teal-hover prose-strong:font-semibold prose-strong:text-ov-white prose-ul:my-2.5 prose-ol:my-2.5 prose-li:my-1 prose-li:marker:text-ov-teal prose-blockquote:border-ov-teal prose-blockquote:text-ov-dim prose-code:bg-ov-bg prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-ov-teal-hover prose-code:before:content-none prose-code:after:content-none prose-pre:border prose-pre:border-ov-border prose-pre:bg-ov-bg prose-table:text-ui prose-th:border-ov-border prose-th:text-ov-white prose-td:border-ov-border";
 
 /// The Concierge: a streamed chat with the game-recommendation model. An
 /// `initialQuery` (from ⌘K or the Discover prompt) is sent once on mount.
@@ -117,7 +117,7 @@ export function AIChat({
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-var(--ov-topbar-h)-64px)] max-w-[880px] flex-col gap-4 px-4 pt-4 md:px-8 lg:min-h-[calc(100dvh-var(--ov-topbar-h))] lg:gap-5 lg:pt-8">
       <div className="flex items-center gap-3">
-        <h1 className="flex items-center gap-2 font-mono text-label tracking-[0.1em] text-ov-teal">
+        <h1 className="flex items-center gap-2 font-hud text-label tracking-[0.1em] text-ov-teal">
           <OvIcon name="sparkles" className="text-sm" />
           AI CONCIERGE
         </h1>
@@ -158,7 +158,7 @@ export function AIChat({
                   )}
                 </div>
               ) : (
-                <span className="flex items-center gap-2.5 font-mono text-ui text-ov-muted">
+                <span className="flex items-center gap-2.5 font-hud text-ui text-ov-muted">
                   <span aria-hidden className="size-2 rotate-45 animate-ov-pulse bg-ov-teal" />
                   Checking the catalogue…
                 </span>

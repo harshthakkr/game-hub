@@ -36,7 +36,7 @@ export function Select<T extends string>({
         className
       )}
     >
-      <span id={labelId} className="font-mono text-micro uppercase tracking-label text-ov-muted">
+      <span id={labelId} className="font-hud text-micro uppercase tracking-label text-ov-muted">
         {label}
       </span>
       <RadixSelect.Root value={value} onValueChange={(next) => onValueChange(next as T)}>

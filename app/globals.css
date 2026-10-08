@@ -38,6 +38,8 @@
   /* Rose is reserved for wishlist, live and destructive actions. */
   --color-ov-rose: #f43f5e;
   --color-ov-rose-soft: #fda4af;
+  /* Solid fill under white text (4.7:1); plain rose is 3.7:1. */
+  --color-ov-rose-strong: #e11d48;
   --color-ov-rose-deep: #9f1239;
   --color-ov-rose-wash: #2a0e17;
 
@@ -96,6 +98,8 @@
   --animate-ov-pulse: ov-pulse 2s ease-in-out infinite;
   --animate-ov-sheet-in: ov-sheet-in 0.25s ease-out backwards;
   --animate-ov-sheet-out: ov-sheet-in 0.2s ease-in reverse both;
+  --animate-ov-heart: ov-heart 0.42s cubic-bezier(0.3, 1.6, 0.5, 1);
+  --animate-ov-draw: ov-draw 0.7s cubic-bezier(0.3, 0.8, 0.3, 1) backwards;
   --animate-ov-shimmer: ov-shimmer 1.2s linear infinite;
   --animate-ov-think: ov-think 0.8s linear infinite;
   --animate-ov-scrollup: ov-scrollup 26s linear infinite;
@@ -149,6 +153,27 @@
     }
   }
 
+  /* Wishlist "on": a quick overshoot, so the state change is felt. */
+  @keyframes ov-heart {
+    35% {
+      transform: scale(1.32);
+    }
+    70% {
+      transform: scale(0.92);
+    }
+  }
+
+  /* Chart lines drawn left to right. A clip reveal, not a dash offset, so
+     dashed series (Steam) and the area fill animate the same way. */
+  @keyframes ov-draw {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
   @keyframes ov-shimmer {
     from {
       background-position: -400px 0;
@@ -174,10 +199,16 @@
 /* next/font exposes its families as variables on <body>, so these must stay
    inline to resolve there rather than on :root. */
 @theme inline {
-  --font-sans: var(--font-geist-next), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono-next), ui-monospace, monospace;
-  /* Display face: the logo and big numerals only. */
-  --font-orbitron: var(--font-orbitron-next), sans-serif;
+  /* Type roles. Chakra Petch is the voice of the UI; Geist is only for
+     long reading text; Orbitron for the logo, page titles and numerals.
+     font-hud marks small readouts (labels, counts, tags): same face as
+     sans, named for intent so it survives inside font-body regions. */
+  --font-sans: var(--font-chakra-next), system-ui, sans-serif;
+  --font-hud: var(--font-chakra-next), system-ui, sans-serif;
+  --font-body: var(--font-geist-next), system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  /* Orbitron has no ₹, so prices fall back to Chakra Petch, not Arial. */
+  --font-orbitron: var(--font-orbitron-next), var(--font-chakra-next), sans-serif;
 }
 
 /* Sticky header height (plus its 1px rule), for layouts that fill or stick
@@ -249,6 +280,53 @@
       scroll-behavior: auto !important;
     }
   }
+}
+
+/* Focus on chamfered controls. The cut corner is a clip-path, which also
+   clips the normal outside outline, leaving no visible focus at all. Draw
+   the ring inside instead: teal at the edge, a dark band within, so it
+   reads on teal (primary) and dark (secondary) fills alike. Unlayered so
+   no utility can override it. */
+.ov-chamfer:focus-visible,
+.ov-chamfer-x:focus-visible,
+.ov-chamfer-bl:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 2px var(--color-ov-teal-hover),
+    inset 0 0 0 4px var(--color-ov-bg);
+}
+
+/* Card → game page hero transition (utils/heroNav.ts). The page itself
+   cross-fades quickly; the cover and title travel on a longer ease-out. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+}
+
+::view-transition-group(game-cover),
+::view-transition-group(game-title) {
+  animation-duration: 440ms;
+  animation-timing-function: cubic-bezier(0.2, 0.9, 0.1, 1);
+}
+
+/* Portrait cover into a landscape band (phones): crop, don't squash. */
+::view-transition-group(game-cover) {
+  overflow: clip;
+}
+::view-transition-old(game-cover),
+::view-transition-new(game-cover) {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Titles scale with the box height and keep their aspect, so the card's
+   one-line name grows into the H1 instead of stretching. */
+::view-transition-old(game-title),
+::view-transition-new(game-title) {
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+  object-position: left top;
 }
 
 /* HUD grid backdrop. A utility (not a component class) so it takes variants,
