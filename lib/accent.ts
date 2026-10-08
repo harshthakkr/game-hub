@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { unstable_cache } from "next/cache";
 
 /// Per-game accent: the cover's most vivid hue, normalised so it always
 /// reads on the near-black UI. Used only for ambient light around the hero
@@ -10,7 +11,6 @@ import sharp from "sharp";
 /// teal).
 export async function coverAccent(coverUrl: string): Promise<string | null> {
   // A cover never changes, so its hue is computed once and kept.
-  const { unstable_cache } = await import("next/cache");
   return unstable_cache(() => extractAccent(coverUrl), ["cover-accent", coverUrl], { revalidate: false })();
 }
 

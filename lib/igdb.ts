@@ -1,4 +1,5 @@
 import axios from "axios";
+import { unstable_cache } from "next/cache";
 
 // IGDB authenticates with a Twitch app access token (client-credentials
 // grant). Those tokens expire after ~60 days, so rather than pinning one in
@@ -57,7 +58,6 @@ export async function igdb<T = unknown>(
   body: string,
   { revalidate = 3600 }: { revalidate?: number } = {}
 ): Promise<T> {
-  const { unstable_cache } = await import("next/cache");
   const run = unstable_cache(
     async () => {
       const { data } = await axios.post<T>(`${process.env.NEXT_PUBLIC_BASE_URL}${endpoint}`, body, {
