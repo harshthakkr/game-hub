@@ -11,7 +11,7 @@ export const Tabs = RadixTabs.Root;
 export function TabsList({ className, ...props }: ComponentProps<typeof RadixTabs.List>) {
   return (
     <RadixTabs.List
-      className={cx("flex flex-wrap border-b border-ov-border", className)}
+      className={cx("flex gap-8 overflow-x-auto [scrollbar-width:none]", className)}
       {...props}
     />
   );
@@ -21,7 +21,7 @@ export function TabsTrigger({ className, ...props }: ComponentProps<typeof Radix
   return (
     <RadixTabs.Trigger
       className={cx(
-        "-mb-px cursor-pointer border-b-2 border-transparent px-4 py-2.5 text-xs tracking-hud-wide text-ov-muted transition-colors duration-150 hover:text-ov-teal data-[state=active]:border-ov-teal data-[state=active]:text-ov-teal",
+        "flex shrink-0 cursor-pointer items-center gap-2 py-4 text-body font-medium text-ov-dim shadow-[inset_0_-2px_0_transparent] transition-[color,box-shadow] duration-150 hover:text-ov-white data-[state=active]:text-ov-white data-[state=active]:shadow-[inset_0_-2px_0_var(--color-ov-teal)]",
         className
       )}
       {...props}

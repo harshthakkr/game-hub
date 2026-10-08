@@ -1,22 +1,28 @@
 import type { Metadata } from "next";
-import { Chakra_Petch, Orbitron } from "next/font/google";
+import { Geist, Geist_Mono, Orbitron } from "next/font/google";
 import "./globals.css";
 
+const geist = Geist({
+  variable: "--font-geist-next",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono-next",
+  subsets: ["latin"],
+});
+
+// Display face for the logo and big numerals only.
 const orbitron = Orbitron({
   variable: "--font-orbitron-next",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-});
-
-const chakra = Chakra_Petch({
-  variable: "--font-chakra-next",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["700", "800"],
 });
 
 export const metadata: Metadata = {
   title: "GAME//HUB",
-  description: "Track releases, sync your library, and discover games across every platform.",
+  description:
+    "Discover games, track PlayStation Store and Steam prices in INR, and follow every showcase.",
 };
 
 export default function RootLayout({
@@ -27,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${orbitron.variable} ${chakra.variable} bg-ov-bg font-chakra text-ov-text antialiased`}
+        className={`${geist.variable} ${geistMono.variable} ${orbitron.variable} bg-ov-bg font-sans text-ov-white antialiased`}
       >
         {children}
       </body>

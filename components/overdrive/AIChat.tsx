@@ -1,171 +1,212 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Button, Spinner } from "@/components/ui";
+import { OvIcon } from "./OvIcon";
+import { cx } from "@/utils/cx";
 
 const SUGGESTIONS = [
-  "Best RPGs of 2025",
-  "What's live right now?",
   "Games like Elden Ring",
+  "Best RPGs right now",
+  "What's live right now?",
+  "Short games under ₹1,000",
 ];
 
 const WELCOME = {
   role: "assistant",
   content:
-    "Welcome to the grid. I can help you discover games, compare titles, track events, or build a wishlist. What are you in the mood for?",
+    "Hi! I can help you find something to play, compare games, or catch up on events. What are you in the mood for?",
 };
 
+type Message = { role: string; content: string };
+
+const PROSE =
+  "prose prose-invert max-w-none text-body leading-relaxed text-ov-text break-words prose-p:my-2.5 prose-headings:mt-5 prose-headings:mb-2 prose-headings:font-semibold prose-headings:text-ov-white prose-h1:text-lg prose-h2:text-base prose-h3:text-body prose-a:text-ov-teal prose-a:underline-offset-2 hover:prose-a:text-ov-teal-hover prose-strong:font-semibold prose-strong:text-ov-white prose-ul:my-2.5 prose-ol:my-2.5 prose-li:my-1 prose-li:marker:text-ov-teal prose-blockquote:border-ov-teal prose-blockquote:text-ov-dim prose-code:bg-ov-bg prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-ov-teal-hover prose-code:before:content-none prose-code:after:content-none prose-pre:border prose-pre:border-ov-border prose-pre:bg-ov-bg prose-table:text-ui prose-th:border-ov-border prose-th:text-ov-white prose-td:border-ov-border";
+
+/// The Concierge: a streamed chat with the game-recommendation model. An
+/// `initialQuery` (from ⌘K or the Discover prompt) is sent once on mount.
 export function AIChat({
   initialMessages,
+  initialQuery,
 }: {
-  initialMessages?: Array<{ role: string; content: string }>;
+  initialMessages?: Message[];
+  initialQuery?: string;
 }) {
   const [query, setQuery] = useState("");
-  const [messages, setMessages] = useState<
-    Array<{ role: string; content: string }>
-  >(initialMessages?.length ? initialMessages : [WELCOME]);
-  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<Message[]>(
+    initialMessages?.length ? initialMessages : [WELCOME]
+  );
+  const [streaming, setStreaming] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const sentInitial = useRef(false);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, streaming]);
 
-  const send = async (text: string) => {
-    if (!text.trim() || loading) return;
-    const userMessage = { role: "user", content: text };
-    const next = [...messages, userMessage];
-    setMessages(next);
-    setQuery("");
-    setLoading(true);
-    try {
+  const send = useCallback(
+    async (text: string) => {
+      if (!text.trim() || streaming) return;
+      const next = [...messages, { role: "user", content: text.trim() }];
       setMessages([...next, { role: "assistant", content: "" }]);
-      const res = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next }),
-      });
-
-      if (!res.ok || !res.body) throw new Error("Unable to start stream");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let complete = false;
-
-      while (!complete) {
-        const { value, done } = await reader.read();
-        complete = done;
-        const chunk = decoder.decode(value, { stream: !done });
-        if (!chunk) continue;
-        setMessages((prev) => {
-          const updated = [...prev];
-          const last = updated.length - 1;
-          updated[last] = {
-            ...updated[last],
-            content: updated[last].content + chunk,
-          };
-          return updated;
+      setQuery("");
+      setStreaming(true);
+      const controller = new AbortController();
+      abortRef.current = controller;
+      try {
+        const res = await fetch("/api/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: next }),
+          signal: controller.signal,
         });
+        if (!res.ok || !res.body) throw new Error("Unable to start stream");
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        for (;;) {
+          const { value, done } = await reader.read();
+          const chunk = decoder.decode(value, { stream: !done });
+          if (chunk) {
+            setMessages((prev) => {
+              const updated = [...prev];
+              const last = updated.length - 1;
+              updated[last] = { ...updated[last], content: updated[last].content + chunk };
+              return updated;
+            });
+          }
+          if (done) break;
+        }
+      } catch (error) {
+        // A stop keeps whatever already streamed in; real failures replace
+        // the empty reply with an apology.
+        if ((error as Error).name !== "AbortError") {
+          setMessages((prev) => [
+            ...prev.slice(0, -1),
+            {
+              role: "assistant",
+              content: "Something went wrong reaching the Concierge. Try again in a moment.",
+            },
+          ]);
+        }
+      } finally {
+        abortRef.current = null;
+        setStreaming(false);
       }
-    } catch {
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { role: "assistant", content: "Signal lost — try again in a moment." },
-      ]);
-    } finally {
-      setLoading(false);
+    },
+    [messages, streaming]
+  );
+
+  useEffect(() => {
+    if (initialQuery && !sentInitial.current) {
+      sentInitial.current = true;
+      send(initialQuery);
     }
-  };
+  }, [initialQuery, send]);
+
+  const showChips = messages.every((m) => m.role !== "user");
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-var(--ov-topbar-h))] max-w-[900px] flex-col px-4 py-7 lg:px-6">
-      <div className="mb-[18px] flex items-center gap-3">
-        <span className="font-orbitron text-xl font-black tracking-hud text-ov-teal">
-          A.I. CONCIERGE
-        </span>
-        <span className="animate-ov-pulse flex items-center border border-ov-rose px-2 py-0.5 text-label text-ov-rose">
-          <span aria-hidden className="mr-1.5 size-1.5 rounded-full bg-current" />
-          ONLINE
-        </span>
-      </div>
+    <div className="mx-auto flex min-h-[calc(100dvh-var(--ov-topbar-h))] max-w-[880px] flex-col gap-5 px-4 pt-8 md:px-8">
+      <h1 className="flex items-center gap-2 font-mono text-label tracking-[0.1em] text-ov-teal">
+        <OvIcon name="sparkles" className="text-sm" />
+        AI CONCIERGE
+      </h1>
 
-      {/* The chamfered frame stays still; the log inside it scrolls, so the
-          corner hairline doesn't scroll away with the messages. */}
-      <div className="ov-chamfer ov-chamfer-lg flex min-h-0 flex-1 flex-col border border-ov-border bg-ov-sunken">
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6">
-          {messages.map((msg, idx) => {
-            const isUser = msg.role === "user";
+      <div role="log" aria-label="Conversation" className="flex flex-1 flex-col gap-5 pb-3">
+        {messages.map((msg, idx) => {
+          const last = idx === messages.length - 1;
+          if (msg.role === "user") {
             return (
               <div
                 key={idx}
-                className={`animate-ov-fade-up flex ${isUser ? "justify-end" : "justify-start"}`}
+                className="ov-chamfer-bl ov-chamfer-sm max-w-[75%] animate-ov-fade-up self-end bg-ov-teal px-4 py-3 text-body leading-normal font-medium text-ov-teal-ink"
               >
-                <div
-                  className={`max-w-[78%] px-4 py-3 text-sm leading-relaxed ${
-                    isUser
-                      ? "ov-chamfer-bl ov-chamfer-sm bg-ov-teal text-ov-bg"
-                      : "ov-chamfer ov-chamfer-sm border border-ov-border bg-ov-panel text-ov-text"
-                  }`}
-                >
-                  {isUser ? (
-                    msg.content
-                  ) : (
-                    <div className="prose prose-invert prose-sm max-w-none break-words prose-p:my-3 prose-headings:mb-2 prose-headings:mt-5 prose-headings:font-orbitron prose-headings:tracking-wide prose-headings:text-white prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-a:text-ov-teal prose-a:underline-offset-2 hover:prose-a:text-white prose-strong:text-white prose-ul:my-3 prose-ol:my-3 prose-li:my-1 prose-li:marker:text-ov-teal prose-blockquote:my-3 prose-blockquote:border-ov-teal prose-blockquote:text-ov-dim prose-code:rounded-sm prose-code:bg-ov-bg prose-code:px-1.5 prose-code:py-0.5 prose-code:text-ov-teal prose-code:before:content-none prose-code:after:content-none prose-pre:my-3 prose-pre:overflow-x-auto prose-pre:border prose-pre:border-ov-border prose-pre:bg-ov-bg prose-pre:p-3 prose-table:my-3 prose-table:text-xs prose-th:border-ov-border prose-th:text-white prose-td:border-ov-border">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.content}
-                      </ReactMarkdown>
-                    </div>
-                  )}
-                </div>
+                {msg.content}
               </div>
             );
-          })}
-          {loading && (
-            <div className="flex items-center gap-2.5 text-ui text-ov-muted">
-              <Spinner className="text-sm text-ov-teal" />
-              Scanning the grid…
+          }
+          return (
+            <div
+              key={idx}
+              className="max-w-[88%] animate-ov-fade-up self-start border border-ov-border bg-ov-panel px-4.5 py-4"
+            >
+              {msg.content ? (
+                <div className={PROSE}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                  {last && streaming && (
+                    <span aria-hidden className="inline-block h-4 w-2 animate-ov-pulse bg-ov-teal align-middle" />
+                  )}
+                </div>
+              ) : (
+                <span className="flex items-center gap-2.5 font-mono text-ui text-ov-muted">
+                  <span aria-hidden className="size-2 rotate-45 animate-ov-pulse bg-ov-teal" />
+                  Checking the catalogue…
+                </span>
+              )}
             </div>
-          )}
-          <div ref={endRef} />
-        </div>
+          );
+        })}
+        <div ref={endRef} />
       </div>
 
-      <div className="my-3.5 flex flex-wrap gap-2">
-        {SUGGESTIONS.map((s) => (
-          <Button key={s} size="sm" variant="secondary" disabled={loading} onClick={() => send(s)}>
-            {s}
-          </Button>
-        ))}
-      </div>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          send(query);
-        }}
-        className="ov-chamfer-x flex items-center gap-3 border border-ov-border bg-ov-panel px-4 py-3 transition-colors duration-200 focus-within:border-ov-teal"
-      >
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ask me about games, events, or recommendations…"
-          aria-label="Message the AI concierge"
-          disabled={loading}
-          className="min-w-0 flex-1 border-none bg-transparent text-sm text-ov-white outline-none placeholder:text-ov-muted"
-        />
-        <Button
-          type="submit"
-          variant="primary"
-          iconRight="send"
-          chamfer={false}
-          disabled={!query.trim()}
-          loading={loading}
+      <div className="sticky bottom-0 flex flex-col gap-3 bg-linear-to-t from-ov-bg from-70% to-transparent pt-4 pb-7">
+        {showChips && (
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => send(s)}
+                className="border border-ov-border bg-ov-raised px-3 py-1.5 text-sm text-ov-text transition-colors hover:border-ov-border-strong hover:text-ov-white"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(query);
+          }}
+          className="flex h-14 items-center gap-2.5 border border-ov-border-strong bg-ov-field pr-2 pl-4.5 focus-within:border-ov-teal"
         >
-          SEND
-        </Button>
-      </form>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ask about games, prices or events"
+            aria-label="Message the Concierge"
+            className="min-w-0 flex-1 bg-transparent text-base text-ov-white outline-none"
+          />
+          {streaming ? (
+            <button
+              type="button"
+              onClick={() => abortRef.current?.abort()}
+              className="flex h-10 items-center gap-2 border border-ov-border-strong px-3.5 text-ui font-medium text-ov-white hover:bg-ov-raised"
+            >
+              <span aria-hidden className="size-[9px] bg-ov-white" />
+              Stop
+            </button>
+          ) : (
+            <button
+              type="submit"
+              aria-label="Send"
+              disabled={!query.trim()}
+              className={cx(
+                "ov-chamfer ov-chamfer-sm flex size-10 shrink-0 items-center justify-center transition-colors",
+                query.trim()
+                  ? "bg-ov-teal text-ov-teal-ink hover:bg-ov-teal-hover"
+                  : "bg-ov-raised text-ov-muted"
+              )}
+            >
+              <OvIcon name="arrow-up" className="text-lg" />
+            </button>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

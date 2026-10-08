@@ -12,7 +12,7 @@ export type AuthMode = "signup" | "login";
 export function AuthForm({
   mode,
   onToggleMode,
-  callbackUrl = "/games",
+  callbackUrl = "/",
 }: {
   mode: AuthMode;
   onToggleMode: () => void;
@@ -82,7 +82,7 @@ export function AuthForm({
     <form onSubmit={submit} noValidate>
       {isSignup && (
         <>
-          <FieldLabel htmlFor="auth-username">USERNAME</FieldLabel>
+          <FieldLabel htmlFor="auth-username">Username</FieldLabel>
           <Input
             id="auth-username"
             value={username}
@@ -91,28 +91,28 @@ export function AuthForm({
             autoComplete="username"
             className="mb-1"
           />
-          <p className="mb-3.5 text-micro text-ov-muted">{USERNAME_HINT}</p>
+          <p className="mb-3.5 text-label text-ov-muted">{USERNAME_HINT}</p>
         </>
       )}
 
-      <FieldLabel htmlFor="auth-email">EMAIL</FieldLabel>
+      <FieldLabel htmlFor="auth-email">Email</FieldLabel>
       <Input
         id="auth-email"
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="player@grid.io"
+        placeholder="you@example.com"
         autoComplete="email"
         className="mb-3.5"
       />
 
-      <FieldLabel htmlFor="auth-password">PASSWORD</FieldLabel>
+      <FieldLabel htmlFor="auth-password">Password</FieldLabel>
       <Input
         id="auth-password"
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        placeholder="••••••••••"
+        placeholder="At least 8 characters"
         autoComplete={isSignup ? "new-password" : "current-password"}
         className="mb-5"
       />
@@ -126,8 +126,8 @@ export function AuthForm({
         </div>
       )}
 
-      <Button type="submit" variant="secondary" size="lg" loading={busy}>
-        {isSignup ? "CREATE ACCOUNT" : "LOG IN"}
+      <Button type="submit" variant="primary" size="lg" loading={busy} className="w-full">
+        {isSignup ? "Create account" : "Sign in"}
       </Button>
 
       <div className="mt-5 text-center text-xs text-ov-muted">
@@ -140,7 +140,7 @@ export function AuthForm({
           }}
           className="text-ov-teal transition-colors duration-150 hover:text-ov-white hover:underline"
         >
-          {isSignup ? "Log in" : "Sign up"}
+          {isSignup ? "Sign in" : "Create one"}
         </button>
       </div>
     </form>

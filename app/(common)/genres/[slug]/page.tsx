@@ -15,8 +15,8 @@ export default function Genre() {
 
   return (
     <GameCatalogue
-      title={slugStr.replace(/-/g, " ").toUpperCase()}
-      subtitle="genre catalogue"
+      title={slugStr.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+      subtitle="Games in this genre, best rated first."
       games={data}
       loading={loading}
       hasMore={hasMore}

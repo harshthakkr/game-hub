@@ -1,0 +1,244 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import { Command } from "cmdk";
+import { OvIcon, type IconName } from "./OvIcon";
+import { coverUrl, formatYear } from "@/utils/overdrive";
+import type { GameCardProps } from "@/utils/types";
+
+export const NAV_PAGES: { label: string; href: string; icon: IconName }[] = [
+  { label: "Discover", href: "/", icon: "grid" },
+  { label: "Catalogue", href: "/games", icon: "list" },
+  { label: "Events", href: "/events", icon: "clock" },
+  { label: "Platforms", href: "/platforms", icon: "grid" },
+  { label: "Genres", href: "/genres", icon: "grid" },
+  { label: "Developers", href: "/developers", icon: "user" },
+  { label: "Concierge", href: "/ai", icon: "sparkles" },
+  { label: "Wishlist", href: "/wishlist", icon: "heart" },
+  { label: "Library", href: "/library", icon: "library" },
+];
+
+const PaletteContext = createContext<{ open: () => void } | null>(null);
+
+export function useCommandPalette() {
+  const ctx = useContext(PaletteContext);
+  if (!ctx) throw new Error("useCommandPalette must be used within CommandPaletteProvider");
+  return ctx;
+}
+
+/// Global ⌘K / Ctrl+K palette: search games, jump to a page, or hand the
+/// query to the Concierge. Mounted once; anything can open it via
+/// useCommandPalette().
+export function CommandPaletteProvider({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        setOpen((v) => !v);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  const value = useMemo(() => ({ open: () => setOpen(true) }), []);
+
+  return (
+    <PaletteContext.Provider value={value}>
+      {children}
+      <CommandPalette open={open} onOpenChange={setOpen} />
+    </PaletteContext.Provider>
+  );
+}
+
+function useGameSearch(query: string) {
+  const [results, setResults] = useState<GameCardProps[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      axios
+        .get<GameCardProps[]>("/api/search", {
+          params: { q, limit: 8 },
+          signal: controller.signal,
+        })
+        .then((res) => setResults(res.data.filter((g) => g.cover)))
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }, 200);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query]);
+
+  return { results, loading };
+}
+
+const GROUP_HEADING =
+  "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-micro [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-label [&_[cmdk-group-heading]]:text-ov-muted";
+
+const ITEM =
+  "flex cursor-pointer items-center gap-3 px-3 py-2 text-sm text-ov-text data-[selected=true]:bg-ov-raised data-[selected=true]:text-ov-white data-[selected=true]:shadow-[inset_2px_0_0_var(--color-ov-teal)]";
+
+function CommandPalette({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const { results, loading } = useGameSearch(query);
+
+  const go = useCallback(
+    (href: string) => {
+      onOpenChange(false);
+      setQuery("");
+      router.push(href);
+    },
+    [onOpenChange, router]
+  );
+
+  const trimmed = query.trim();
+  const pages = NAV_PAGES.filter((p) =>
+    p.label.toLowerCase().includes(trimmed.toLowerCase())
+  );
+
+  return (
+    <Command.Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      label="Search and navigation"
+      // Results come pre-ranked from IGDB; filtering is done above.
+      shouldFilter={false}
+      overlayClassName="fixed inset-0 z-[110] bg-[rgb(2_3_8/0.72)] backdrop-blur-[4px] data-[state=open]:animate-ov-fade-up"
+      contentClassName="fixed left-1/2 top-[12vh] z-[110] flex max-h-[70vh] w-[min(640px,calc(100%-32px))] -translate-x-1/2 flex-col border border-ov-border-strong bg-ov-field shadow-ov-pop data-[state=open]:animate-ov-pop"
+    >
+      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-ov-border px-4">
+        <OvIcon name="search" className="text-lg text-ov-muted" />
+        <Command.Input
+          value={query}
+          onValueChange={setQuery}
+          placeholder="Search games, jump to a page, or ask the Concierge"
+          className="h-full min-w-0 flex-1 bg-transparent text-base text-ov-white outline-none placeholder:text-ov-muted"
+        />
+        <kbd className="border border-ov-border-strong px-1.5 py-0.5 font-mono text-micro text-ov-dim">
+          ESC
+        </kbd>
+      </div>
+
+      <Command.List className={`overflow-y-auto p-1.5 ${GROUP_HEADING}`}>
+        {loading && results.length === 0 && (
+          <Command.Loading>
+            <div className="px-3 py-4 text-sm text-ov-muted">Searching…</div>
+          </Command.Loading>
+        )}
+
+        {results.length > 0 && (
+          <Command.Group heading="Games">
+            {results.map((game) => {
+              const cover = coverUrl(game.cover);
+              return (
+                <Command.Item
+                  key={game.id}
+                  value={`game-${game.id}`}
+                  onSelect={() => go(`/games/${game.slug}`)}
+                  className={ITEM}
+                >
+                  {cover ? (
+                    <Image
+                      src={cover}
+                      alt=""
+                      width={28}
+                      height={37}
+                      className="h-[37px] w-7 shrink-0 object-cover"
+                    />
+                  ) : (
+                    <span className="h-[37px] w-7 shrink-0 bg-ov-raised" />
+                  )}
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="truncate font-medium">{game.name}</span>
+                    <span className="text-label text-ov-muted">
+                      {[formatYear(game.first_release_date), game.genres?.[0]?.name]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </span>
+                  <span className="font-mono text-micro text-ov-dim">GAME</span>
+                </Command.Item>
+              );
+            })}
+          </Command.Group>
+        )}
+
+        {trimmed.length >= 2 && (
+          <Command.Group heading="Concierge">
+            <Command.Item
+              value="ask-concierge"
+              onSelect={() => go(`/ai?q=${encodeURIComponent(trimmed)}`)}
+              className={ITEM}
+            >
+              <OvIcon name="sparkles" className="text-base text-ov-teal" />
+              <span className="min-w-0 flex-1 truncate">
+                Ask the Concierge: <span className="text-ov-white">“{trimmed}”</span>
+              </span>
+              <span className="font-mono text-micro text-ov-dim">ASK</span>
+            </Command.Item>
+          </Command.Group>
+        )}
+
+        {pages.length > 0 && (
+          <Command.Group heading="Pages">
+            {pages.map((page) => (
+              <Command.Item
+                key={page.href}
+                value={`page-${page.href}`}
+                onSelect={() => go(page.href)}
+                className={ITEM}
+              >
+                <OvIcon name={page.icon} className="text-base text-ov-muted" />
+                <span className="flex-1">{page.label}</span>
+                <span className="font-mono text-micro text-ov-dim">PAGE</span>
+              </Command.Item>
+            ))}
+          </Command.Group>
+        )}
+
+        {!loading && trimmed.length >= 2 && results.length === 0 && pages.length === 0 && (
+          <Command.Empty className="px-3 py-6 text-center text-sm text-ov-muted">
+            No games match “{trimmed}”.
+          </Command.Empty>
+        )}
+      </Command.List>
+
+      <div className="flex shrink-0 gap-4 border-t border-ov-border px-4 py-2.5 text-label text-ov-muted">
+        <span>↑↓ navigate</span>
+        <span>↵ open</span>
+        <span>esc close</span>
+      </div>
+    </Command.Dialog>
+  );
+}

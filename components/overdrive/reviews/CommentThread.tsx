@@ -97,11 +97,11 @@ function CommentBox({
               setValue("");
             }}
           >
-            {submitting ? "SENDING" : "SEND"}
+            {submitting ? "Sending" : "Send"}
           </Button>
           {onCancel && (
             <Button size="sm" variant="ghost" onClick={onCancel}>
-              CANCEL
+              Cancel
             </Button>
           )}
           <CharCount count={value.length} max={MAX_COMMENT_CHARS} className="ml-auto" />
@@ -162,19 +162,19 @@ function CommentRow({
                 onClick={() =>
                   onReplyOpen(replyingTo === comment.id ? null : comment.id)
                 }
-                className="flex items-center gap-1 text-label tracking-hud text-ov-muted transition-colors duration-150 hover:text-ov-teal"
+                className="flex items-center gap-1 text-label text-ov-muted transition-colors duration-150 hover:text-ov-teal"
               >
                 <OvIcon name="reply" className="text-label" />
-                REPLY
+                Reply
               </button>
             )}
             {comment.isMine && (
               <button
                 type="button"
                 onClick={() => onDelete(comment.id)}
-                className="text-label tracking-hud text-ov-muted transition-colors duration-150 hover:text-ov-rose"
+                className="text-label text-ov-muted transition-colors duration-150 hover:text-ov-rose"
               >
-                DELETE
+                Delete
               </button>
             )}
           </div>
@@ -334,8 +334,8 @@ export function CommentThread({
     // review instead of looking like the next item in the feed.
     <div className="mt-4 border-l-2 border-ov-border pl-4">
       {loading ? (
-        <div className="text-xs tracking-hud text-ov-muted">
-          LOADING COMMENTS...
+        <div className="text-xs text-ov-muted">
+          Loading comments…
         </div>
       ) : (
         <>

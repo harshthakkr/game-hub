@@ -2,6 +2,14 @@ import type { CSSProperties } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUp,
+  ArrowUpRight,
+  CalendarPlus,
+  CalendarCheck,
+  Pause,
+  Sparkles,
+  ThumbsUp,
+  Trash2,
   Bell,
   Check,
   ChevronDown,
@@ -59,12 +67,21 @@ const ICONS = {
   expand: Maximize2,
   "trend-down": TrendingDown,
   "trend-up": TrendingUp,
+  "arrow-up": ArrowUp,
+  external: ArrowUpRight,
+  "calendar-add": CalendarPlus,
+  "calendar-check": CalendarCheck,
+  pause: Pause,
+  sparkles: Sparkles,
+  "thumbs-up": ThumbsUp,
+  "thumbs-up-filled": ThumbsUp,
+  trash: Trash2,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;
 
 /// Solid glyphs: filled with currentColor rather than outlined.
-const FILLED = new Set<IconName>(["heart-filled", "play"]);
+const FILLED = new Set<IconName>(["heart-filled", "thumbs-up-filled", "play"]);
 
 /// Lucide icon sized in `em`, so a text-size class on `className` sets the
 /// icon size and it lines up with adjacent text the way a glyph would.
@@ -86,7 +103,7 @@ export function OvIcon({
     >
       <Icon
         size="1em"
-        strokeWidth={2.25}
+        strokeWidth={2}
         fill={FILLED.has(name) ? "currentColor" : "none"}
       />
     </span>

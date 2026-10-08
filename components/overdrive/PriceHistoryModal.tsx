@@ -2,28 +2,38 @@
 
 import axios from "axios";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { StoreId } from "@/utils/types";
 import { OvIcon } from "./OvIcon";
-import { Button, ChipGroup, Dialog, Price, Stat, Tag } from "@/components/ui";
+import { Button, ChipGroup, Dialog, Eyebrow, Tag } from "@/components/ui";
+import { cx } from "@/utils/cx";
 
 const RANGES = [
-  { key: "24h", label: "24H", hours: 24 },
-  { key: "7d", label: "7D", hours: 24 * 7 },
-  { key: "30d", label: "30D", hours: 24 * 30 },
+  { value: "24h", label: "24H", hours: 24 },
+  { value: "7d", label: "7D", hours: 24 * 7 },
+  { value: "30d", label: "30D", hours: 24 * 30 },
 ] as const;
-type RangeKey = (typeof RANGES)[number]["key"];
+type RangeKey = (typeof RANGES)[number]["value"];
 
-interface PricePoint {
-  t: string;
-  price: number;
-  basePrice: number;
-}
+/// Line color per store: PS Store in the brand teal, Steam in sky.
+const STORE_STROKE: Record<StoreId, string> = {
+  PLAYSTATION: "stroke-ov-teal",
+  STEAM: "stroke-ov-sky",
+};
+const STORE_FILL: Record<StoreId, string> = {
+  PLAYSTATION: "fill-ov-teal",
+  STEAM: "fill-ov-sky",
+};
+const STORE_SWATCH: Record<StoreId, string> = {
+  PLAYSTATION: "bg-ov-teal",
+  STEAM: "bg-ov-sky",
+};
 
-interface PriceHistory {
-  productName: string | null;
+interface Series {
+  store: StoreId;
+  label: string;
   url: string;
   currency: string;
   lastFetchedAt: string | null;
-  lastError: string | null;
   current: {
     price: number;
     basePrice: number;
@@ -32,7 +42,7 @@ interface PriceHistory {
     saleEndsAt: string | null;
   } | null;
   previous: { t: string; price: number } | null;
-  points: PricePoint[];
+  points: { t: string; price: number; basePrice: number }[];
 }
 
 const inr = new Intl.NumberFormat("en-IN", {
@@ -67,8 +77,8 @@ function formatStamp(date: Date) {
   });
 }
 
-/// Modal showing the PS Store price trail for a game, sampled hourly. The
-/// body mounts only while open, so history is fetched on each opening.
+/// Modal with the hourly price trail for every store we track the game on.
+/// The body mounts only while open, so history is fetched on each opening.
 export function PriceHistoryModal({
   open,
   onOpenChange,
@@ -84,21 +94,20 @@ export function PriceHistoryModal({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      eyebrow="PRICE TRACKER · PS STORE IN"
+      eyebrow="PRICE HISTORY · INDIA"
       title={gameName}
-      description={`PlayStation Store price history for ${gameName}`}
-      className="max-w-[720px]"
+      description={`Store price history for ${gameName}`}
+      className="max-w-[760px]"
     >
       <PriceHistoryBody slug={slug} />
     </Dialog>
   );
 }
 
-const RANGE_OPTIONS = RANGES.map((r) => ({ value: r.key, label: r.label }));
-
 function PriceHistoryBody({ slug }: { slug: string }) {
-  const [range, setRange] = useState<RangeKey>("24h");
-  const [history, setHistory] = useState<PriceHistory | null>(null);
+  const [range, setRange] = useState<RangeKey>("7d");
+  const [series, setSeries] = useState<Series[] | null>(null);
+  const [focus, setFocus] = useState<StoreId | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
@@ -106,10 +115,10 @@ function PriceHistoryBody({ slug }: { slug: string }) {
     let cancelled = false;
     setLoading(true);
     axios
-      .get<PriceHistory>(`/api/games/${slug}/prices`, { params: { range } })
+      .get<{ series: Series[] }>(`/api/games/${slug}/prices`, { params: { range } })
       .then((res) => {
         if (cancelled) return;
-        setHistory(res.data);
+        setSeries(res.data.series);
         setFailed(false);
       })
       .catch(() => !cancelled && setFailed(true))
@@ -119,46 +128,72 @@ function PriceHistoryBody({ slug }: { slug: string }) {
     };
   }, [slug, range]);
 
-  const { hours, label: rangeLabel } = RANGES.find((r) => r.key === range)!;
-  const stats = useMemo(() => {
-    if (!history) return null;
-    const prices = history.points.map((p) => p.price);
-    if (history.previous) prices.unshift(history.previous.price);
-    if (prices.length === 0) return null;
-    const start = prices[0];
-    const end = prices[prices.length - 1];
-    return { low: Math.min(...prices), high: Math.max(...prices), change: end - start };
-  }, [history]);
+  const { hours } = RANGES.find((r) => r.value === range)!;
+  // Stats follow the focused store; default to whichever is cheapest now.
+  const cheapest = useMemo(
+    () =>
+      series
+        ?.filter((s) => s.current)
+        .sort((a, b) => a.current!.price - b.current!.price)[0]?.store ?? series?.[0]?.store,
+    [series]
+  );
+  const active = series?.find((s) => s.store === (focus ?? cheapest)) ?? null;
 
-  const current = history?.current;
+  const stats = useMemo(() => {
+    if (!active) return null;
+    const prices = active.points.map((p) => p.price);
+    if (active.previous) prices.unshift(active.previous.price);
+    if (prices.length === 0) return null;
+    return {
+      low: Math.min(...prices),
+      high: Math.max(...prices),
+      change: prices[prices.length - 1] - prices[0],
+    };
+  }, [active]);
+
+  const current = active?.current;
   const onSale = current && current.price < current.basePrice;
+  const hasData = series?.some((s) => s.points.length > 0 || s.previous);
 
   return (
-    <>
-      <div className="grid grid-cols-2 gap-px border-b border-ov-border bg-ov-border md:grid-cols-4">
-        <Stat label="CURRENT" className="bg-ov-panel px-5 py-3">
-          {current ? (
-            <Price
-              size="xl"
-              current={current.formatted}
-              original={onSale ? money(current.basePrice) : null}
-            />
-          ) : (
-            <span className="text-ov-muted">—</span>
-          )}
-        </Stat>
-        <Stat label={`LOW · ${rangeLabel}`} className="bg-ov-panel px-5 py-3">
-          {stats ? money(stats.low) : "—"}
-        </Stat>
-        <Stat label={`HIGH · ${rangeLabel}`} className="bg-ov-panel px-5 py-3">
-          {stats ? money(stats.high) : "—"}
-        </Stat>
-        <Stat label="CHANGE" className="bg-ov-panel px-5 py-3">
+    <div className="flex flex-col gap-5 px-6 pb-6">
+      {series && series.length > 1 && (
+        <ChipGroup
+          label="Store"
+          variant="segmented"
+          options={series.map((s) => ({ value: s.store, label: s.label }))}
+          value={active?.store ?? series[0].store}
+          onValueChange={(v) => setFocus(v as StoreId)}
+          className="w-max"
+        />
+      )}
+
+      <div className="grid grid-cols-2 border border-ov-border bg-ov-panel md:grid-cols-4 [&>*]:border-ov-border [&>*]:px-4 [&>*]:py-3 [&>*:not(:last-child)]:md:border-r">
+        <div className="flex flex-col gap-1">
+          <Eyebrow>CURRENT</Eyebrow>
+          <span className="flex flex-wrap items-baseline gap-2">
+            <span className="font-orbitron text-xl font-bold">{current?.formatted ?? "—"}</span>
+            {onSale && <s className="text-ui text-ov-muted">{money(current.basePrice)}</s>}
+          </span>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Eyebrow>LOW</Eyebrow>
+          <span className="font-orbitron text-xl font-bold text-ov-deal">
+            {stats ? money(stats.low) : "—"}
+          </span>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Eyebrow>HIGH</Eyebrow>
+          <span className="font-orbitron text-xl font-bold">{stats ? money(stats.high) : "—"}</span>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Eyebrow>CHANGE</Eyebrow>
           {stats ? (
             <span
-              className={`inline-flex items-center gap-1 ${
-                stats.change < 0 ? "text-ov-teal" : stats.change > 0 ? "text-ov-rose" : ""
-              }`}
+              className={cx(
+                "flex items-center gap-1 pt-0.5 text-body font-semibold",
+                stats.change < 0 ? "text-ov-deal" : stats.change > 0 ? "text-ov-rose-soft" : "text-ov-dim"
+              )}
             >
               {stats.change !== 0 && (
                 <OvIcon name={stats.change < 0 ? "trend-down" : "trend-up"} className="text-sm" />
@@ -168,80 +203,96 @@ function PriceHistoryBody({ slug }: { slug: string }) {
                 : `${stats.change < 0 ? "Down" : "Up"} ${money(Math.abs(stats.change))}`}
             </span>
           ) : (
-            "—"
+            <span className="text-ov-muted">—</span>
           )}
-        </Stat>
+        </div>
       </div>
 
-      <div className="px-5 pt-3">
-        <div className="flex flex-wrap items-center">
-          <ChipGroup
-            label="Time range"
-            variant="underline"
-            options={RANGE_OPTIONS}
-            value={range}
-            onValueChange={setRange}
-            className="flex-1"
-          />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-4 text-ui text-ov-dim">
+          {series && series.length > 1 &&
+            series.map((s) => (
+              <span key={s.store} className="flex items-center gap-2">
+                <span aria-hidden className={cx("h-0.5 w-4", STORE_SWATCH[s.store])} />
+                {s.label}
+              </span>
+            ))}
           {onSale && current?.saleEndsAt && (
-            <Tag tone="rose" size="sm" className="ml-3">
-              SALE ENDS {formatStamp(new Date(current.saleEndsAt)).toUpperCase()}
+            <Tag tone="rose" size="sm">
+              Sale ends {formatStamp(new Date(current.saleEndsAt))}
             </Tag>
           )}
         </div>
-
-        <div
-          aria-busy={loading}
-          className={`py-4 transition-opacity duration-150 ${loading && history ? "opacity-50" : ""}`}
-        >
-          {failed ? (
-            <ChartMessage>Couldn&apos;t load price history. Try again in a moment.</ChartMessage>
-          ) : !history ? (
-            <ChartMessage>
-              <span className="animate-ov-pulse">LOADING PRICE DATA…</span>
-            </ChartMessage>
-          ) : history.points.length === 0 && !history.previous ? (
-            <ChartMessage>
-              Tracking has just started — prices are sampled every hour, so the
-              trail builds up from here.
-            </ChartMessage>
-          ) : (
-            <PriceChart history={history} hours={hours} />
-          )}
-        </div>
+        <ChipGroup
+          label="Time range"
+          variant="segmented"
+          options={RANGES}
+          value={range}
+          onValueChange={setRange}
+        />
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-ov-border px-5 py-3.5">
-        <span className="inline-flex items-center text-label tracking-wide text-ov-dim">
-          <OvIcon name="clock" className="mr-1.5 text-label" />
-          Checked {timeAgo(history?.lastFetchedAt ?? null)} · refreshes hourly
+      <div
+        aria-busy={loading}
+        className={cx("transition-opacity duration-150", loading && series && "opacity-50")}
+      >
+        {failed ? (
+          <ChartMessage>Couldn&apos;t load price history. Try again in a moment.</ChartMessage>
+        ) : !series ? (
+          <ChartMessage>Loading price data…</ChartMessage>
+        ) : !hasData || !active ? (
+          <ChartMessage>
+            Tracking has just started. Prices are checked every hour, so the trail builds up from
+            here.
+          </ChartMessage>
+        ) : (
+          <PriceChart series={series} focus={active.store} hours={hours} />
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 border-t border-ov-border pt-4">
+        <span className="flex items-center gap-1.5 font-mono text-label text-ov-muted">
+          <OvIcon name="clock" className="text-sm" />
+          Checked {timeAgo(active?.lastFetchedAt ?? null)} · hourly · INR
         </span>
-        {history && (
-          <Button asChild variant="primary" iconRight="chevron-right" className="ml-auto">
-            <a href={history.url} target="_blank" rel="noreferrer">
-              OPEN IN PS STORE
+        {active && (
+          <Button asChild variant="primary" iconRight="external" className="ml-auto">
+            <a href={active.url} target="_blank" rel="noreferrer">
+              Open {active.label}
             </a>
           </Button>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
 function ChartMessage({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-[220px] items-center justify-center px-6 text-center text-ui leading-relaxed text-ov-muted">
+    <div className="flex h-[240px] items-center justify-center px-6 text-center text-sm leading-relaxed text-ov-dim">
       {children}
     </div>
   );
 }
 
-const CHART_HEIGHT = 220;
+const CHART_HEIGHT = 240;
 const PAD = { top: 14, right: 14, bottom: 26, left: 64 };
 
+type Sample = { t: number; price: number; base: number | null; since?: string };
+
+function toSamples(s: Series, start: number): Sample[] {
+  // The sample from before the window anchors the line at its left edge.
+  return [
+    ...(s.previous ? [{ t: start, price: s.previous.price, base: null, since: s.previous.t }] : []),
+    ...s.points.map((p) => ({ t: new Date(p.t).getTime(), price: p.price, base: p.basePrice })),
+  ];
+}
+
 /// Step-line chart: a store price holds until the next sample shows a change,
-/// so steps read truer than diagonals between hourly points.
-function PriceChart({ history, hours }: { history: PriceHistory; hours: number }) {
+/// so steps read truer than diagonals between hourly points. Every store is
+/// drawn; the focused one is bright and carries the fill, low line and the
+/// scrubber. The plot is a focusable slider: arrow keys step through samples.
+function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId; hours: number }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(640);
   const [hover, setHover] = useState<number | null>(null);
@@ -256,19 +307,15 @@ function PriceChart({ history, hours }: { history: PriceHistory; hours: number }
 
   const now = Date.now();
   const start = now - hours * 60 * 60 * 1000;
-  // The sample from before the window anchors the line at its left edge.
-  const series = [
-    ...(history.previous ? [{ t: start, price: history.previous.price, base: null }] : []),
-    ...history.points.map((p) => ({
-      t: new Date(p.t).getTime(),
-      price: p.price,
-      base: p.basePrice,
-    })),
-  ];
+  const lines = series
+    .map((s) => ({ store: s.store, label: s.label, samples: toSamples(s, start) }))
+    .filter((l) => l.samples.length > 0);
+  const focused = lines.find((l) => l.store === focus) ?? lines[0];
+  const hoverIndex = hover !== null && hover < focused.samples.length ? hover : null;
 
-  const prices = series.map((p) => p.price);
-  let lo = Math.min(...prices);
-  let hi = Math.max(...prices);
+  const all = lines.flatMap((l) => l.samples.map((p) => p.price));
+  let lo = Math.min(...all);
+  let hi = Math.max(...all);
   // A flat line gets breathing room so it sits mid-plot instead of on an edge.
   const pad = hi === lo ? Math.max(hi * 0.1, 100) : (hi - lo) * 0.15;
   // Snap the axis to round rupee steps so tick labels read ₹3,000 not ₹2,814.
@@ -283,120 +330,123 @@ function PriceChart({ history, hours }: { history: PriceHistory; hours: number }
   const x = (t: number) => PAD.left + ((t - start) / (now - start)) * plotW;
   const y = (v: number) => PAD.top + (1 - (v - lo) / (hi - lo)) * plotH;
 
-  let path = "";
-  series.forEach((p, i) => {
-    path += i === 0 ? `M${x(p.t)},${y(p.price)}` : `H${x(p.t)}V${y(p.price)}`;
-  });
-  // Carry the latest known price through to "now".
-  path += `H${x(now)}`;
-  const area = `${path}V${PAD.top + plotH}H${x(series[0].t)}Z`;
+  const pathFor = (samples: Sample[]) => {
+    let d = "";
+    samples.forEach((p, i) => {
+      d += i === 0 ? `M${x(p.t)},${y(p.price)}` : `H${x(p.t)}V${y(p.price)}`;
+    });
+    // Carry the latest known price through to "now".
+    return `${d}H${x(now)}`;
+  };
+  const focusPath = pathFor(focused.samples);
+  const area = `${focusPath}V${PAD.top + plotH}H${x(focused.samples[0].t)}Z`;
+  const low = Math.min(...focused.samples.map((p) => p.price));
 
   const yTicks: number[] = [];
   for (let v = lo; v <= hi + step / 2; v += step) yTicks.push(v);
   const xTickCount = hours <= 24 ? 4 : hours <= 24 * 7 ? 7 : 5;
-  const xTicks = Array.from(
-    { length: xTickCount + 1 },
-    (_, i) => start + ((now - start) * i) / xTickCount
-  );
+  const xTicks = Array.from({ length: xTickCount + 1 }, (_, i) => start + ((now - start) * i) / xTickCount);
 
   const onMove = (event: React.PointerEvent<SVGRectElement>) => {
     const rect = event.currentTarget.ownerSVGElement!.getBoundingClientRect();
     const px = event.clientX - rect.left;
     let best = 0;
-    series.forEach((p, i) => {
-      if (Math.abs(x(p.t) - px) < Math.abs(x(series[best].t) - px)) best = i;
+    focused.samples.forEach((p, i) => {
+      if (Math.abs(x(p.t) - px) < Math.abs(x(focused.samples[best].t) - px)) best = i;
     });
     setHover(best);
   };
 
-  const hovered = hover !== null ? series[hover] : null;
+  const onKey = (event: React.KeyboardEvent<SVGRectElement>) => {
+    const last = focused.samples.length - 1;
+    if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      const delta = event.key === "ArrowRight" ? 1 : -1;
+      setHover((h) => Math.min(last, Math.max(0, (h ?? (delta > 0 ? -1 : last + 1)) + delta)));
+    } else if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      setHover(event.key === "Home" ? 0 : last);
+    }
+  };
+
+  const hovered = hoverIndex !== null ? focused.samples[hoverIndex] : null;
+  const latest = focused.samples[focused.samples.length - 1];
   const tooltipLeft = hovered ? Math.min(Math.max(x(hovered.t), 70), width - 70) : 0;
 
   return (
     <div ref={wrapRef} className="relative">
-      <svg
-        width={width}
-        height={CHART_HEIGHT}
-        role="img"
-        aria-label={`Price over the last ${hours} hours`}
-        className="block select-none"
-      >
+      <svg width={width} height={CHART_HEIGHT} className="block select-none">
         <defs>
           <linearGradient id="ov-price-fill" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" className="[stop-color:var(--color-ov-teal)]" stopOpacity="0.18" />
+            <stop offset="0%" className="[stop-color:var(--color-ov-teal)]" stopOpacity="0.14" />
             <stop offset="100%" className="[stop-color:var(--color-ov-teal)]" stopOpacity="0" />
           </linearGradient>
         </defs>
 
-        {yTicks.map((v) => (
-          <g key={v}>
-            <line
-              x1={PAD.left}
-              x2={PAD.left + plotW}
-              y1={y(v)}
-              y2={y(v)}
-              className="stroke-ov-border"
-              strokeDasharray="2 4"
-            />
+        <g aria-hidden>
+          {yTicks.map((v) => (
+            <g key={v}>
+              <line x1={PAD.left} x2={PAD.left + plotW} y1={y(v)} y2={y(v)} className="stroke-ov-raised" />
+              <text
+                x={PAD.left - 10}
+                y={y(v)}
+                textAnchor="end"
+                dominantBaseline="middle"
+                className="fill-ov-muted font-mono text-micro"
+              >
+                {money(Math.round(v))}
+              </text>
+            </g>
+          ))}
+          {xTicks.map((t, i) => (
             <text
-              x={PAD.left - 10}
-              y={y(v)}
-              textAnchor="end"
-              dominantBaseline="middle"
-              className="fill-ov-muted text-micro"
+              key={t}
+              x={x(t)}
+              y={CHART_HEIGHT - 6}
+              textAnchor={i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle"}
+              className="fill-ov-muted font-mono text-micro"
             >
-              {money(Math.round(v))}
+              {i === xTicks.length - 1 ? "NOW" : formatTick(new Date(t), hours)}
             </text>
-          </g>
-        ))}
-        {xTicks.map((t, i) => (
-          <text
-            key={t}
-            x={x(t)}
-            y={CHART_HEIGHT - 6}
-            textAnchor={i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle"}
-            className="fill-ov-muted text-micro"
-          >
-            {i === xTicks.length - 1 ? "NOW" : formatTick(new Date(t), hours)}
-          </text>
-        ))}
+          ))}
 
-        <path d={area} fill="url(#ov-price-fill)" />
-        <path
-          d={path}
-          fill="none"
-          className="stroke-ov-teal"
-          strokeWidth={2}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        <circle
-          cx={x(now)}
-          cy={y(series[series.length - 1].price)}
-          r={4}
-          className="fill-ov-teal stroke-ov-panel"
-          strokeWidth={2}
-        />
-
-        {hovered && (
-          <g pointerEvents="none">
-            <line
-              x1={x(hovered.t)}
-              x2={x(hovered.t)}
-              y1={PAD.top}
-              y2={PAD.top + plotH}
-              className="stroke-ov-dim"
-              strokeWidth={1}
-            />
-            <circle
-              cx={x(hovered.t)}
-              cy={y(hovered.price)}
-              r={5}
-                  className="fill-ov-teal stroke-ov-panel"
+          {focused.store === "PLAYSTATION" && <path d={area} fill="url(#ov-price-fill)" />}
+          <line
+            x1={PAD.left}
+            x2={PAD.left + plotW}
+            y1={y(low)}
+            y2={y(low)}
+            className="stroke-ov-deal"
+            strokeDasharray="4 5"
+            opacity={0.6}
+          />
+          {lines.map((line) => (
+            <path
+              key={line.store}
+              d={pathFor(line.samples)}
+              fill="none"
+              className={STORE_STROKE[line.store]}
               strokeWidth={2}
+              strokeLinejoin="round"
+              opacity={line.store === focused.store ? 1 : 0.35}
             />
-          </g>
-        )}
+          ))}
+
+          {hovered && (
+            <g pointerEvents="none">
+              <line x1={x(hovered.t)} x2={x(hovered.t)} y1={PAD.top} y2={PAD.top + plotH} className="stroke-ov-faint" />
+              <rect
+                x={x(hovered.t) - 5}
+                y={y(hovered.price) - 5}
+                width={10}
+                height={10}
+                transform={`rotate(45 ${x(hovered.t)} ${y(hovered.price)})`}
+                className={cx(STORE_FILL[focused.store], "stroke-ov-field")}
+                strokeWidth={2}
+              />
+            </g>
+          )}
+        </g>
 
         <rect
           x={PAD.left}
@@ -404,46 +454,41 @@ function PriceChart({ history, hours }: { history: PriceHistory; hours: number }
           width={plotW}
           height={plotH}
           fill="transparent"
+          tabIndex={0}
+          role="slider"
+          aria-label={`${focused.label} price over the last ${hours <= 24 ? "24 hours" : `${hours / 24} days`}. Use arrow keys to step through samples.`}
+          aria-valuemin={0}
+          aria-valuemax={focused.samples.length - 1}
+          aria-valuenow={hoverIndex ?? focused.samples.length - 1}
+          aria-valuetext={
+            hovered
+              ? `${money(hovered.price)}, ${formatStamp(new Date(hovered.t))}`
+              : `Latest ${money(latest.price)}`
+          }
+          className="cursor-crosshair outline-none focus-visible:stroke-ov-teal-hover"
           onPointerMove={onMove}
           onPointerLeave={() => setHover(null)}
+          onKeyDown={onKey}
+          onBlur={() => setHover(null)}
         />
       </svg>
 
       {hovered && (
         <div
-          className="pointer-events-none absolute top-0 -translate-x-1/2 border border-ov-border bg-ov-bg px-3 py-2 whitespace-nowrap"
+          className="pointer-events-none absolute top-2 flex -translate-x-1/2 -translate-y-full flex-col gap-0.5 border border-ov-border-strong bg-ov-bg px-2.5 py-2 whitespace-nowrap"
           style={{ left: tooltipLeft }}
         >
-          <div className="font-orbitron text-sm font-bold text-white">{money(hovered.price)}</div>
+          <span className="font-orbitron text-body font-bold">{money(hovered.price)}</span>
           {hovered.base !== null && hovered.base > hovered.price && (
-            <div className="text-micro text-ov-muted line-through">{money(hovered.base)}</div>
+            <s className="text-label text-ov-muted">{money(hovered.base)}</s>
           )}
-          <div className="mt-0.5 text-micro tracking-wide text-ov-dim">
-            {hover === 0 && history.previous
-              ? `Since ${formatStamp(new Date(history.previous.t))}`
+          <span className="text-label text-ov-dim">
+            {hovered.since
+              ? `Since ${formatStamp(new Date(hovered.since))}`
               : formatStamp(new Date(hovered.t))}
-          </div>
+          </span>
         </div>
       )}
-
-      {/* Screen-reader view of the same samples. */}
-      <table className="sr-only">
-        <caption>Sampled PS Store prices</caption>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          {history.points.map((p) => (
-            <tr key={p.t}>
-              <td>{formatStamp(new Date(p.t))}</td>
-              <td>{money(p.price)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

@@ -4,15 +4,16 @@ import Link from "next/link";
 import { OvIcon, type IconName } from "./OvIcon";
 import { Button } from "@/components/ui";
 
+/// Empty collection or page: a short title, why it's empty, and one way out.
 export function EmptyState({
   icon,
   title,
   description,
   actionLabel,
   actionHref,
-  iconClassName = "text-ov-rose",
+  iconClassName = "text-ov-dim",
 }: {
-  icon: IconName;
+  icon?: IconName;
   title: string;
   description: string;
   actionLabel: string;
@@ -20,15 +21,11 @@ export function EmptyState({
   iconClassName?: string;
 }) {
   return (
-    <div className="border border-dashed border-ov-border px-8 py-[60px] text-center">
-      <div className={`mx-auto mb-3 flex justify-center ${iconClassName}`}>
-        <OvIcon name={icon} className="text-4xl" />
-      </div>
-      <div className="font-orbitron text-base font-bold tracking-wide text-ov-text">
-        {title}
-      </div>
-      <p className="mt-2.5 text-ui text-ov-muted">{description}</p>
-      <Button asChild variant="primary" className="mt-5">
+    <div className="flex flex-col items-center gap-3 border border-dashed border-ov-border-strong px-6 py-[72px] text-center">
+      {icon && <OvIcon name={icon} className={`mb-1 text-3xl ${iconClassName}`} />}
+      <p className="text-lg font-semibold text-ov-white">{title}</p>
+      <p className="max-w-md text-sm text-ov-dim">{description}</p>
+      <Button asChild variant="primary" className="mt-2">
         <Link href={actionHref}>{actionLabel}</Link>
       </Button>
     </div>
@@ -36,18 +33,16 @@ export function EmptyState({
 }
 
 export function NoResults({
-  title = "NO RESULTS",
+  title = "No results",
   description = "Nothing matches these filters right now. Try a different combination.",
 }: {
   title?: string;
   description?: string;
 }) {
   return (
-    <div className="border border-dashed border-ov-border px-8 py-[60px] text-center text-ov-muted">
-      <div className="font-orbitron text-base font-bold tracking-hud-wide text-ov-text">
-        {title}
-      </div>
-      <p className="mt-3 text-ui">{description}</p>
+    <div className="flex flex-col items-center gap-2 border border-dashed border-ov-border-strong px-6 py-14 text-center">
+      <p className="text-lg font-semibold text-ov-white">{title}</p>
+      <p className="max-w-md text-sm text-ov-dim">{description}</p>
     </div>
   );
 }
@@ -67,7 +62,7 @@ export function LoadMoreButton({
         loading={loading}
         iconRight={loading ? undefined : "chevron-down"}
       >
-        {loading ? "LOADING" : "LOAD MORE"}
+        {loading ? "Loading" : "Load more"}
       </Button>
     </div>
   );

@@ -3,15 +3,15 @@ import Image from "next/image";
 import { Button } from "@/components/ui";
 
 export const SignIn = ({
-  label = "SIGN UP WITH GOOGLE",
-  callbackUrl = "/games",
+  label = "Continue with Google",
+  callbackUrl = "/",
 }: {
   label?: string;
   callbackUrl?: string;
 }) => {
   return (
     <form action={googleSignIn.bind(null, callbackUrl)}>
-      <Button type="submit" variant="primary" size="lg">
+      <Button type="submit" variant="light" size="lg" className="w-full">
         <Image
           width={20}
           height={20}

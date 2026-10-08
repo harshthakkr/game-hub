@@ -8,58 +8,88 @@
    var(--color-ov-*) when a value has to be computed at runtime.
    --------------------------------------------------------------------------- */
 @theme static {
-  /* Surfaces, darkest to lightest. */
+  /* Surfaces, darkest to lightest: page, panels/cards, fields/menus, chips and
+     hover fills. */
   --color-ov-bg: #05070e;
-  --color-ov-sunken: #070b14;
-  --color-ov-panel: #0a1220;
-  --color-ov-raised: #0f1a2e;
-  --color-ov-border: #16324a;
+  --color-ov-panel: #0a0e18;
+  --color-ov-field: #0f1521;
+  --color-ov-raised: #151c2a;
 
-  /* Text, strongest to weakest. Every step clears WCAG AA (4.5:1) on bg and
-     panel; muted was #5b6b82 (3.7:1) before the token pass. */
-  --color-ov-white: #e6edf6;
-  --color-ov-text: #c3cede;
-  --color-ov-dim: #7c8aa0;
-  --color-ov-muted: #6f7f96;
+  /* Lines: default dividers and card edges, then interactive edges. */
+  --color-ov-border: #1e2737;
+  --color-ov-border-strong: #2c3749;
+  /* Decorative only (separators, the logo slashes); below text contrast. */
+  --color-ov-faint: #4a5669;
 
-  /* Accents. Teal is the brand/interactive accent, rose the alert accent;
-     sky and amber only appear in the review verdict scale. */
+  /* Text, strongest to weakest. Every step clears WCAG AA (4.5:1) on bg,
+     panel and field. */
+  --color-ov-white: #e6ebf2;
+  --color-ov-text: #c9d1dd;
+  --color-ov-dim: #a3aebf;
+  --color-ov-muted: #7a8699;
+
+  /* Brand / interactive accent. `ink` is text on a teal fill; `deep` the
+     border of a teal-tinted chip. */
   --color-ov-teal: #2dd4bf;
-  --color-ov-teal-dark: #14b8a6;
-  --color-ov-rose: #f43f5e;
-  --color-ov-sky: #38bdf8;
-  --color-ov-amber: #fbbf24;
+  --color-ov-teal-hover: #5eead4;
+  --color-ov-teal-ink: #03201b;
+  --color-ov-teal-deep: #1f5f58;
 
-  /* Type scale. Tailwind's xs (12) / sm (14) / base (16) / lg (18) / 2xl (24) /
-     3xl (30) / 4xl (36) fill the gaps between these. */
-  --text-micro: 10px;
-  --text-label: 11px;
+  /* Rose is reserved for wishlist, live and destructive actions. */
+  --color-ov-rose: #f43f5e;
+  --color-ov-rose-soft: #fda4af;
+  --color-ov-rose-deep: #9f1239;
+  --color-ov-rose-wash: #2a0e17;
+
+  /* Discounts and price drops. */
+  --color-ov-deal: #4ade80;
+  --color-ov-deal-ink: #052e14;
+
+  /* Warnings (spoilers) and the review verdict scale. */
+  --color-ov-amber: #fbbf24;
+  --color-ov-sky: #38bdf8;
+
+  /* Type scale. micro is the mono caps label size; Tailwind's xs (12) /
+     sm (14) / base (16) / lg (18) / xl (20) / 4xl (36) fill the gaps. */
+  --text-micro: 11px;
+  --text-label: 12px;
   --text-ui: 13px;
   --text-body: 15px;
+  --text-lead: 17px;
+  --text-section: 22px;
   --text-title: 28px;
+  --text-page: 40px;
+  --text-display: 52px;
+  --text-hero: 60px;
 
-  /* Letter-spacing for uppercase HUD labels. */
+  /* Letter-spacing for mono caps labels, and legacy HUD caps. */
+  --tracking-label: 0.08em;
   --tracking-hud: 1px;
   --tracking-hud-wide: 2px;
   --tracking-hud-xwide: 3px;
 
-  /* Chamfer (cut-corner) sizes, consumed by the .ov-chamfer utilities below. */
+  /* Chamfer (cut-corner) sizes, consumed by the .ov-chamfer utilities below:
+     sm for controls, md for cards and panels. */
   --chamfer-sm: 8px;
-  --chamfer-md: 12px;
-  --chamfer-lg: 20px;
+  --chamfer-md: 16px;
+  --chamfer-lg: 16px;
 
-  --shadow-ov-pop: 0 12px 30px rgb(0 0 0 / 0.5);
+  --shadow-ov-pop: 0 24px 48px rgb(0 0 0 / 0.55);
 
   --animate-ov-pop: ov-pop 0.14s ease-out both;
   --animate-ov-fade-up: ov-fade-up 0.25s ease-out both;
   --animate-ov-fade-out: ov-fade-out 0.15s ease-in both;
   --animate-ov-pop-out: ov-pop-out 0.1s ease-in both;
   --animate-ov-pulse: ov-pulse 2s ease-in-out infinite;
+  --animate-ov-shimmer: ov-shimmer 1.2s linear infinite;
   --animate-ov-think: ov-think 0.8s linear infinite;
   --animate-ov-scrollup: ov-scrollup 26s linear infinite;
   --animate-ov-scrollup-slow: ov-scrollup 34s linear infinite;
   --animate-ov-scrolldown: ov-scrollup 30s linear infinite reverse;
 
+  /* All breakpoints in px: Tailwind orders variants by value, and mixing px
+     with the default rem values breaks that ordering. */
+  --breakpoint-sm: 480px;
   --breakpoint-md: 586px;
   --breakpoint-lg: 800px;
   --breakpoint-xl: 1080px;
@@ -98,6 +128,15 @@
     }
   }
 
+  @keyframes ov-shimmer {
+    from {
+      background-position: -400px 0;
+    }
+    to {
+      background-position: 400px 0;
+    }
+  }
+
   @keyframes ov-think {
     to {
       transform: rotate(360deg);
@@ -114,19 +153,21 @@
 /* next/font exposes its families as variables on <body>, so these must stay
    inline to resolve there rather than on :root. */
 @theme inline {
+  --font-sans: var(--font-geist-next), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono-next), ui-monospace, monospace;
+  /* Display face: the logo and big numerals only. */
   --font-orbitron: var(--font-orbitron-next), sans-serif;
-  --font-chakra: var(--font-chakra-next), sans-serif;
 }
 
-/* Sticky header height, for layouts that fill or stick below it. Below xl the
-   header carries a second row (the scrollable nav strip). */
+/* Sticky header height (plus its 1px rule), for layouts that fill or stick
+   below it. Below xl the header carries a second row: the nav strip. */
 :root {
-  --ov-topbar-h: 94px;
+  --ov-topbar-h: 109px;
 }
 
 @media (width >= 1080px) {
   :root {
-    --ov-topbar-h: 74px;
+    --ov-topbar-h: 65px;
   }
 }
 
@@ -138,8 +179,9 @@
   body {
     margin: 0;
     background: var(--color-ov-bg);
-    color: var(--color-ov-text);
-    font-family: var(--font-chakra), sans-serif;
+    color: var(--color-ov-white);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 
   a {
@@ -155,14 +197,18 @@
 
   ::selection {
     background: var(--color-ov-teal);
-    color: var(--color-ov-bg);
+    color: var(--color-ov-teal-ink);
   }
 
   /* One focus ring for everything keyboard-reachable. Mouse clicks don't
      trigger :focus-visible, so this never shows on pointer interaction. */
   :focus-visible {
-    outline: 2px solid var(--color-ov-teal);
+    outline: 2px solid var(--color-ov-teal-hover);
     outline-offset: 2px;
+  }
+
+  ::placeholder {
+    color: var(--color-ov-muted);
   }
 
   @media (prefers-reduced-motion: reduce) {

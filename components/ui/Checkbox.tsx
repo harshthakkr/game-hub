@@ -1,62 +1,65 @@
 "use client";
 
 import { useId, type ReactNode } from "react";
-import { Checkbox as RadixCheckbox } from "radix-ui";
+import { Checkbox as RadixCheckbox, Switch as RadixSwitch } from "radix-ui";
 import { OvIcon } from "@/components/overdrive/OvIcon";
 import { cx } from "@/utils/cx";
-
-const TONES = {
-  teal: {
-    box: "data-[state=checked]:border-ov-teal data-[state=checked]:bg-ov-teal/16 text-ov-teal",
-    label: "peer-data-[state=checked]:text-ov-teal",
-  },
-  rose: {
-    box: "data-[state=checked]:border-ov-rose data-[state=checked]:bg-ov-rose/16 text-ov-rose",
-    label: "peer-data-[state=checked]:text-ov-rose",
-  },
-};
 
 export function Checkbox({
   checked,
   onCheckedChange,
   children,
-  tone = "teal",
-  size = "md",
   className,
 }: {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   children: ReactNode;
-  /// Rose for warnings ("contains spoilers"), teal otherwise.
-  tone?: keyof typeof TONES;
-  size?: "sm" | "md";
   className?: string;
 }) {
   const id = useId();
   return (
-    <span className={cx("inline-flex items-center gap-2", className)}>
+    <span className={cx("inline-flex items-center gap-2.5", className)}>
       <RadixCheckbox.Root
         id={id}
         checked={checked}
         onCheckedChange={(state) => onCheckedChange(state === true)}
-        className={cx(
-          "peer flex shrink-0 items-center justify-center border border-ov-border transition-colors duration-150",
-          size === "sm" ? "size-4" : "size-[18px]",
-          TONES[tone].box
-        )}
+        className="flex size-[18px] shrink-0 items-center justify-center border border-ov-border-strong bg-ov-field text-ov-teal-ink transition-colors duration-150 data-[state=checked]:border-ov-teal data-[state=checked]:bg-ov-teal"
       >
         <RadixCheckbox.Indicator>
-          <OvIcon name="check" className={size === "sm" ? "text-micro" : "text-label"} />
+          <OvIcon name="check" className="text-xs" />
         </RadixCheckbox.Indicator>
       </RadixCheckbox.Root>
-      <label
-        htmlFor={id}
-        className={cx(
-          "cursor-pointer tracking-hud text-ov-dim transition-colors duration-150",
-          size === "sm" ? "text-micro" : "text-label",
-          TONES[tone].label
-        )}
+      <label htmlFor={id} className="cursor-pointer text-sm text-ov-text">
+        {children}
+      </label>
+    </span>
+  );
+}
+
+/// On/off setting that applies immediately ("Contains spoilers").
+export function Switch({
+  checked,
+  onCheckedChange,
+  children,
+  className,
+}: {
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  children: ReactNode;
+  className?: string;
+}) {
+  const id = useId();
+  return (
+    <span className={cx("inline-flex items-center gap-2.5", className)}>
+      <RadixSwitch.Root
+        id={id}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        className="h-[22px] w-10 shrink-0 bg-ov-border-strong p-[3px] transition-colors duration-200 data-[state=checked]:bg-ov-teal"
       >
+        <RadixSwitch.Thumb className="block size-4 bg-ov-white transition-transform duration-200 data-[state=checked]:translate-x-[18px]" />
+      </RadixSwitch.Root>
+      <label htmlFor={id} className="cursor-pointer text-sm text-ov-text">
         {children}
       </label>
     </span>

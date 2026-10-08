@@ -2,12 +2,12 @@ import { forwardRef, type InputHTMLAttributes, type TextareaHTMLAttributes } fro
 import { cx } from "@/utils/cx";
 
 const BASE =
-  "block w-full border bg-ov-panel text-ov-white outline-none transition-colors duration-150 placeholder:text-ov-muted disabled:opacity-50";
+  "block w-full border bg-ov-field text-ov-white outline-none transition-colors duration-150 placeholder:text-ov-muted disabled:opacity-50";
 
 /// Border color doubles as the focus indicator, so fields opt out of the global
 /// outline. `invalid` also sets aria-invalid.
 function border(invalid?: boolean) {
-  return invalid ? "border-ov-rose" : "border-ov-border focus:border-ov-teal";
+  return invalid ? "border-ov-rose" : "border-ov-border-strong focus:border-ov-teal";
 }
 
 export const Input = forwardRef<
@@ -18,7 +18,7 @@ export const Input = forwardRef<
     <input
       ref={ref}
       aria-invalid={invalid || undefined}
-      className={cx(BASE, "px-4 py-3 text-ui", border(invalid), className)}
+      className={cx(BASE, "h-12 px-3.5 text-body", border(invalid), className)}
       {...props}
     />
   );
@@ -35,7 +35,7 @@ export const Textarea = forwardRef<
       className={cx(
         BASE,
         "resize-y",
-        size === "sm" ? "px-3 py-2 text-ui leading-[1.7]" : "px-4 py-3 text-sm leading-[1.8]",
+        size === "sm" ? "px-3 py-2 text-sm leading-normal" : "px-3.5 py-3 text-body leading-normal",
         border(invalid),
         className
       )}
@@ -54,7 +54,7 @@ export function FieldLabel({
   className?: string;
 }) {
   return (
-    <label htmlFor={htmlFor} className={cx("mb-2 block text-label tracking-wide text-ov-dim", className)}>
+    <label htmlFor={htmlFor} className={cx("mb-1.5 block text-ui font-medium text-ov-text", className)}>
       {children}
     </label>
   );
@@ -75,7 +75,7 @@ export function CharCount({
   return (
     <span
       className={cx(
-        "font-orbitron text-label font-bold",
+        "font-mono text-label",
         count > max ? "text-ov-rose" : "text-ov-muted",
         className
       )}

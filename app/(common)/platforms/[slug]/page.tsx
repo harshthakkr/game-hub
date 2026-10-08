@@ -15,8 +15,8 @@ export default function Platform() {
 
   return (
     <GameCatalogue
-      title={slugStr.replace(/-/g, " ").toUpperCase()}
-      subtitle="platform catalogue"
+      title={slugStr.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+      subtitle="Games on this platform, best rated first."
       games={data}
       loading={loading}
       hasMore={hasMore}

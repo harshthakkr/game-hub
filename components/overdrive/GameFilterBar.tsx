@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { GameCardProps } from "@/utils/types";
-import { Select, type SelectOption } from "@/components/ui";
+import { ChipGroup, type SelectOption } from "@/components/ui";
 
 export type GameSort = "rating" | "date" | "popularity" | "az";
 
@@ -39,8 +39,6 @@ export function GameFilterBar({
   setSort: (s: GameSort) => void;
 }) {
   return (
-    <div className="mb-6 flex justify-end">
-      <Select label="Sort by" options={GAME_SORTS} value={sort} onValueChange={setSort} align="end" />
-    </div>
+    <ChipGroup label="Sort by" variant="segmented" options={GAME_SORTS} value={sort} onValueChange={setSort} />
   );
 }

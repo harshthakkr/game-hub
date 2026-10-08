@@ -5,13 +5,11 @@ import { useState } from "react";
 import axios from "axios";
 import { ToggleGroup } from "radix-ui";
 import { OvIcon } from "../OvIcon";
-import { Button, CharCount, Checkbox, Textarea } from "@/components/ui";
-import { Avatar } from "./Avatar";
+import { Button, CharCount, Switch, Textarea } from "@/components/ui";
 import {
   MAX_REVIEW_WORDS,
   VERDICTS,
   countWords,
-  displayName,
   verdictMeta,
   verdictVars,
   type Verdict,
@@ -58,17 +56,11 @@ export function ReviewComposer({
 
   if (!viewer) {
     return (
-      <div className="py-2 text-center">
-        <div className="font-orbitron text-sm font-bold tracking-hud-wide text-ov-text">
-          SIGN IN TO POST A REVIEW
-        </div>
-        <p className="mx-auto mt-2.5 max-w-[420px] text-ui leading-relaxed text-ov-muted">
-          Reviews are tied to a player handle so other players know whose call
-          they are reading. Reading is open to everyone.
-        </p>
-        <Button asChild variant="primary" className="mt-5">
-          <Link href={`/register?callbackUrl=${encodeURIComponent(`/games/${gameSlug}`)}`}>
-            JOIN THE GRID
+      <div className="flex flex-wrap items-center justify-between gap-3 border border-ov-border bg-ov-panel p-4.5">
+        <p className="text-body text-ov-text">Sign in to write a review.</p>
+        <Button asChild variant="primary" size="sm" chamfer>
+          <Link href={`/register?mode=login&callbackUrl=${encodeURIComponent(`/games/${gameSlug}`)}`}>
+            Sign in
           </Link>
         </Button>
       </div>
@@ -76,20 +68,18 @@ export function ReviewComposer({
   }
 
   if (myReview && !open) {
+    const meta = verdictMeta(myReview.verdict);
     return (
-      <div className="flex flex-wrap items-center gap-3">
-        <OvIcon name="check" className="text-sm text-ov-teal" />
-        <span className="text-ui text-ov-text">
-          You reviewed {gameName} —{" "}
-          <span
-            className="text-(--verdict)"
-            style={verdictVars(verdictMeta(myReview.verdict).color)}
-          >
-            {verdictMeta(myReview.verdict).label}
+      <div className="flex flex-wrap items-center gap-3 border border-ov-border bg-ov-panel p-4.5">
+        <OvIcon name="check" className="text-base text-ov-teal" />
+        <p className="text-body text-ov-text">
+          You called it{" "}
+          <span className="font-semibold text-(--verdict)" style={verdictVars(meta.color)}>
+            {meta.label}
           </span>
-        </span>
+        </p>
         <Button size="sm" variant="outline" icon="edit" onClick={() => setOpen(true)} className="ml-auto">
-          EDIT
+          Edit review
         </Button>
       </div>
     );
@@ -135,100 +125,82 @@ export function ReviewComposer({
   };
 
   return (
-    <div>
-      <div className="flex items-center gap-3">
-        <Avatar author={viewer} size={34} />
-        <div className="min-w-0">
-          <div className="font-orbitron text-xs font-bold tracking-hud-wide text-ov-rose">
-            {myReview ? "EDIT YOUR REVIEW" : "WRITE A REVIEW"}
-          </div>
-          <div className="mt-0.5 text-label text-ov-muted">
-            posting as {displayName(viewer)}
-          </div>
-        </div>
+    <div className="flex flex-col gap-3.5 border border-ov-border bg-ov-panel p-4.5">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span id="verdict-label" className="mr-1.5 text-body font-semibold">
+          {myReview ? "Update your verdict" : "Your verdict"}
+        </span>
+        {/* Same ToggleGroup primitive as ChipGroup (roving focus, arrow keys),
+            but each tier lights up in its own verdict color. */}
+        <ToggleGroup.Root
+          type="single"
+          aria-labelledby="verdict-label"
+          value={verdict ?? ""}
+          onValueChange={(next) => next && setVerdict(next as Verdict)}
+          className="flex flex-wrap gap-2"
+        >
+          {VERDICTS.map((tier) => (
+            <ToggleGroup.Item
+              key={tier.value}
+              value={tier.value}
+              title={tier.blurb}
+              style={verdictVars(tier.color)}
+              className="flex items-center gap-1.5 border border-ov-border-strong px-3 py-1.5 text-ui font-medium text-ov-dim transition-colors duration-150 hover:text-ov-white data-[state=on]:border-(--verdict) data-[state=on]:bg-ov-raised data-[state=on]:text-(--verdict)"
+            >
+              <span aria-hidden className="size-1.5 rotate-45 bg-(--verdict)" />
+              {tier.label}
+            </ToggleGroup.Item>
+          ))}
+        </ToggleGroup.Root>
       </div>
+      {selected && <p className="-mt-1 text-ui text-ov-muted">{selected.blurb}</p>}
 
-      <div aria-hidden className="mt-5 mb-2 text-label tracking-hud-wide text-ov-dim">
-        YOUR VERDICT
-      </div>
-      {/* Same ToggleGroup primitive as ChipGroup (roving focus, arrow keys), but
-          each tier lights up in its own verdict color. */}
-      <ToggleGroup.Root
-        type="single"
-        aria-label="Your verdict"
-        value={verdict ?? ""}
-        onValueChange={(next) => next && setVerdict(next as Verdict)}
-        className="flex flex-wrap gap-2"
-      >
-        {VERDICTS.map((tier) => (
-          <ToggleGroup.Item
-            key={tier.value}
-            value={tier.value}
-            style={verdictVars(tier.color)}
-            className="ov-chamfer-x ov-chamfer-sm border border-ov-border px-3 py-2 font-orbitron text-micro font-bold tracking-hud-wide text-ov-dim transition-[filter,background-color,border-color,color,scale] duration-150 hover:brightness-125 active:scale-95 data-[state=on]:border-(--verdict) data-[state=on]:bg-(--verdict)/9 data-[state=on]:text-(--verdict)"
-          >
-            {tier.label}
-          </ToggleGroup.Item>
-        ))}
-      </ToggleGroup.Root>
-      <div className="mt-2 h-4 text-label italic text-ov-muted">
-        {selected ? `// ${selected.blurb}` : ""}
-      </div>
-
-      <div className="mt-4 mb-2 flex items-baseline gap-3">
-        <label htmlFor="review-body" className="text-label tracking-hud-wide text-ov-dim">
-          REVIEW
-        </label>
-        <CharCount count={words} max={MAX_REVIEW_WORDS} unit="WORDS" className="ml-auto" />
-      </div>
       <Textarea
         id="review-body"
+        aria-label="Your review"
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        rows={7}
-        placeholder="What worked, what didn't, who should play it..."
+        rows={4}
+        placeholder="What worked, what didn't, who should play it?"
         invalid={overLimit}
-        className="ov-chamfer-x"
       />
 
-      <Checkbox tone="rose" checked={hasSpoilers} onCheckedChange={setHasSpoilers} className="mt-3.5">
-        THIS REVIEW CONTAINS SPOILERS
-      </Checkbox>
-
       {error && (
-        <div
-          role="alert"
-          className="animate-ov-fade-up mt-3.5 border-l-2 border-ov-rose py-1.5 pl-3.5 text-xs text-ov-rose"
-        >
+        <p role="alert" className="border-l-2 border-ov-rose py-1 pl-3 text-sm text-ov-rose-soft">
           {error}
-        </div>
+        </p>
       )}
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Button variant="primary" onClick={submit} disabled={!canSubmit} loading={saving}>
-          {saving ? "SAVING" : myReview ? "UPDATE REVIEW" : "POST REVIEW"}
-        </Button>
-
-        {myReview && (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setBody(myReview.body);
-                setVerdict(myReview.verdict);
-                setHasSpoilers(myReview.hasSpoilers);
-                setError(null);
-                setOpen(false);
-              }}
-            >
-              CANCEL
-            </Button>
-            <Button variant="danger" size="sm" onClick={remove} disabled={saving} className="ml-auto">
-              DELETE
-            </Button>
-          </>
-        )}
+      <div className="flex flex-wrap items-center gap-4">
+        <Switch checked={hasSpoilers} onCheckedChange={setHasSpoilers}>
+          Contains spoilers
+        </Switch>
+        <CharCount count={words} max={MAX_REVIEW_WORDS} unit="words" />
+        <div className="ml-auto flex items-center gap-2">
+          {myReview && (
+            <>
+              <Button variant="danger" size="sm" onClick={remove} disabled={saving}>
+                Delete
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setBody(myReview.body);
+                  setVerdict(myReview.verdict);
+                  setHasSpoilers(myReview.hasSpoilers);
+                  setError(null);
+                  setOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+          <Button variant="primary" onClick={submit} disabled={!canSubmit} loading={saving}>
+            {myReview ? "Update review" : "Post review"}
+          </Button>
+        </div>
       </div>
     </div>
   );

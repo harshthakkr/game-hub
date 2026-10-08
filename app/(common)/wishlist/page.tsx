@@ -1,106 +1,99 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
-import Image from "next/image";
-import Link from "next/link";
+import { useMemo, useState } from "react";
+import { useGamesByIds } from "@/utils/hooks/useGamesByIds";
 import { loginHref, useCollection } from "@/context/CollectionContext";
-import { GameCardProps } from "@/utils/types";
-import { PageContainer, PageTitle } from "@/components/overdrive/PageShell";
+import { PageContainer } from "@/components/overdrive/PageShell";
 import { EmptyState } from "@/components/overdrive/EmptyState";
 import { WishlistSkeleton } from "@/components/overdrive/Skeletons";
-import { WishButton } from "@/components/overdrive/GameCards";
-import { coverUrl } from "@/utils/overdrive";
+import { GameGridCard } from "@/components/overdrive/GameCards";
+import { ChipGroup, Eyebrow, PageHeading, StatStrip } from "@/components/ui";
+
+const SORTS = [
+  { value: "added", label: "Recently added" },
+  { value: "discount", label: "Biggest discount" },
+  { value: "price", label: "Lowest price" },
+] as const;
+type Sort = (typeof SORTS)[number]["value"];
+
+const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
 export default function WishlistPage() {
   const { wishlist, ready, signedIn } = useCollection();
-  const [games, setGames] = useState<GameCardProps[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { games, loading } = useGamesByIds(wishlist, ready && signedIn);
+  const [sort, setSort] = useState<Sort>("added");
 
-  useEffect(() => {
-    if (!ready) return;
-    if (wishlist.length === 0) {
-      setGames([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    axios
-      .get(`/api/games?ids=${wishlist.join(",")}`)
-      .then((res) => setGames(res.data))
-      .finally(() => setLoading(false));
-  }, [wishlist, ready]);
+  const sorted = useMemo(() => {
+    if (sort === "added") return games;
+    return [...games].sort((a, b) =>
+      sort === "discount"
+        ? (b.price?.discountPercent ?? -1) - (a.price?.discountPercent ?? -1)
+        : (a.price?.amount ?? Infinity) - (b.price?.amount ?? Infinity)
+    );
+  }, [games, sort]);
+
+  const onSale = games.filter((g) => (g.price?.discountPercent ?? 0) > 0);
+  const saving = onSale.reduce((sum, g) => sum + Math.max(0, g.price!.baseAmount - g.price!.amount), 0);
 
   if (ready && !signedIn) {
     return (
       <PageContainer>
-        <PageTitle title="WISH" accent="LIST" accentClassName="text-ov-rose" />
+        <PageHeading title="Wishlist" />
         <EmptyState
-          icon="heart-filled"
-          title="LOG IN TO SEE YOUR WISHLIST"
+          icon="heart"
+          title="Sign in to see your wishlist"
           description="Your wishlist is saved to your account, so it follows you across devices."
-          actionLabel="LOG IN"
+          actionLabel="Sign in"
           actionHref={loginHref("/wishlist")}
         />
       </PageContainer>
     );
   }
-  if (!ready || loading) return <WishlistSkeleton />;
+  if (!ready || (loading && games.length === 0 && wishlist.length > 0)) return <WishlistSkeleton />;
 
   return (
     <PageContainer>
-      <PageTitle
-        title="WISH"
-        accent="LIST"
-        accentClassName="text-ov-rose"
-        subtitle={`${wishlist.length} titles tracked`}
-      />
+      <PageHeading
+        title="Wishlist"
+        description="Prices checked hourly on PlayStation Store and Steam."
+      >
+        {wishlist.length > 0 && (
+          <StatStrip>
+            <div className="flex flex-col gap-1">
+              <Eyebrow>WISHLISTED</Eyebrow>
+              <span className="font-orbitron text-[22px] font-bold">{wishlist.length}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <Eyebrow>ON SALE</Eyebrow>
+              <span className="font-orbitron text-[22px] font-bold text-ov-deal">{onSale.length}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <Eyebrow>YOU&apos;D SAVE</Eyebrow>
+              <span className="font-orbitron text-[22px] font-bold text-ov-deal">{inr.format(saving)}</span>
+            </div>
+          </StatStrip>
+        )}
+      </PageHeading>
 
-      {games.length === 0 ? (
+      {wishlist.length === 0 ? (
         <EmptyState
-          icon="heart-filled"
-          title="YOUR WISHLIST IS EMPTY"
-          description="Tap the heart on any game to track price drops and release dates."
-          actionLabel="BROWSE GAMES"
+          icon="heart"
+          title="Your wishlist is empty"
+          description="Tap the heart on any game to track its price."
+          actionLabel="Browse the catalogue"
           actionHref="/games"
         />
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-[18px]">
-          {games.map((game) => {
-            const cover = coverUrl(game.cover);
-            return (
-              <div key={game.id} className="group relative">
-                <Link href={`/games/${game.slug}`} className="block">
-                  <div className="ov-chamfer relative aspect-[3/4] overflow-hidden border border-ov-border transition-all duration-200 group-hover:-translate-y-1.5 group-hover:border-ov-teal">
-                    {cover ? (
-                      <Image
-                        src={cover}
-                        alt=""
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        sizes="220px"
-                      />
-                    ) : (
-                      <div className="h-full w-full bg-linear-to-br from-teal-700 to-slate-900" />
-                    )}
-                  </div>
-                  <div className="mt-2 text-body font-semibold text-white transition-colors duration-150 group-hover:text-ov-teal">
-                    {game.name}
-                  </div>
-                  <div className="mt-0.5 text-label text-ov-teal">Track price</div>
-                </Link>
-                {game.id && (
-                  <WishButton
-                    gameId={game.id}
-                    gameName={game.name}
-                    className="absolute right-2 top-2 group-hover:-translate-y-1.5"
-                    iconClassName="text-body"
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <>
+          <div className="flex justify-end border-b border-ov-border pb-3.5">
+            <ChipGroup label="Sort wishlist" variant="segmented" options={SORTS} value={sort} onValueChange={setSort} />
+          </div>
+          <div className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+            {sorted.map((game) => (
+              <GameGridCard key={game.id} game={game} />
+            ))}
+          </div>
+        </>
       )}
     </PageContainer>
   );

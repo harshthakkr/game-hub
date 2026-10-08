@@ -24,31 +24,31 @@ export interface VerdictMeta {
 export const VERDICTS: readonly VerdictMeta[] = [
   {
     value: "SKIP",
-    label: "SKIP",
+    label: "Skip",
     blurb: "Not worth your time",
     color: "var(--color-ov-rose)",
   },
   {
     value: "TIMEPASS",
-    label: "TIMEPASS",
+    label: "Timepass",
     blurb: "Fine on a slow weekend",
     color: "var(--color-ov-dim)",
   },
   {
     value: "WORTH_IT",
-    label: "WORTH IT",
+    label: "Worth it",
     blurb: "Solid — no regrets",
     color: "var(--color-ov-sky)",
   },
   {
     value: "GO_FOR_IT",
-    label: "GO FOR IT",
+    label: "Go for it",
     blurb: "Buy it, play it",
     color: "var(--color-ov-teal)",
   },
   {
     value: "MASTERPIECE",
-    label: "MASTERPIECE",
+    label: "Masterpiece",
     blurb: "An all-timer",
     color: "var(--color-ov-amber)",
   },
@@ -58,7 +58,7 @@ export const VERDICT_VALUES = VERDICTS.map((v) => v.value);
 
 const FALLBACK_VERDICT: VerdictMeta = {
   value: "WORTH_IT",
-  label: "WORTH IT",
+  label: "Worth it",
   blurb: "",
   color: "var(--color-ov-muted)",
 };
@@ -89,9 +89,9 @@ export function countWords(text: string) {
 export type ReviewSort = "latest" | "liked" | "discussed";
 
 export const REVIEW_SORTS: { value: ReviewSort; label: string }[] = [
-  { value: "latest", label: "LATEST" },
-  { value: "liked", label: "MOST LIKED" },
-  { value: "discussed", label: "MOST DISCUSSED" },
+  { value: "latest", label: "Latest" },
+  { value: "liked", label: "Most liked" },
+  { value: "discussed", label: "Most discussed" },
 ];
 
 export function isReviewSort(value: unknown): value is ReviewSort {

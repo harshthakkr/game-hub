@@ -3,7 +3,7 @@
 import { useRef, type ReactNode } from "react";
 import { Dialog as RadixDialog, VisuallyHidden } from "radix-ui";
 import { cx } from "@/utils/cx";
-import { Button } from "./Button";
+import { IconButton } from "./IconButton";
 
 /// Controlled dialogs here have no Radix <Trigger>, and without one Radix has
 /// nowhere to send focus on close. Remember what had focus when the dialog
@@ -24,7 +24,7 @@ function useReturnFocus() {
 }
 
 const OVERLAY =
-  "fixed inset-0 z-[100] backdrop-blur-[3px] data-[state=closed]:animate-ov-fade-out data-[state=open]:animate-ov-fade-up";
+  "fixed inset-0 z-[100] backdrop-blur-[6px] data-[state=closed]:animate-ov-fade-out data-[state=open]:animate-ov-fade-up";
 
 /// Modal panel with a titled header and close button. Radix provides the focus
 /// trap, Escape and outside-click dismissal, scroll lock, focus return to the
@@ -52,29 +52,29 @@ export function Dialog({
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className={cx(OVERLAY, "bg-ov-bg/88")} />
-        <div className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center p-3">
+        <RadixDialog.Overlay className={cx(OVERLAY, "bg-[rgb(2_3_8/0.82)]")} />
+        <div className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center p-3 md:p-10">
           {/* The chamfered frame doesn't scroll (its corner hairlines would
               scroll away with the content); the body inside it does. */}
           <RadixDialog.Content
             {...returnFocus}
             {...(!description && { "aria-describedby": undefined })}
             className={cx(
-              "ov-chamfer-x pointer-events-auto flex max-h-full w-full flex-col border border-ov-border bg-ov-panel focus:outline-none data-[state=closed]:animate-ov-pop-out data-[state=open]:animate-ov-fade-up",
+              "pointer-events-auto flex max-h-full w-full flex-col border border-ov-border-strong bg-ov-field shadow-ov-pop focus:outline-none data-[state=closed]:animate-ov-pop-out data-[state=open]:animate-ov-fade-up",
               className
             )}
           >
-            <div className="flex shrink-0 items-start gap-4 border-b border-ov-border px-5 py-4">
+            <div className="flex shrink-0 items-start gap-3 px-6 pt-6 pb-2">
               <div className="min-w-0 flex-1">
                 {eyebrow && (
-                  <div className="font-orbitron text-label font-bold tracking-hud-wide text-ov-rose">
+                  <div className="font-mono text-label uppercase tracking-label text-ov-muted">
                     {eyebrow}
                   </div>
                 )}
                 <RadixDialog.Title
                   className={cx(
-                    "truncate font-orbitron text-lg font-bold text-white",
-                    eyebrow && "mt-1.5"
+                    "truncate text-xl font-semibold text-ov-white",
+                    eyebrow && "mt-1"
                   )}
                 >
                   {title}
@@ -86,9 +86,7 @@ export function Dialog({
                 ) : null}
               </div>
               <RadixDialog.Close asChild>
-                <Button size="sm" variant="outline" icon="close">
-                  CLOSE
-                </Button>
+                <IconButton icon="close" label="Close" className="border border-ov-border-strong" />
               </RadixDialog.Close>
             </div>
             <div className="min-h-0 overflow-y-auto">{children}</div>
@@ -118,7 +116,7 @@ export function FullscreenDialog({
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className={cx(OVERLAY, "bg-ov-bg/95")} />
+        <RadixDialog.Overlay className={cx(OVERLAY, "bg-[rgb(2_3_8/0.92)]")} />
         <RadixDialog.Content
           {...returnFocus}
           aria-describedby={undefined}

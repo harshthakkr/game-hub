@@ -1,13 +1,15 @@
 "use client";
 
 import { OvIcon } from "../OvIcon";
+import { cx } from "@/utils/cx";
 
+/// Thumbs-up with a count. The heart is reserved for the wishlist, so likes
+/// get their own symbol.
 export function LikeButton({
   liked,
   count,
   onToggle,
   disabled,
-  size = "md",
 }: {
   liked: boolean;
   count: number;
@@ -15,24 +17,21 @@ export function LikeButton({
   disabled?: boolean;
   size?: "sm" | "md";
 }) {
-  const compact = size === "sm";
-
   return (
     <button
       type="button"
       onClick={onToggle}
       disabled={disabled}
-      title={disabled ? "Sign in to like" : liked ? "Unlike" : "Like"}
+      title={disabled ? "Sign in to like" : undefined}
       aria-pressed={liked}
-      className={`group flex items-center gap-1.5 transition-transform duration-150 active:scale-90 disabled:cursor-default disabled:active:scale-100 ${
-        compact ? "text-label" : "text-xs"
-      } ${liked ? "text-ov-rose" : "text-ov-muted"}`}
+      aria-label={`${liked ? "Unlike" : "Like"}, ${count} ${count === 1 ? "like" : "likes"}`}
+      className={cx(
+        "flex items-center gap-1.5 text-ui transition-colors duration-150 hover:text-ov-white disabled:cursor-default disabled:hover:text-inherit",
+        liked ? "text-ov-teal" : "text-ov-dim"
+      )}
     >
-      <OvIcon
-        name={liked ? "heart-filled" : "heart"}
-        className={`transition-transform duration-150 group-hover:scale-110 ${compact ? "text-xs" : "text-sm"}`}
-      />
-      <span className="font-orbitron font-bold">{count}</span>
+      <OvIcon name={liked ? "thumbs-up-filled" : "thumbs-up"} className="text-sm" />
+      {count}
     </button>
   );
 }

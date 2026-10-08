@@ -36,7 +36,7 @@ function Column({
             key={`${src}-${i}`}
             src={src}
             alt=""
-            className="aspect-[3/4] w-full rounded-lg object-cover"
+            className="aspect-[3/4] w-full object-cover"
           />
         ))}
       </div>

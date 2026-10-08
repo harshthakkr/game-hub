@@ -1,45 +1,26 @@
+import { cx } from "@/utils/cx";
+
 export function PageShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="ov-grid-bg min-h-screen text-ov-text">
-      {children}
-    </div>
-  );
+  return <div className="min-h-screen bg-ov-bg text-ov-white">{children}</div>;
 }
 
-export function PageContainer({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mx-auto max-w-[1320px] px-4 pb-[60px] pt-3 lg:px-6 lg:pt-7">
-      {children}
-    </div>
-  );
-}
-
-export function PageTitle({
-  title,
-  accent,
-  accentClassName = "text-ov-teal",
-  subtitle,
-  badge,
+/// Standard page frame: the shared max width and gutters, with room for the
+/// page's own vertical rhythm.
+export function PageContainer({
+  children,
+  className,
 }: {
-  title: string;
-  accent?: string;
-  accentClassName?: string;
-  subtitle?: string;
-  badge?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-baseline gap-3 lg:mb-6">
-      <h1 className="font-orbitron text-title font-black tracking-wide text-white">
-        {title}
-        {accent && <span className={accentClassName}>{accent}</span>}
-      </h1>
-      {subtitle && (
-        <span className="text-sm text-ov-muted">
-          {"// "}
-          {subtitle}
-        </span>
+    <div
+      className={cx(
+        "mx-auto flex max-w-[1440px] flex-col gap-7 px-4 pt-8 pb-24 md:px-8 md:pt-10",
+        className
       )}
-      {badge && <span className="ml-auto">{badge}</span>}
+    >
+      {children}
     </div>
   );
 }

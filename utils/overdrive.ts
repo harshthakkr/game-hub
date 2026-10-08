@@ -189,3 +189,48 @@ export function googleCalendarUrl({
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
+
+/// IGDB image at a given size preset (t_1080p, t_screenshot_big, ...).
+export function igdbImage(url: string, size: string) {
+  return `https:${url.replace("t_thumb", size)}`;
+}
+
+/// Widest landscape image from a list, for heroes and banners. Portrait box
+/// art upscaled into a wide hero looks blurry, so callers fall back to a
+/// designed treatment rather than the cover when this returns null.
+export function landscapeArt(list?: { url: string; width?: number; height?: number }[]) {
+  const wide = (list ?? []).filter((i) => !i.width || !i.height || i.width >= i.height);
+  wide.sort((a, b) => (b.width ?? 0) - (a.width ?? 0));
+  return wide[0] ? igdbImage(wide[0].url, "t_1080p") : null;
+}
+
+function duration(seconds: number) {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.max(1, Math.floor((seconds % 3600) / 60));
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+/// Event state for badges and countdowns, in sentence case.
+export function eventTiming(start?: number, end?: number, now = Date.now() / 1000) {
+  if (!start) {
+    return { state: "tba" as const, badge: "Date TBA", countdownLabel: "STARTS", countdown: "TBA" };
+  }
+  const finish = end && end > start ? end : start + 3600;
+  if (now >= start && now <= finish) {
+    return { state: "live" as const, badge: "Live now", countdownLabel: "ENDS IN", countdown: duration(finish - now) };
+  }
+  if (now > finish) {
+    return { state: "past" as const, badge: "Ended", countdownLabel: "ENDED", countdown: formatEventDate(finish) };
+  }
+  const days = Math.floor((start - now) / 86400);
+  const sameDay = new Date(start * 1000).toDateString() === new Date(now * 1000).toDateString();
+  return {
+    state: "upcoming" as const,
+    badge: sameDay ? "Today" : days <= 1 ? "Tomorrow" : `In ${days} days`,
+    countdownLabel: "STARTS IN",
+    countdown: duration(start - now),
+  };
+}

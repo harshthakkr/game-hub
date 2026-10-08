@@ -4,37 +4,39 @@ import { OvIcon, type IconName } from "@/components/overdrive/OvIcon";
 import { cx } from "@/utils/cx";
 import { Spinner } from "./Spinner";
 
-export type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "danger" | "live";
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "danger"
+  | "live"
+  | "light";
 export type ButtonSize = "sm" | "md" | "lg";
 
-/// Filled variants set in Orbitron; outlined ones in the UI face.
-const DISPLAY_FACE: Record<ButtonVariant, boolean> = {
-  primary: true,
-  live: true,
-  secondary: false,
-  outline: false,
-  ghost: false,
-  danger: false,
-};
-
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary:
-    "bg-linear-to-b from-ov-teal to-ov-teal-dark text-ov-bg hover:brightness-110",
+  /// The one call to action per view.
+  primary: "bg-ov-teal font-semibold text-ov-teal-ink hover:bg-ov-teal-hover",
+  /// Solid neutral; pressed (aria-pressed) turns it teal for "saved" toggles.
   secondary:
-    "border border-ov-teal bg-ov-teal/6 text-ov-teal hover:bg-ov-teal/14 aria-pressed:bg-ov-teal/16",
+    "border border-ov-border-strong bg-ov-raised font-medium text-ov-white hover:border-ov-faint aria-pressed:border-ov-teal-deep aria-pressed:text-ov-teal-hover",
+  /// Transparent neutral, for secondary actions on busy surfaces.
   outline:
-    "border border-ov-border text-ov-dim hover:border-ov-teal hover:text-ov-teal",
+    "border border-ov-border-strong font-medium text-ov-text hover:bg-ov-raised hover:text-ov-white",
   /// Text-only, for low-emphasis actions like Cancel.
-  ghost: "text-ov-muted hover:text-ov-text",
+  ghost: "font-medium text-ov-dim hover:text-ov-white",
+  /// Destructive or "remove"; also the pressed state of a wishlist toggle.
   danger:
-    "border border-ov-rose bg-ov-rose/8 text-ov-rose hover:bg-ov-rose hover:text-ov-bg",
-  live: "bg-ov-rose text-ov-bg hover:brightness-110",
+    "border border-ov-rose-deep bg-ov-rose-wash font-medium text-ov-rose-soft hover:border-ov-rose",
+  live: "bg-ov-rose font-semibold text-white hover:brightness-110",
+  /// Third-party sign-in ("Continue with Google"): a light, neutral fill.
+  light: "bg-ov-white font-semibold text-ov-bg hover:bg-white",
 };
 
-const SIZES: Record<ButtonSize, { box: string; display: string; ui: string; icon: string }> = {
-  sm: { box: "gap-1 px-3 py-1.5", display: "text-micro", ui: "text-label", icon: "text-xs" },
-  md: { box: "gap-1.5 px-[18px] py-3", display: "text-xs", ui: "text-ui", icon: "text-xs" },
-  lg: { box: "w-full gap-2.5 px-4 py-3.5", display: "text-ui", ui: "text-sm", icon: "text-sm" },
+const SIZES: Record<ButtonSize, { box: string; icon: string }> = {
+  sm: { box: "h-8 gap-1.5 px-3 text-ui", icon: "text-sm" },
+  md: { box: "h-10 gap-2 px-4 text-sm", icon: "text-base" },
+  lg: { box: "h-12 gap-2.5 px-6 text-body", icon: "text-base" },
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -45,7 +47,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   iconRight?: IconName;
   /// Disables the button and swaps the leading icon for a spinner.
   loading?: boolean;
-  /// Cut corners. Defaults on for md/lg, off for compact sm buttons.
+  /// Cut bottom-right corner. Defaults on for md/lg, off for compact sm.
   chamfer?: boolean;
   /// Render the single child (a Link or <a>) with button styling instead.
   asChild?: boolean;
@@ -72,7 +74,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 ) {
   const Comp = asChild ? Slot.Root : "button";
   const s = SIZES[size];
-  const display = DISPLAY_FACE[variant];
   const cut = chamfer ?? size !== "sm";
 
   return (
@@ -82,9 +83,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={asChild ? undefined : disabled || loading}
       aria-busy={loading || undefined}
       className={cx(
-        "inline-flex shrink-0 items-center justify-center whitespace-nowrap tracking-hud transition-[filter,background-color,border-color,color,scale] duration-150 active:scale-95 disabled:pointer-events-none disabled:opacity-40",
-        cut && "ov-chamfer-x ov-chamfer-sm",
-        display ? `font-orbitron font-bold ${s.display}` : s.ui,
+        "inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-[filter,background-color,border-color,color,scale] duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40",
+        cut && "ov-chamfer ov-chamfer-sm",
         s.box,
         VARIANTS[variant],
         className

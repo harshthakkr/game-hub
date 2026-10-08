@@ -3,9 +3,17 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { AIChat } from "@/components/overdrive/AIChat";
 
-export default async function AIPage() {
+export default async function AIPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
   const session = await auth();
-  if (!session) redirect("/register?mode=login&callbackUrl=/ai");
+  if (!session) {
+    const back = q ? `/ai?q=${encodeURIComponent(q)}` : "/ai";
+    redirect(`/register?mode=login&callbackUrl=${encodeURIComponent(back)}`);
+  }
 
   const history = await prisma.chatMessage.findMany({
     where: { userId: session.user.id },
@@ -18,5 +26,5 @@ export default async function AIPage() {
     content: m.content,
   }));
 
-  return <AIChat initialMessages={initialMessages} />;
+  return <AIChat initialMessages={initialMessages} initialQuery={q?.slice(0, 500)} />;
 }

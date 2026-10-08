@@ -11,6 +11,7 @@ import { ReviewComposer } from "./ReviewComposer";
 import { VerdictMeter } from "./VerdictMeter";
 import {
   REVIEW_SORTS,
+  VERDICTS,
   type ReviewSort,
   type Verdict,
 } from "@/utils/reviews";
@@ -52,7 +53,7 @@ function Pager({
   return (
     <nav aria-label="Review pages" className="mt-6 flex flex-wrap items-center justify-center gap-2">
       <Button size="sm" icon="chevron-left" disabled={page <= 1} onClick={() => onChange(page - 1)}>
-        PREV
+        Prev
       </Button>
       {window[0] > 1 && <span className="text-label text-ov-muted">…</span>}
       {window.map((n) => (
@@ -72,7 +73,7 @@ function Pager({
         <span className="text-label text-ov-muted">…</span>
       )}
       <Button size="sm" iconRight="chevron-right" disabled={page >= pages} onClick={() => onChange(page + 1)}>
-        NEXT
+        Next
       </Button>
     </nav>
   );
@@ -161,24 +162,19 @@ export function ReviewsPanel({
   }, []);
 
   if (!gameId) {
-    return (
-      <div className="px-8 py-12 text-center text-ui text-ov-muted">
-        Reviews are unavailable for this title.
-      </div>
-    );
+    return <p className="py-12 text-center text-sm text-ov-dim">Reviews are unavailable for this title.</p>;
   }
 
-  // One column, sections parted by hairlines rather than each being its own panel.
-  return (
-    <div>
-      <VerdictMeter
-        stats={stats}
-        activeVerdict={verdict}
-        onVerdictChange={setVerdict}
-      />
+  const verdictLabel = verdict ? VERDICTS.find((v) => v.value === verdict)?.label : null;
 
-      {/* Re-keyed so the composer resets between "no review" and "editing mine". */}
-      <div className="mt-6 border-t border-ov-border pt-6">
+  return (
+    <div className="flex flex-wrap items-start gap-8">
+      <div className="max-w-[380px] min-w-0 flex-[1_1_280px]">
+        <VerdictMeter stats={stats} activeVerdict={verdict} onVerdictChange={setVerdict} />
+      </div>
+
+      <div className="flex min-w-0 flex-[999_1_420px] flex-col gap-5">
+        {/* Re-keyed so the composer resets between "no review" and "editing mine". */}
         <ReviewComposer
           key={myReview?.id ?? "new"}
           gameId={gameId}
@@ -189,61 +185,60 @@ export function ReviewsPanel({
           onSaved={reload}
           onDeleted={reload}
         />
-      </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-ov-border pt-4">
-        <span aria-hidden className="text-micro tracking-hud-wide text-ov-dim">SORT</span>
-        <ChipGroup label="Sort reviews" options={REVIEW_SORTS} value={sort} onValueChange={setSort} />
-
-        <Checkbox size="sm" checked={hideSpoilers} onCheckedChange={setHideSpoilers} className="ml-auto">
-          HIDE SPOILERS
-          {stats.spoilerCount > 0 && ` (${stats.spoilerCount})`}
-        </Checkbox>
-      </div>
-
-      {loading ? (
-        <ReviewListSkeleton />
-      ) : error ? (
-        <div
-          role="alert"
-          className="animate-ov-fade-up mt-4 border-l-2 border-ov-rose py-2 pl-3.5 text-ui text-ov-rose"
-        >
-          {error}
+        <div className="flex flex-wrap items-center gap-3 border-b border-ov-border pb-3">
+          {verdictLabel && (
+            <span className="flex items-center gap-1.5 border border-ov-teal-deep bg-ov-teal/8 py-1 pr-1.5 pl-2.5 text-ui text-ov-teal-hover">
+              Showing {verdictLabel} reviews
+              <button
+                type="button"
+                onClick={() => setVerdict(null)}
+                aria-label="Show all verdicts"
+                className="flex size-[18px] items-center justify-center hover:text-ov-white"
+              >
+                <OvIcon name="close" className="text-xs" />
+              </button>
+            </span>
+          )}
+          <Checkbox checked={hideSpoilers} onCheckedChange={setHideSpoilers}>
+            Hide spoilers{stats.spoilerCount > 0 && ` (${stats.spoilerCount})`}
+          </Checkbox>
+          <ChipGroup
+            label="Sort reviews"
+            variant="segmented"
+            options={REVIEW_SORTS}
+            value={sort}
+            onValueChange={setSort}
+            className="ml-auto"
+          />
         </div>
-      ) : reviews.length === 0 ? (
-        <div className="px-8 py-[54px] text-center">
-          <div className="mx-auto mb-3 flex justify-center text-ov-muted">
-            <OvIcon name="comment" className="text-title" />
-          </div>
-          <div className="font-orbitron text-sm font-bold tracking-hud-wide text-ov-text">
-            {stats.total === 0 ? "NO REVIEWS YET" : "NOTHING MATCHES THOSE FILTERS"}
-          </div>
-          <p className="mt-2.5 text-ui text-ov-muted">
-            {stats.total === 0
-              ? `Be the first to call it on ${gameName}.`
-              : "Loosen the filters to see more player verdicts."}
+
+        {loading ? (
+          <ReviewListSkeleton />
+        ) : error ? (
+          <p role="alert" className="border-l-2 border-ov-rose py-2 pl-3.5 text-sm text-ov-rose-soft">
+            {error}
           </p>
-        </div>
-      ) : (
-        <>
-          <div className="mt-4 text-label tracking-hud text-ov-muted">
-            SHOWING {reviews.length} OF {total}
-            {verdict || hideSpoilers ? " FILTERED" : ""}{" "}
-            {total === 1 ? "REVIEW" : "REVIEWS"}
-          </div>
-          <div className="mt-1 divide-y divide-ov-border border-t border-ov-border">
-            {reviews.map((review) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                viewer={viewer}
-                onChange={updateReview}
-              />
-            ))}
-          </div>
-          <Pager page={page} pages={pages} onChange={setPage} />
-        </>
-      )}
+        ) : reviews.length === 0 ? (
+          <p className="border border-dashed border-ov-border-strong p-10 text-center text-sm text-ov-dim">
+            {stats.total === 0
+              ? `No reviews yet. Be the first to call it on ${gameName}.`
+              : "No reviews match these filters."}
+          </p>
+        ) : (
+          <>
+            <p className="font-mono text-label text-ov-muted" aria-live="polite">
+              {reviews.length} of {total} {total === 1 ? "review" : "reviews"}
+            </p>
+            <div className="flex flex-col gap-5">
+              {reviews.map((review) => (
+                <ReviewCard key={review.id} review={review} viewer={viewer} onChange={updateReview} />
+              ))}
+            </div>
+            <Pager page={page} pages={pages} onChange={setPage} />
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -49,14 +49,13 @@ export function Lightbox({
         }}
       >
         <div className="flex shrink-0 items-center gap-4 px-4 py-3.5 lg:px-7">
-          <span className="font-orbitron text-label font-bold tracking-hud-wide text-ov-teal">
-            {String(index + 1).padStart(2, "0")}
-            <span className="text-ov-muted"> / {String(count).padStart(2, "0")}</span>
+          <span className="truncate text-body font-semibold text-ov-white">{alt}</span>
+          <span className="ml-auto font-mono text-ui text-ov-dim">
+            {index + 1} / {count}
           </span>
-          <span className="hidden truncate text-xs tracking-hud text-ov-dim md:inline">{alt}</span>
           <DialogClose asChild>
-            <Button size="sm" variant="outline" icon="close" className="ml-auto">
-              CLOSE
+            <Button size="sm" variant="outline" icon="close">
+              Close
             </Button>
           </DialogClose>
         </div>

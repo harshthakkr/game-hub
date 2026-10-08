@@ -23,7 +23,7 @@ export function Menu({
         <DropdownMenu.Content
           align={align}
           sideOffset={8}
-          className="z-50 min-w-[190px] origin-(--radix-dropdown-menu-content-transform-origin) border border-ov-border bg-ov-panel shadow-ov-pop data-[state=closed]:animate-ov-pop-out data-[state=open]:animate-ov-pop"
+          className="z-50 min-w-[220px] origin-(--radix-dropdown-menu-content-transform-origin) border border-ov-border-strong bg-ov-field p-1.5 shadow-ov-pop data-[state=closed]:animate-ov-pop-out data-[state=open]:animate-ov-pop"
         >
           {children}
         </DropdownMenu.Content>
@@ -34,7 +34,20 @@ export function Menu({
 
 /// Non-interactive header block at the top of a menu.
 export function MenuHeader({ children }: { children: ReactNode }) {
-  return <div className="border-b border-ov-border px-3.5 py-2.5">{children}</div>;
+  return <div className="mb-1.5 border-b border-ov-border px-3 pt-2.5 pb-3">{children}</div>;
+}
+
+/// Mono caps caption above a group of items.
+export function MenuLabel({ children }: { children: ReactNode }) {
+  return (
+    <DropdownMenu.Label className="px-2.5 py-2 font-mono text-micro uppercase tracking-label text-ov-muted">
+      {children}
+    </DropdownMenu.Label>
+  );
+}
+
+export function MenuSeparator() {
+  return <DropdownMenu.Separator className="my-1.5 h-px bg-ov-border" />;
 }
 
 export function MenuItem({
@@ -45,8 +58,10 @@ export function MenuItem({
   return (
     <DropdownMenu.Item
       className={cx(
-        "flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-label tracking-hud text-ov-dim outline-none transition-colors duration-150 data-[highlighted]:bg-ov-raised",
-        tone === "danger" ? "data-[highlighted]:text-ov-rose" : "data-[highlighted]:text-ov-teal",
+        "flex w-full cursor-pointer items-center justify-between gap-3 px-2.5 py-2.5 text-sm outline-none transition-colors duration-150",
+        tone === "danger"
+          ? "text-ov-rose-soft data-[highlighted]:bg-ov-rose-wash"
+          : "text-ov-text data-[highlighted]:bg-ov-raised data-[highlighted]:text-ov-white",
         className
       )}
       {...props}
