@@ -4,16 +4,13 @@ import axios from "axios";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { StoreId } from "@/utils/types";
 import { OvIcon } from "./OvIcon";
-import { Button, ChipGroup, Dialog, Eyebrow, Sheet, Tag } from "@/components/ui";
+import { Button, Dialog, Eyebrow, Sheet, Tag } from "@/components/ui";
 import { useIsMobile } from "@/utils/hooks/useMediaQuery";
 import { cx } from "@/utils/cx";
 
-const RANGES = [
-  { value: "24h", label: "24H", hours: 24 },
-  { value: "7d", label: "7D", hours: 24 * 7 },
-  { value: "30d", label: "30D", hours: 24 * 30 },
-] as const;
-type RangeKey = (typeof RANGES)[number]["value"];
+/// The chart always covers (up to) the last 30 days.
+const WINDOW_HOURS = 24 * 30;
+const HOUR_MS = 60 * 60 * 1000;
 
 /// Series styling: PS Store solid teal, Steam dashed white, so the two lines
 /// differ by stroke pattern as well as colour.
@@ -68,8 +65,8 @@ function timeAgo(iso: string | null) {
   return hours < 24 ? `${hours}h ago` : `${Math.round(hours / 24)}d ago`;
 }
 
-function formatTick(date: Date, hours: number) {
-  return hours <= 24
+function formatTick(date: Date, spanHours: number) {
+  return spanHours <= 24
     ? date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false })
     : date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
@@ -127,7 +124,6 @@ export function PriceHistoryModal({
 }
 
 function PriceHistoryBody({ slug }: { slug: string }) {
-  const [range, setRange] = useState<RangeKey>("7d");
   const [series, setSeries] = useState<Series[] | null>(null);
   const [focus, setFocus] = useState<StoreId | null>(null);
   const [hidden, setHidden] = useState<StoreId[]>([]);
@@ -138,7 +134,7 @@ function PriceHistoryBody({ slug }: { slug: string }) {
     let cancelled = false;
     setLoading(true);
     axios
-      .get<{ series: Series[] }>(`/api/games/${slug}/prices`, { params: { range } })
+      .get<{ series: Series[] }>(`/api/games/${slug}/prices`, { params: { range: "30d" } })
       .then((res) => {
         if (cancelled) return;
         setSeries(res.data.series);
@@ -149,9 +145,8 @@ function PriceHistoryBody({ slug }: { slug: string }) {
     return () => {
       cancelled = true;
     };
-  }, [slug, range]);
+  }, [slug]);
 
-  const { hours } = RANGES.find((r) => r.value === range)!;
   // Stats follow the focused store; default to whichever is cheapest now.
   const cheapest = useMemo(
     () =>
@@ -264,23 +259,11 @@ function PriceHistoryBody({ slug }: { slug: string }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-4 text-ui text-ov-dim">
-          {onSale && current?.saleEndsAt && (
-            <Tag tone="rose" size="sm">
-              Sale ends {formatStamp(new Date(current.saleEndsAt))}
-            </Tag>
-          )}
-        </div>
-        <ChipGroup
-          label="Time range"
-          variant="segmented"
-          options={RANGES}
-          value={range}
-          onValueChange={setRange}
-          className="ml-auto"
-        />
-      </div>
+      {onSale && current?.saleEndsAt && (
+        <Tag tone="rose" size="sm" className="w-max">
+          Sale ends {formatStamp(new Date(current.saleEndsAt))}
+        </Tag>
+      )}
 
       <div
         aria-busy={loading}
@@ -292,14 +275,12 @@ function PriceHistoryBody({ slug }: { slug: string }) {
           <ChartMessage>Loading price data…</ChartMessage>
         ) : !hasData || !active ? (
           <ChartMessage>
-            Tracking has just started. Prices are checked every hour, so the trail builds up from
-            here.
+            Tracking has just started. The trail builds up here as prices are checked.
           </ChartMessage>
         ) : (
           <PriceChart
             series={series.filter((sr) => !hidden.includes(sr.store) || sr.store === active.store)}
             focus={active.store}
-            hours={hours}
           />
         )}
       </div>
@@ -307,7 +288,7 @@ function PriceHistoryBody({ slug }: { slug: string }) {
       <div className="flex flex-wrap items-center gap-3 border-t border-ov-border pt-4">
         <span className="flex items-center gap-1.5 font-hud text-label text-ov-muted">
           <OvIcon name="clock" className="text-sm" />
-          Checked {timeAgo(active?.lastFetchedAt ?? null)} · hourly · INR
+          Checked {timeAgo(active?.lastFetchedAt ?? null)} · last 30 days · INR
         </span>
         {active && (
           <Button asChild variant="primary" iconRight="external" className="ml-auto">
@@ -357,7 +338,7 @@ function toSamples(s: Series, start: number): Sample[] {
 /// so steps read truer than diagonals between hourly points. Every store is
 /// drawn; the focused one is bright and carries the fill, low line and the
 /// scrubber. The plot is a focusable slider: arrow keys step through samples.
-function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId; hours: number }) {
+function PriceChart({ series, focus }: { series: Series[]; focus: StoreId }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(640);
   const [hover, setHover] = useState<number | null>(null);
@@ -371,10 +352,17 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
   }, []);
 
   const now = Date.now();
-  const start = now - hours * 60 * 60 * 1000;
+  const start = now - WINDOW_HOURS * HOUR_MS;
   const lines = series
     .map((s) => ({ store: s.store, label: s.label, samples: toSamples(s, start) }))
     .filter((l) => l.samples.length > 0);
+  // The axis starts where data starts: drawing the empty days before tracking
+  // began would read as history we don't have. Capped at 30 days, and at
+  // least an hour wide so a brand-new listing still has a plot.
+  const firstSample = Math.min(...lines.map((l) => l.samples[0].t));
+  const from = Math.min(Math.max(start, firstSample), now - HOUR_MS);
+  const spanHours = (now - from) / HOUR_MS;
+  const partial = from > start;
   const focused = lines.find((l) => l.store === focus) ?? lines[0];
   const hoverIndex = hover !== null && hover < focused.samples.length ? hover : null;
 
@@ -392,7 +380,7 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
 
   const plotW = Math.max(width - PAD.left - PAD.right, 10);
   const plotH = CHART_HEIGHT - PAD.top - PAD.bottom;
-  const x = (t: number) => PAD.left + ((t - start) / (now - start)) * plotW;
+  const x = (t: number) => PAD.left + ((t - from) / (now - from)) * plotW;
   const y = (v: number) => PAD.top + (1 - (v - lo) / (hi - lo)) * plotH;
 
   const pathFor = (samples: Sample[]) => {
@@ -405,12 +393,11 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
   };
   const focusPath = pathFor(focused.samples);
   const area = `${focusPath}V${PAD.top + plotH}H${x(focused.samples[0].t)}Z`;
-  const low = Math.min(...focused.samples.map((p) => p.price));
 
   const yTicks: number[] = [];
   for (let v = lo; v <= hi + step / 2; v += step) yTicks.push(v);
-  const xTickCount = hours <= 24 ? 4 : hours <= 24 * 7 ? 7 : 5;
-  const xTicks = Array.from({ length: xTickCount + 1 }, (_, i) => start + ((now - start) * i) / xTickCount);
+  const xTickCount = spanHours <= 24 ? 4 : spanHours <= 24 * 7 ? Math.max(2, Math.round(spanHours / 24)) : 5;
+  const xTicks = Array.from({ length: xTickCount + 1 }, (_, i) => from + ((now - from) * i) / xTickCount);
 
   const onMove = (event: React.PointerEvent<SVGRectElement>) => {
     const rect = event.currentTarget.ownerSVGElement!.getBoundingClientRect();
@@ -471,22 +458,12 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
               textAnchor={i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle"}
               className="fill-ov-muted font-hud text-micro"
             >
-              {i === xTicks.length - 1 ? "NOW" : formatTick(new Date(t), hours)}
+              {i === xTicks.length - 1 ? "NOW" : formatTick(new Date(t), spanHours)}
             </text>
           ))}
 
-          {/* Keyed by range: switching range redraws the lines. */}
-          <g key={hours} className="animate-ov-draw">
+          <g className="animate-ov-draw">
             {focused.store === "PLAYSTATION" && <path d={area} fill="url(#ov-price-fill)" />}
-            <line
-              x1={PAD.left}
-              x2={PAD.left + plotW}
-              y1={y(low)}
-              y2={y(low)}
-              className="stroke-ov-deal"
-              strokeDasharray="4 5"
-              opacity={0.6}
-            />
             {lines.map((line) => (
               <path
                 key={line.store}
@@ -499,6 +476,22 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
                 opacity={line.store === focused.store ? 1 : 0.6}
               />
             ))}
+            {/* End marker: every line is visible even with only a few hours of data. */}
+            {lines.map((line) => {
+              const end = line.samples[line.samples.length - 1];
+              return (
+                <rect
+                  key={`${line.store}-end`}
+                  x={x(now) - 4}
+                  y={y(end.price) - 4}
+                  width={8}
+                  height={8}
+                  transform={`rotate(45 ${x(now)} ${y(end.price)})`}
+                  className={STORE_FILL[line.store]}
+                  opacity={line.store === focused.store ? 1 : 0.6}
+                />
+              );
+            })}
           </g>
 
           {hovered && (
@@ -525,7 +518,7 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
           fill="transparent"
           tabIndex={0}
           role="slider"
-          aria-label={`${focused.label} price over the last ${hours <= 24 ? "24 hours" : `${hours / 24} days`}. Use arrow keys to step through samples.`}
+          aria-label={`${focused.label} price ${partial ? `since ${formatStamp(new Date(from))}` : "over the last 30 days"}. Use arrow keys to step through samples.`}
           aria-valuemin={0}
           aria-valuemax={focused.samples.length - 1}
           aria-valuenow={hoverIndex ?? focused.samples.length - 1}
@@ -542,6 +535,13 @@ function PriceChart({ series, focus, hours }: { series: Series[]; focus: StoreId
           onBlur={() => setHover(null)}
         />
       </svg>
+
+      {partial && (
+        <p className="mt-2 text-label text-ov-muted">
+          Tracked since {new Date(from).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}. The chart
+          fills out to 30 days as prices are checked.
+        </p>
+      )}
 
       {hovered && (
         <div

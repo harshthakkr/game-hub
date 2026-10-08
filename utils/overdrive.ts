@@ -145,15 +145,6 @@ export function formatEventDateTime(timestamp?: number) {
   });
 }
 
-export function isThisCalendarMonth(timestamp?: number) {
-  if (!timestamp) return false;
-  const d = new Date(timestamp * 1000);
-  const now = new Date();
-  return (
-    d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
-  );
-}
-
 export function isUpcoming(timestamp?: number) {
   if (!timestamp) return false;
   return timestamp * 1000 > Date.now();

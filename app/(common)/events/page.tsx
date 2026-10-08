@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useData } from "@/utils/hooks/useData";
 import { EventCardProps } from "@/utils/types";
 import { PageContainer } from "@/components/overdrive/PageShell";
@@ -8,7 +8,7 @@ import { LoadMoreButton, NoResults } from "@/components/overdrive/EmptyState";
 import { EventsSkeleton, EventTileSkeletons } from "@/components/overdrive/Skeletons";
 import { EventCard } from "@/components/overdrive/EventCard";
 import { ChipGroup, PageHeading } from "@/components/ui";
-import { eventTiming, isThisCalendarMonth } from "@/utils/overdrive";
+import { eventTiming } from "@/utils/overdrive";
 
 const FILTERS = [
   { value: "all", label: "All" },
@@ -18,27 +18,40 @@ const FILTERS = [
 ] as const;
 type Filter = (typeof FILTERS)[number]["value"];
 
+const EMPTY: Record<Filter, { title: string; description: string }> = {
+  all: { title: "No events yet", description: "Check back later." },
+  live: { title: "Nothing live right now", description: "Check upcoming events instead." },
+  upcoming: { title: "Nothing scheduled yet", description: "New showcases are announced all the time." },
+  month: { title: "Nothing this month", description: "Check upcoming events instead." },
+};
+
+/// Each tab is its own server query, so "Load more" pages through that tab
+/// and disappears once it runs out (a page shorter than 20 means the end).
+/// "This month" is bounded in the viewer's own timezone.
+function eventsEndpoint(filter: Filter) {
+  if (filter === "all") return "events";
+  if (filter !== "month") return `events?status=${filter}`;
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000;
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime() / 1000;
+  return `events?status=month&from=${from}&to=${to}`;
+}
+
 export default function Events() {
-  const { data, hasMore, loading, loadingMore, handlePagination } =
-    useData<EventCardProps>("events");
   const [filter, setFilter] = useState<Filter>("all");
+  const endpoint = useMemo(() => eventsEndpoint(filter), [filter]);
+  const { data: events, hasMore, loading, loadingMore, handlePagination } =
+    useData<EventCardProps>(endpoint);
+  // Full-page skeleton only on first load; switching tabs keeps the header
+  // and filters in place and skeletons just the grid.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!loading) setReady(true);
+  }, [loading]);
 
-  const events = useMemo(
-    () =>
-      data.filter((e) => {
-        const { state } = eventTiming(e.start_time, e.end_time);
-        if (filter === "live") return state === "live";
-        if (filter === "upcoming") return state === "upcoming" || state === "live";
-        // What's actually happening in the current calendar month.
-        if (filter === "month") return isThisCalendarMonth(e.start_time);
-        return true;
-      }),
-    [data, filter]
-  );
+  const liveCount = events.filter((e) => eventTiming(e.start_time, e.end_time).state === "live").length;
 
-  const liveCount = data.filter((e) => eventTiming(e.start_time, e.end_time).state === "live").length;
-
-  if (loading) return <EventsSkeleton />;
+  if (!ready) return <EventsSkeleton />;
 
   return (
     <PageContainer>
@@ -59,12 +72,14 @@ export default function Events() {
         className="border-b border-ov-border pb-3.5"
       />
 
-      {data.length === 0 ? (
-        <NoResults description="No events found right now. Check back later." />
+      {loading ? (
+        <div className="grid gap-5 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+          <EventTileSkeletons count={6} />
+        </div>
       ) : events.length === 0 ? (
         <NoResults
-          title={filter === "live" ? "Nothing live right now" : "No matches"}
-          description={filter === "live" ? "Check upcoming events instead." : "Try a different filter."}
+          title={EMPTY[filter].title}
+          description={EMPTY[filter].description}
         />
       ) : (
         <div className="grid gap-5 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
@@ -74,7 +89,9 @@ export default function Events() {
           {loadingMore && <EventTileSkeletons count={6} />}
         </div>
       )}
-      {hasMore && <LoadMoreButton onClick={handlePagination} loading={loadingMore} />}
+      {!loading && events.length > 0 && hasMore && (
+        <LoadMoreButton onClick={handlePagination} loading={loadingMore} />
+      )}
     </PageContainer>
   );
 }

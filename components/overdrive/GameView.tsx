@@ -378,7 +378,7 @@ export function GameView({ data, slug }: { data: GamePageProps; slug: string }) 
                 <section className="flex flex-col gap-3.5">
                   <SubHeading>{trailer ? "Trailer & screenshots" : "Screenshots"}</SubHeading>
                   {/* Phones: a sideways snap scroller. Desktop: trailer plus a 2x2 grid. */}
-                  <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:grid-cols-[2fr_1fr_1fr] lg:grid-rows-[150px_150px] lg:gap-3 lg:px-0">
+                  <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-2.5 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:grid-cols-[2fr_1fr_1fr] lg:grid-rows-[150px_150px] lg:gap-3 lg:px-0">
                     {trailer && (
                       <button
                         type="button"
@@ -423,7 +423,7 @@ export function GameView({ data, slug }: { data: GamePageProps; slug: string }) 
                   <SubHeading>Similar games</SubHeading>
                   {/* Fixed column counts, each showing a whole number of rows:
                       3 cols × 3 rows, 4 × 2, 5 × 2. No lone card on the last row. */}
-                  <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:px-0 xl:grid-cols-4 2xl:grid-cols-5">
+                  <div className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:px-0 xl:grid-cols-4 2xl:grid-cols-5">
                     {related.map((game, i) => (
                       <div
                         key={game.id}
