@@ -10,7 +10,7 @@ const IGDB_PAGE = 500;
 /// them. "Popular" is IGDB's total rating count (about 17k rated games have
 /// a store listing; `limit` takes the top slice). Existing listings are left
 /// untouched; new ones start outside the hot tier (lastViewedAt in the past),
-/// so they're checked daily, not hourly.
+/// so they're checked daily, not every 3 hours.
 export async function seedCatalogue(limit: number) {
   const headers = await getIgdbHeaders();
   const sources = STORE_SOURCES.map((s) => s.source).join(",");

@@ -95,7 +95,7 @@ export function GameView({ data, slug }: { data: GamePageProps; slug: string }) 
   // the cover and title in place, so skip the page fade-in.
   const [arrivedByHero] = useState(() => heroPending(slug) !== null);
   useHeroArrival(slug, true);
-  // Record the view (moves this game's prices to hourly checks). A beacon,
+  // Record the view (moves this game's prices to 3-hourly checks). A beacon,
   // so the cached page never waits on it.
   useEffect(() => {
     navigator.sendBeacon?.(`/api/games/${slug}/view`);

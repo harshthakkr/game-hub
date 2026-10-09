@@ -160,7 +160,7 @@ export function WhereToBuy({
               <div className="flex items-center gap-2.5">
                 <span className="flex flex-1 flex-col gap-0.5">
                   <span className="text-body font-semibold text-ov-text">Price unavailable</span>
-                  <span className="text-ui text-ov-muted">We&apos;ll have it after the next hourly check.</span>
+                  <span className="text-ui text-ov-muted">We&apos;ll have it after the next check, within 3 hours.</span>
                 </span>
                 <Button asChild variant="outline" size="md" iconRight="external" chamfer={false}>
                   <a href={store.url} target="_blank" rel="noreferrer" aria-label={`Open ${store.label}`}>
@@ -184,7 +184,7 @@ export function WhereToBuy({
             <OvIcon name="trend-down" className="text-base" />
             {priced.length > 1 ? "Price history · both stores" : "Price history"}
           </Button>
-          {checked && <p className="text-label text-ov-muted">Checked {checked} · refreshes hourly</p>}
+          {checked && <p className="text-label text-ov-muted">Checked {checked} · refreshes every 3 hours</p>}
           <PriceHistoryModal open={historyOpen} onOpenChange={setHistoryOpen} slug={slug} gameName={gameName} />
         </>
       )}

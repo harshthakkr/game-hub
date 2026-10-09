@@ -218,7 +218,7 @@ enum PriceStore {
 
 /// A store product whose price we poll. Created the first time a game page is
 /// viewed with a known store id, or seeded from the popular catalogue; the
-/// price sweep re-checks hot listings hourly and the rest daily.
+/// price sweep re-checks hot listings every 3 hours and the rest daily.
 model PriceListing {
   id            String     @id @default(cuid())
   createdAt     DateTime   @default(now())

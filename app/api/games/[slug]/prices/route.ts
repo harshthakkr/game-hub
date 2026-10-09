@@ -64,6 +64,6 @@ export const GET = async (
     })
   );
 
-  // Prices change hourly at most; a 5-minute shared copy is plenty.
+  // Prices are checked every 3 hours at most; a 5-minute shared copy is plenty.
   return publicJson({ range, series }, 300);
 };

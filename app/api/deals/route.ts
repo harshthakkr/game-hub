@@ -23,7 +23,7 @@ export const GET = async () => {
       `fields id,name,slug,cover.url,first_release_date,genres.name; where id = (${ids.join(",")}); limit ${LIMIT};`
     );
     const byId = new Map(data.map((g) => [g.id, g]));
-    // Prices change at most hourly; the CDN copy is refreshed every 10 min.
+    // Prices are checked every 3 hours at most; the CDN copy refreshes every 10 min.
     return publicJson(
       onSale.flatMap(([id, price]) => (byId.has(id) ? [{ ...byId.get(id), price }] : [])),
       600

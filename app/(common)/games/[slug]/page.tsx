@@ -7,7 +7,7 @@ import { formatYear } from "@/utils/overdrive";
 type Props = { params: Promise<{ slug: string }> };
 
 // Rendered on first visit, then served from cache and regenerated in the
-// background at most every 5 minutes (prices change hourly at most). The
+// background at most every 5 minutes (prices are checked every 3 hours at most). The
 // render is read-only; views are recorded by a beacon from GameView.
 export const revalidate = 300;
 

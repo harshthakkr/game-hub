@@ -14,7 +14,7 @@ export function SectionHeader({
   title: ReactNode;
   /// Two-digit position on the page, e.g. "01".
   index?: string;
-  /// Quiet text after the title, e.g. "PlayStation Store India · hourly".
+  /// Quiet text after the title, e.g. "PlayStation Store India · daily".
   meta?: ReactNode;
   action?: ReactNode;
   as?: "h2" | "h3";

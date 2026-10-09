@@ -1,12 +1,14 @@
 name: Price tracker
 
-# Hourly price sweep, run as a script straight against the database (so it
-# isn't bound by the 60s serverless limit and doesn't depend on the deploy).
+# Price sweep every 3 hours, run as a script straight against the database
+# (so it isn't bound by the 60s serverless limit and doesn't depend on the
+# deploy). Every 3 hours rather than hourly keeps the database's awake time
+# (Neon compute) low; store prices rarely change more often than that.
 #
 # - Hot listings (wishlisted, in a library, or viewed in the last 14 days)
 #   are re-checked every run.
 # - The rest of the tracked catalogue is re-checked once a day.
-# - Once a day (the 21:xx UTC run, ~03:00 IST) the popular catalogue is
+# - Once a day (the 21:07 UTC run, ~02:37 IST) the popular catalogue is
 #   seeded from IGDB first, so popular games have prices before anyone
 #   opens them.
 #
@@ -14,7 +16,7 @@ name: Price tracker
 # Repository secrets: DATABASE_URL, IGDB_CLIENT_ID, IGDB_CLIENT_SECRET.
 on:
   schedule:
-    - cron: "7 * * * *"
+    - cron: "7 */3 * * *"
   workflow_dispatch:
     inputs:
       seed:

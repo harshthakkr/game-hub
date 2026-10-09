@@ -423,7 +423,7 @@ export function WishlistRow({ game }: { game: GameCardProps }) {
           <span className="text-ui text-ov-muted">No price yet</span>
         )}
         <span className={cx("text-label", note ? "text-ov-deal" : "text-ov-muted")}>
-          {note ?? (game.price ? "Tracking · no change" : "Checked hourly once it's on a store")}
+          {note ?? (game.price ? "Tracking · no change" : "Checked every 3 hours once it's on a store")}
         </span>
       </span>
       {game.id && <WishButton variant="ghost" gameId={game.id} gameName={game.name} className="relative" />}

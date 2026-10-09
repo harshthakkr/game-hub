@@ -69,7 +69,7 @@ export const GET = async (request: NextRequest) => {
       // The total only matters for the first page's "N games" heading.
       offset === 0 ? igdb<{ count?: number }>("/games/count", `where ${where};`).catch(() => null) : null,
     ]);
-    // Prices on the cards refresh hourly, so a 5-minute CDN copy is plenty.
+    // Card prices are checked every 3 hours at most, so a 5-minute CDN copy is plenty.
     const response = publicJson(await withPrices(games), 300);
     const total = countRes?.count;
     if (typeof total === "number") response.headers.set("X-Total-Count", String(total));
