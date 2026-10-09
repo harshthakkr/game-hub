@@ -63,6 +63,23 @@ export type CatalogFilters = {
   sort?: CatalogSort;
 };
 
+/// IGDB order for a sort, plus any condition it needs: rating order is
+/// meaningless for unrated games, and "newest" shouldn't surface far-future
+/// placeholders. Shared by the catalogue and the platform/genre pages.
+export function sortClause(sort: CatalogSort | undefined, { ratingFiltered = false } = {}) {
+  const value = SORTS.find((s) => s.value === sort)?.value ?? DEFAULT_SORT;
+  const where: string[] = [];
+  if (value === "rating" && !ratingFiltered) where.push("aggregated_rating != null");
+  if (value === "date") where.push(`first_release_date <= ${Math.floor(Date.now() / 1000 / 300) * 300}`);
+  const order = {
+    rating: "aggregated_rating desc",
+    popularity: "hypes desc",
+    date: "first_release_date desc",
+    az: "name asc",
+  }[value];
+  return { order, where };
+}
+
 /// IGDB `where` and `sort` clauses for a filter set. Unknown values are
 /// ignored. `ids` restricts the query to those games (the on-sale set).
 export function igdbCatalogQuery(filters: CatalogFilters, ids?: number[]) {
@@ -72,23 +89,13 @@ export function igdbCatalogQuery(filters: CatalogFilters, ids?: number[]) {
   const platform = PLATFORMS.find((p) => p.value === filters.platform);
   const years = YEARS.find((y) => y.value === filters.year);
   const rating = RATINGS.find((r) => r.value === filters.rating);
-  const sort = SORTS.find((s) => s.value === filters.sort)?.value ?? DEFAULT_SORT;
 
   if (genre) where.push(`genres = (${genre.id})`);
   if (platform) where.push(`platforms = (${platform.id})`);
   if (years) where.push(`first_release_date >= ${years.from} & first_release_date < ${years.to}`);
   if (rating) where.push(`aggregated_rating >= ${rating.min}`);
-  // Rating order is meaningless for unrated games; newest-first should not
-  // surface far-future placeholders.
-  if (sort === "rating" && !rating) where.push("aggregated_rating != null");
-  if (sort === "date") where.push(`first_release_date <= ${Math.floor(Date.now() / 1000)}`);
-
-  const order = {
-    rating: "aggregated_rating desc",
-    popularity: "hypes desc",
-    date: "first_release_date desc",
-    az: "name asc",
-  }[sort];
+  const { order, where: sortWhere } = sortClause(filters.sort, { ratingFiltered: !!rating });
+  where.push(...sortWhere);
 
   return { where: where.join(" & "), sort: order };
 }

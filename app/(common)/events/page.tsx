@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useData } from "@/utils/hooks/useData";
 import { EventCardProps } from "@/utils/types";
 import { PageContainer } from "@/components/overdrive/PageShell";
-import { LoadMoreButton, NoResults } from "@/components/overdrive/EmptyState";
+import { AutoLoadMore, NoResults } from "@/components/overdrive/EmptyState";
 import { EventsSkeleton, EventTileSkeletons } from "@/components/overdrive/Skeletons";
 import { EventCard } from "@/components/overdrive/EventCard";
 import { ChipGroup, PageHeading, tileGrid } from "@/components/ui";
@@ -89,8 +89,8 @@ export default function Events() {
           {loadingMore && <EventTileSkeletons count={6} />}
         </div>
       )}
-      {!loading && events.length > 0 && hasMore && (
-        <LoadMoreButton onClick={handlePagination} loading={loadingMore} />
+      {!loading && events.length > 0 && (
+        <AutoLoadMore onLoadMore={handlePagination} loading={loadingMore} hasMore={hasMore} count={events.length} />
       )}
     </PageContainer>
   );

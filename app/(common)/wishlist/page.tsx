@@ -10,8 +10,12 @@ import { GameGridCard, WishlistRow } from "@/components/overdrive/GameCards";
 import { SavedSwitcher } from "@/components/overdrive/SavedSwitcher";
 import { useIsMobile } from "@/utils/hooks/useMediaQuery";
 import { ChipGroup, Eyebrow, PageHeading, StatStrip, GAME_GRID } from "@/components/ui";
+import { sortGames } from "@/components/overdrive/GameFilterBar";
 
+// Popularity first and by default, worded as everywhere else; then the
+// wishlist's own orders.
 const SORTS = [
+  { value: "popularity", label: "Popularity" },
   { value: "added", label: "Recently added" },
   { value: "discount", label: "Biggest discount" },
   { value: "price", label: "Lowest price" },
@@ -23,11 +27,12 @@ const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR",
 export default function WishlistPage() {
   const { wishlist, ready, signedIn } = useCollection();
   const { games, loading } = useGamesByIds(wishlist, ready && signedIn);
-  const [sort, setSort] = useState<Sort>("added");
+  const [sort, setSort] = useState<Sort>("popularity");
   const isMobile = useIsMobile();
 
   const sorted = useMemo(() => {
     if (sort === "added") return games;
+    if (sort === "popularity") return sortGames(games, "popularity");
     return [...games].sort((a, b) =>
       sort === "discount"
         ? (b.price?.discountPercent ?? -1) - (a.price?.discountPercent ?? -1)

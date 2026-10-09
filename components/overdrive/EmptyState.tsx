@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { OvIcon, type IconName } from "./OvIcon";
 import { Button } from "@/components/ui";
@@ -47,24 +48,55 @@ export function NoResults({
   );
 }
 
-export function LoadMoreButton({
-  onClick,
+/// Infinite scroll for paginated lists. Rather than "after N% of the batch",
+/// it triggers on distance: the next page starts loading once the end of
+/// the list is within ~1.5 screen heights, so it's usually in before anyone
+/// reaches the bottom, whatever the screen or batch size. `count` (items
+/// loaded) re-arms it after each page, so a short page that still shows the
+/// trigger keeps loading. A visible button stays as the fallback for
+/// keyboards and browsers without IntersectionObserver.
+export function AutoLoadMore({
+  onLoadMore,
   loading,
+  hasMore,
+  count,
 }: {
-  onClick: () => void;
+  onLoadMore: () => void;
   loading?: boolean;
+  hasMore: boolean;
+  count: number;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const load = useRef(onLoadMore);
+  load.current = onLoadMore;
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !hasMore || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => entry.isIntersecting && load.current(),
+      { rootMargin: "0px 0px 150% 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, count]);
+
+  if (!hasMore) return null;
   return (
-    // No margin: the page's own block gap places it under the grid.
-    <div className="flex justify-center">
-      <Button
-        variant="secondary"
-        onClick={onClick}
-        loading={loading}
-        iconRight={loading ? undefined : "chevron-down"}
-      >
-        {loading ? "Loading" : "Load more"}
-      </Button>
+    <div ref={ref} className="flex min-h-11 items-center justify-center">
+      <span role="status" className="sr-only">
+        {loading ? "Loading more" : ""}
+      </span>
+      {loading ? (
+        <span aria-hidden className="flex items-center gap-2.5 font-hud text-ui text-ov-muted">
+          <span className="size-2 rotate-45 animate-ov-pulse bg-ov-teal" />
+          Loading more
+        </span>
+      ) : (
+        <Button variant="ghost" size="sm" iconRight="chevron-down" onClick={onLoadMore}>
+          Load more
+        </Button>
+      )}
     </div>
   );
 }

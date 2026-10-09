@@ -20,7 +20,7 @@ import {
   GameGridSkeleton,
   GameTileSkeletons,
 } from "@/components/overdrive/Skeletons";
-import { LoadMoreButton } from "@/components/overdrive/EmptyState";
+import { AutoLoadMore } from "@/components/overdrive/EmptyState";
 import { OvIcon } from "@/components/overdrive/OvIcon";
 import { Button, ChipGroup, Eyebrow, IconButton, Select, Sheet, SheetOption, Switch, type ChipOption, GAME_GRID } from "@/components/ui";
 import { cx } from "@/utils/cx";
@@ -528,8 +528,8 @@ function Catalogue() {
           </div>
         )}
 
-        {hasMore && !loading && games.length > 0 && (
-          <LoadMoreButton onClick={loadMore} loading={loadingMore} />
+        {!loading && games.length > 0 && (
+          <AutoLoadMore onLoadMore={loadMore} loading={loadingMore} hasMore={hasMore} count={games.length} />
         )}
       </div>
     </div>
