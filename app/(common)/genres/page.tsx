@@ -9,6 +9,7 @@ import { NoResults } from "@/components/overdrive/EmptyState";
 import { GenresSkeleton } from "@/components/overdrive/Skeletons";
 import { PageHeading, tileGrid } from "@/components/ui";
 import { cx } from "@/utils/cx";
+import { useRestoreScroll } from "@/utils/navMemory";
 
 /// Fan positions, back to front. The most-rated game (covers[0]) sits in
 /// front; hovering the tile spreads the fan.
@@ -60,6 +61,7 @@ function GenreCard({ genre }: { genre: GenreTile }) {
 
 export default function Genres() {
   const { data, loading } = useData<GenreTile>("genres", 40);
+  useRestoreScroll(!loading);
 
   if (loading) return <GenresSkeleton />;
 

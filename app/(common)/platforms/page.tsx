@@ -2,8 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import axios from "axios";
-import { useEffect, useState } from "react";
 import type { FeaturedPlatform, Maker, PlatformDirectory, PlatformEntry } from "@/lib/platforms";
 import { PageContainer } from "@/components/overdrive/PageShell";
 import { NoResults } from "@/components/overdrive/EmptyState";
@@ -11,6 +9,8 @@ import { OvIcon } from "@/components/overdrive/OvIcon";
 import { PlatformsSkeleton } from "@/components/overdrive/Skeletons";
 import { PageHeading, Panel, SectionHeader, tileGrid } from "@/components/ui";
 import { platformAbbr } from "@/utils/overdrive";
+import { useCachedJson } from "@/utils/hooks/useCachedJson";
+import { useRestoreScroll } from "@/utils/navMemory";
 
 /// One hue per maker, all at the same lightness and chroma (like the game
 /// accents), so the tint says "whose platform" without any tile shouting.
@@ -86,14 +86,8 @@ function PlatformTile({ platform }: { platform: PlatformEntry }) {
 }
 
 export default function Platforms() {
-  const [data, setData] = useState<PlatformDirectory | null>(null);
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    axios
-      .get<PlatformDirectory>("/api/platforms")
-      .then((res) => setData(res.data))
-      .catch(() => setFailed(true));
-  }, []);
+  const { data, failed } = useCachedJson<PlatformDirectory>("/api/platforms");
+  useRestoreScroll(data !== null);
 
   if (failed)
     return (

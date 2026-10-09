@@ -11,6 +11,7 @@ import { SavedSwitcher } from "@/components/overdrive/SavedSwitcher";
 import { useIsMobile } from "@/utils/hooks/useMediaQuery";
 import { ChipGroup, Eyebrow, PageHeading, StatStrip, GAME_GRID } from "@/components/ui";
 import { sortGames } from "@/components/overdrive/GameFilterBar";
+import { useRestoreScroll } from "@/utils/navMemory";
 
 // Popularity first and by default, worded as everywhere else; then the
 // wishlist's own orders.
@@ -27,6 +28,7 @@ const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR",
 export default function WishlistPage() {
   const { wishlist, ready, signedIn } = useCollection();
   const { games, loading } = useGamesByIds(wishlist, ready && signedIn);
+  useRestoreScroll(ready && !(loading && games.length === 0 && wishlist.length > 0));
   const [sort, setSort] = useState<Sort>("popularity");
   const isMobile = useIsMobile();
 

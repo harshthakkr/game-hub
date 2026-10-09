@@ -7,6 +7,15 @@ import { BottomTabBar, TopBar } from "@/components/overdrive/TopBar";
 import { ScreenTitleProvider } from "@/components/overdrive/ScreenTitle";
 import { CommandPaletteProvider } from "@/components/overdrive/CommandPalette";
 import { ToastProvider } from "@/components/ui/Toast";
+import { useEffect } from "react";
+import { installNavMemory } from "@/utils/navMemory";
+
+/// Back/forward restores the scroll position on pages that load their
+/// content in the browser (see utils/navMemory).
+function NavMemory() {
+  useEffect(() => installNavMemory(), []);
+  return null;
+}
 
 export default function Layout({
   children,
@@ -20,6 +29,7 @@ export default function Layout({
           <CommandPaletteProvider>
             <ScreenTitleProvider>
               <PageShell>
+                <NavMemory />
                 {/* First tab stop: jump past the nav. Visible only when focused. */}
                 <a
                   href="#main"

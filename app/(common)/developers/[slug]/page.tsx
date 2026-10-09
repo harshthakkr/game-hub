@@ -10,9 +10,11 @@ import { NoResults } from "@/components/overdrive/EmptyState";
 import { GameFilterBar, useGameFilterSort } from "@/components/overdrive/GameFilterBar";
 import { DeveloperDetailSkeleton } from "@/components/overdrive/Skeletons";
 import { abbrev } from "@/utils/overdrive";
+import { useRestoreScroll } from "@/utils/navMemory";
 
 export default function Developer() {
   const { data, loading } = useSingleData<DeveloperPageProps>("developers");
+  useRestoreScroll(!loading);
   const { covered, sort, setSort, visible } = useGameFilterSort(data?.developed || []);
   useScreenTitle(data?.name);
 

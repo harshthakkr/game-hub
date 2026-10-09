@@ -1,16 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useCallback } from "react";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useData } from "@/utils/hooks/useData";
 import { GameCardProps } from "@/utils/types";
-import { DEFAULT_SORT, type CatalogSort } from "@/utils/catalog";
+import { DEFAULT_SORT, SORTS, type CatalogSort } from "@/utils/catalog";
 import { GameCatalogue } from "@/components/overdrive/GameCatalogue";
 
 export default function Genre() {
   const { slug } = useParams();
   const slugStr = String(slug || "");
-  const [sort, setSort] = useState<CatalogSort>(DEFAULT_SORT);
+  // Sort lives in the URL (?sort=), so back returns to the same order.
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const sort = (SORTS.find((o) => o.value === params.get("sort"))?.value ?? DEFAULT_SORT) as CatalogSort;
+  const setSort = useCallback(
+    (next: CatalogSort) => router.replace(next === DEFAULT_SORT ? pathname : `${pathname}?sort=${next}`, { scroll: false }),
+    [pathname, router]
+  );
   // Sorted on the server: a new sort is a new list, and pages append in order.
   const { data, hasMore, loading, loadingMore, handlePagination } = useData<GameCardProps>(
     `genres/${slugStr}?sort=${sort}`,

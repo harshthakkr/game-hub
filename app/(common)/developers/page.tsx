@@ -11,6 +11,8 @@ import { OvIcon } from "@/components/overdrive/OvIcon";
 import { DevelopersSkeleton } from "@/components/overdrive/Skeletons";
 import { Input, PageHeading } from "@/components/ui";
 import { cx } from "@/utils/cx";
+import { useCachedJson } from "@/utils/hooks/useCachedJson";
+import { useRestoreScroll } from "@/utils/navMemory";
 
 const pad = (rank: number) => String(rank).padStart(2, "0");
 const origin = (s: { country: string | null; founded: number | null }) =>
@@ -136,17 +138,10 @@ function useStudioSearch(query: string) {
 }
 
 export default function Developers() {
-  const [board, setBoard] = useState<RankedStudio[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const { data: board, failed } = useCachedJson<RankedStudio[]>("/api/developers");
   const [query, setQuery] = useState("");
   const { results, searching } = useStudioSearch(query);
-
-  useEffect(() => {
-    axios
-      .get<RankedStudio[]>("/api/developers")
-      .then((res) => setBoard(res.data))
-      .catch(() => setFailed(true));
-  }, []);
+  useRestoreScroll(board !== null);
 
   if (failed)
     return (

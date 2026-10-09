@@ -11,9 +11,11 @@ import { GameGridCard } from "@/components/overdrive/GameCards";
 import { EventDetailSkeleton } from "@/components/overdrive/Skeletons";
 import { eventTiming, formatEventDateTime, googleCalendarUrl, igdbImage } from "@/utils/overdrive";
 import { cx } from "@/utils/cx";
+import { useRestoreScroll } from "@/utils/navMemory";
 
 export default function EventPage() {
   const { data, loading } = useSingleData<EventPageProps>("events");
+  useRestoreScroll(!loading);
   useScreenTitle(data?.name);
 
   if (loading) return <EventDetailSkeleton />;

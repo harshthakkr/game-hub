@@ -21,6 +21,8 @@ import {
   GameTileSkeletons,
 } from "@/components/overdrive/Skeletons";
 import { AutoLoadMore } from "@/components/overdrive/EmptyState";
+import { readCache, writeCache } from "@/utils/hooks/useCachedJson";
+import { useRestoreScroll } from "@/utils/navMemory";
 import { OvIcon } from "@/components/overdrive/OvIcon";
 import { Button, ChipGroup, Eyebrow, IconButton, Select, Sheet, SheetOption, Switch, type ChipOption, GAME_GRID } from "@/components/ui";
 import { cx } from "@/utils/cx";
@@ -95,14 +97,29 @@ function useCatalogParams() {
   return { filters, view, set, dataKey };
 }
 
+type CatalogState = { games: GameCardProps[]; total: number | null; hasMore: boolean };
+
+/// The catalogue's results for a filter set. Every loaded page is kept in the
+/// session cache, so the back button brings back everything you'd scrolled
+/// through (and the scroll position, see utils/navMemory).
 function useCatalog(dataKey: string) {
-  const [games, setGames] = useState<GameCardProps[]>([]);
-  const [total, setTotal] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `catalog:${dataKey}`;
+  const [state, setState] = useState<CatalogState>(
+    () => readCache<CatalogState>(cacheKey) ?? { games: [], total: null, hasMore: false }
+  );
+  const [loading, setLoading] = useState(() => !readCache(cacheKey));
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const { games, total, hasMore } = state;
+
+  const update = useCallback(
+    (next: CatalogState) => {
+      writeCache(cacheKey, next);
+      setState(next);
+    },
+    [cacheKey]
+  );
 
   const fetchPage = useCallback(
     (offset: number) => axios.get<GameCardProps[]>(`/api/games?${dataKey}&offset=${offset}`),
@@ -110,37 +127,44 @@ function useCatalog(dataKey: string) {
   );
 
   useEffect(() => {
+    const cached = readCache<CatalogState>(cacheKey);
+    if (cached && attempt === 0) {
+      setState(cached);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setFailed(false);
     fetchPage(0)
       .then((res) => {
         if (cancelled) return;
-        setGames(res.data);
         const header = Number(res.headers["x-total-count"]);
-        setTotal(Number.isFinite(header) && header > 0 ? header : res.data.length || 0);
-        setHasMore(res.data.length >= PAGE_SIZE);
+        update({
+          games: res.data,
+          total: Number.isFinite(header) && header > 0 ? header : res.data.length || 0,
+          hasMore: res.data.length >= PAGE_SIZE,
+        });
       })
       .catch(() => !cancelled && setFailed(true))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [fetchPage, attempt]);
+  }, [cacheKey, fetchPage, attempt, update]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
       const res = await fetchPage(games.length);
-      setGames((prev) => [...prev, ...res.data]);
-      setHasMore(res.data.length >= PAGE_SIZE);
+      update({ games: [...games, ...res.data], total, hasMore: res.data.length >= PAGE_SIZE });
     } catch {
-      setHasMore(false);
+      update({ games, total, hasMore: false });
     } finally {
       setLoadingMore(false);
     }
-  }, [fetchPage, games.length, hasMore, loadingMore]);
+  }, [fetchPage, games, total, hasMore, loadingMore, update]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
@@ -280,6 +304,7 @@ function catalogueTitle(filters: CatalogFilters) {
 function Catalogue() {
   const { filters, view, set, dataKey } = useCatalogParams();
   const { games, total, loading, loadingMore, hasMore, failed, loadMore, retry } = useCatalog(dataKey);
+  useRestoreScroll(!loading);
 
   const [filterSheet, setFilterSheet] = useState(false);
   const [sortSheet, setSortSheet] = useState(false);

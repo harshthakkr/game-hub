@@ -1,33 +1,23 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import axios from "axios";
 import { GameCardProps } from "@/utils/types";
 import { PageContainer } from "@/components/overdrive/PageShell";
 import { PageHeading, GAME_GRID } from "@/components/ui";
 import { GameGridCard } from "@/components/overdrive/GameCards";
 import { SearchSkeleton } from "@/components/overdrive/Skeletons";
 import { NoResults } from "@/components/overdrive/EmptyState";
+import { useCachedJson } from "@/utils/hooks/useCachedJson";
+import { useRestoreScroll } from "@/utils/navMemory";
 
 function SearchResults() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") || "";
-  const [results, setResults] = useState<GameCardProps[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!q.trim()) {
-      setResults([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    axios
-      .get(`/api/search?q=${encodeURIComponent(q)}`)
-      .then((res) => setResults(res.data.filter((g: GameCardProps) => g.cover)))
-      .finally(() => setLoading(false));
-  }, [q]);
+  const { data, failed } = useCachedJson<GameCardProps[]>(q.trim() ? `/api/search?q=${encodeURIComponent(q)}` : null);
+  const results = (data ?? []).filter((g) => g.cover);
+  const loading = !!q.trim() && data === null && !failed;
+  useRestoreScroll(!loading);
 
   if (loading) return <SearchSkeleton />;
 

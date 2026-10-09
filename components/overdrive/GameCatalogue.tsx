@@ -10,6 +10,7 @@ import { useScreenTitle } from "./ScreenTitle";
 import { PageHeading, GAME_GRID } from "@/components/ui";
 import { CatalogueSkeleton, GameTileSkeletons } from "./Skeletons";
 import { GameFilterBar } from "./GameFilterBar";
+import { useRestoreScroll } from "@/utils/navMemory";
 
 /// A paginated grid of games (a platform's, a genre's). Sorting happens on
 /// the server: pass `sort` + `onSortChange` to show the control (the page
@@ -40,10 +41,12 @@ export function GameCatalogue({
   const covered = games.filter((g) => g.cover);
   // Full-page skeleton only on first load; a sort change keeps the header
   // and control in place and skeletons just the grid.
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(!loading);
   useEffect(() => {
     if (!loading) setReady(true);
   }, [loading]);
+
+  useRestoreScroll(ready && !loading);
 
   if (!ready) return <CatalogueSkeleton />;
 
