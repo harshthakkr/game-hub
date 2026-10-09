@@ -240,27 +240,6 @@ export function EventDetailSkeleton() {
   );
 }
 
-export function PanelTileSkeletons({ count = 8 }: { count?: number }) {
-  return (
-    <>
-      {Array.from({ length: count }, (_, i) => (
-        <Bone key={i} className="ov-chamfer h-[140px]" />
-      ))}
-    </>
-  );
-}
-
-function TileGridSkeleton() {
-  return (
-    <Frame>
-      <HeadingBones />
-      <div className={tileGrid(240, 2)}>
-        <PanelTileSkeletons count={8} />
-      </div>
-    </Frame>
-  );
-}
-
 /// Platforms: heading, the four featured tiles, then a maker section.
 export function PlatformsSkeleton() {
   return (
@@ -293,7 +272,24 @@ export function GenresSkeleton() {
     </Frame>
   );
 }
-export const DevelopersSkeleton = TileGridSkeleton;
+/// Developers: heading, the podium, then leaderboard rows.
+export function DevelopersSkeleton() {
+  return (
+    <Frame>
+      <HeadingBones />
+      <div className="grid gap-3 md:grid-cols-3 lg:gap-4">
+        {Array.from({ length: 3 }, (_, i) => (
+          <Bone key={i} className="ov-chamfer h-[188px] lg:h-[232px]" />
+        ))}
+      </div>
+      <div className="flex flex-col gap-1">
+        {Array.from({ length: 8 }, (_, i) => (
+          <Bone key={i} className="h-[66px]" />
+        ))}
+      </div>
+    </Frame>
+  );
+}
 
 export function ReviewListSkeleton() {
   return (
