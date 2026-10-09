@@ -14,49 +14,73 @@ export function abbrev(name: string) {
     .toUpperCase();
 }
 
-export function platformAbbr(name: string) {
+/// Short badge code for a platform (≤5 characters): a curated code for the
+/// well-known systems, else IGDB's own abbreviation when it's badge-sized
+/// (IGDB's range from good, "PSP", to unusable, "Genesis/MegaDrive"), else
+/// initials as a last resort.
+export function platformAbbr(name: string, igdbAbbreviation?: string | null) {
   const map: Record<string, string> = {
     "Nintendo Switch 2": "NS2",
-    "PlayStation 5": "PS5",
-    "Xbox Series X|S": "XSX",
-    "Meta Quest 3": "MQ3",
-    "PlayStation VR2": "PSVR",
-    "Steam Deck": "SD",
     "Nintendo Switch": "NSW",
+    "PlayStation 5": "PS5",
     "PlayStation 4": "PS4",
+    "PlayStation 3": "PS3",
+    "PlayStation 2": "PS2",
+    PlayStation: "PS1",
+    "PlayStation VR2": "PSVR2",
+    "PlayStation VR": "PSVR",
+    "PlayStation Vita": "VITA",
+    "PlayStation Portable": "PSP",
+    "Xbox Series X|S": "XSX",
     "Xbox One": "XB1",
+    "Xbox 360": "X360",
+    Xbox: "XBOX",
+    "Nintendo 3DS": "3DS",
+    "New Nintendo 3DS": "N3DS",
+    "Nintendo DS": "NDS",
+    "Nintendo DSi": "DSI",
+    "Wii U": "WIIU",
+    Wii: "WII",
+    "Nintendo GameCube": "GC",
+    "Nintendo 64": "N64",
+    "Game Boy Advance": "GBA",
+    "Game Boy Color": "GBC",
+    "Game Boy": "GB",
+    "Meta Quest 3": "MQ3",
+    "Meta Quest 2": "MQ2",
+    "Oculus Quest": "QST",
+    "Oculus Rift": "RIFT",
+    "Oculus VR": "OVR",
+    SteamVR: "SVR",
+    "Steam Deck": "DECK",
     "PC (Microsoft Windows)": "PC",
+    Mac: "MAC",
     macOS: "MAC",
+    Linux: "LINUX",
     iOS: "IOS",
     Android: "AND",
-    "Nintendo 3DS": "3DS",
-    "PlayStation Vita": "VITA",
+    "Web browser": "WEB",
+    "Sega Mega Drive/Genesis": "MD",
+    "Sega Game Gear": "GG",
+    "Sega Saturn": "SAT",
+    "Sega Master System/Mark III": "SMS",
+    "Sega CD": "SCD",
+    "Sega 32X": "32X",
+    "SG-1000": "SG1K",
+    "Atari 2600": "2600",
+    "Atari 5200": "5200",
+    "Atari 7800": "7800",
+    "Atari ST/STE": "ST",
+    "Atari 8-bit": "8-BIT",
+    "Atari Jaguar": "JAG",
+    "Atari Jaguar CD": "JAGCD",
+    "Atari Lynx": "LYNX",
     Playdate: "PDT",
   };
-  return map[name] || abbrev(name);
-}
-
-const genreGradients: Record<string, string> = {
-  "Role-playing (RPG)": "from-violet-600 to-violet-950",
-  Shooter: "from-red-600 to-red-950",
-  Fighting: "from-rose-500 to-rose-950",
-  Adventure: "from-teal-600 to-teal-950",
-  Strategy: "from-sky-500 to-sky-950",
-  Racing: "from-amber-500 to-amber-900",
-  Horror: "from-slate-500 to-slate-800",
-  Platform: "from-purple-500 to-purple-950",
-  Simulator: "from-cyan-400 to-cyan-950",
-  Sport: "from-lime-500 to-lime-900",
-  Indie: "from-pink-500 to-pink-950",
-  Puzzle: "from-teal-500 to-teal-950",
-  MOBA: "from-orange-500 to-orange-900",
-  Roguelite: "from-violet-500 to-violet-950",
-  "Card & Board": "from-red-500 to-red-950",
-  "Visual Novel": "from-fuchsia-500 to-fuchsia-950",
-};
-
-export function genreGradient(name: string) {
-  return genreGradients[name] || "from-teal-600 to-slate-900";
+  if (map[name]) return map[name];
+  if (igdbAbbreviation && igdbAbbreviation.length <= 5 && !/\s/.test(igdbAbbreviation))
+    return igdbAbbreviation.toUpperCase();
+  return abbrev(name);
 }
 
 export function formatYear(date?: number) {

@@ -5,9 +5,14 @@ import type { GameCardProps } from "@/utils/types";
 /// Card data for a list of game ids (wishlist, library), in the ids' order.
 /// Only ids it hasn't loaded yet are fetched, so removing a game (or undoing
 /// that) doesn't refetch the whole list.
+/// Games fetched by id this session, shared by every caller, so a list you
+/// come back to (wishlist, library) renders at once and back/forward can
+/// restore its scroll position.
+const known = new Map<number, GameCardProps>();
+
 export function useGamesByIds(ids: number[], enabled: boolean) {
-  const [byId, setById] = useState<Map<number, GameCardProps>>(new Map());
-  const [loading, setLoading] = useState(true);
+  const [byId, setById] = useState<Map<number, GameCardProps>>(() => new Map(known));
+  const [loading, setLoading] = useState(() => !ids.every((id) => known.has(id)));
   const missing = ids.filter((id) => !byId.has(id));
   const missingKey = missing.join(",");
 
@@ -24,7 +29,11 @@ export function useGamesByIds(ids: number[], enabled: boolean) {
         if (cancelled) return;
         setById((prev) => {
           const next = new Map(prev);
-          for (const g of res.data) if (g.id) next.set(g.id, g);
+          for (const g of res.data) {
+            if (!g.id) continue;
+            next.set(g.id, g);
+            known.set(g.id, g);
+          }
           return next;
         });
       })

@@ -1,56 +1,78 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
+import { readCache, writeCache } from "@/utils/hooks/useCachedJson";
 
+type ListState<T> = { data: T[]; hasMore: boolean };
+
+/// Paginated list from /api/<endpoint> (`?offset=` paging). Every loaded page
+/// is kept in the session cache, so coming back to a list (back button)
+/// renders everything you'd scrolled through at once, at full height, and
+/// the scroll position can be restored. A new endpoint (filter, sort) starts
+/// a fresh list, or picks up its own cached one.
 export function useData<T>(endpoint: string, limit: number = 20) {
-  const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const cacheKey = `list:${endpoint}`;
+  const [state, setState] = useState<ListState<T>>(
+    () => readCache<ListState<T>>(cacheKey) ?? { data: [], hasMore: false }
+  );
+  const [loading, setLoading] = useState<boolean>(() => !readCache(cacheKey));
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
-  const [hasMore, setHasMore] = useState<boolean>(false);
+  const { data, hasMore } = state;
+
+  const update = useCallback(
+    (next: ListState<T>) => {
+      writeCache(cacheKey, next);
+      setState(next);
+    },
+    [cacheKey]
+  );
 
   useEffect(() => {
+    const cached = readCache<ListState<T>>(cacheKey);
+    if (cached) {
+      setState(cached);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     // A new endpoint (e.g. a different filter) starts a fresh list.
-    setData([]);
-    setHasMore(false);
+    setState({ data: [], hasMore: false });
     setLoading(true);
-    const fetchData = async () => {
-      try {
-        const res = await axios.get(`/api/${endpoint}`);
+    axios
+      .get(`/api/${endpoint}`)
+      .then((res) => {
         if (cancelled) return;
         const batch = res.data as T[];
-        setData(batch);
         // A short page means the source is exhausted, so there is nothing to load.
-        setHasMore(batch.length >= limit);
-      } catch (error) {
+        update({ data: batch, hasMore: batch.length >= limit });
+      })
+      .catch((error) => {
         console.error("Error fetching data:", error);
-        if (!cancelled) setHasMore(false);
-      } finally {
+        if (!cancelled) setState({ data: [], hasMore: false });
+      })
+      .finally(() => {
         if (!cancelled) setLoading(false);
-      }
-    };
-    fetchData();
+      });
     return () => {
       cancelled = true;
     };
-  }, [endpoint, limit]);
+  }, [cacheKey, endpoint, limit, update]);
 
   const handlePagination = useCallback(async () => {
-    // Guard against double taps queueing duplicate pages.
+    // Guard against double triggers queueing duplicate pages.
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
       const sep = endpoint.includes("?") ? "&" : "?";
       const res = await axios.get(`/api/${endpoint}${sep}offset=${data.length}`);
       const batch = res.data as T[];
-      setData((prev) => [...prev, ...batch]);
-      setHasMore(batch.length >= limit);
+      update({ data: [...data, ...batch], hasMore: batch.length >= limit });
     } catch (error) {
       console.error("Error loading more:", error);
-      setHasMore(false);
+      update({ data, hasMore: false });
     } finally {
       setLoadingMore(false);
     }
-  }, [endpoint, data.length, limit, hasMore, loadingMore]);
+  }, [endpoint, data, limit, hasMore, loadingMore, update]);
 
   return { data, hasMore, loading, loadingMore, handlePagination };
 }

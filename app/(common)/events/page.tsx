@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useData } from "@/utils/hooks/useData";
 import { EventCardProps } from "@/utils/types";
 import { PageContainer } from "@/components/overdrive/PageShell";
-import { LoadMoreButton, NoResults } from "@/components/overdrive/EmptyState";
+import { AutoLoadMore, NoResults } from "@/components/overdrive/EmptyState";
 import { EventsSkeleton, EventTileSkeletons } from "@/components/overdrive/Skeletons";
 import { EventCard } from "@/components/overdrive/EventCard";
 import { ChipGroup, PageHeading, tileGrid } from "@/components/ui";
 import { eventTiming } from "@/utils/overdrive";
+import { useRestoreScroll } from "@/utils/navMemory";
 
 const FILTERS = [
   { value: "all", label: "All" },
@@ -37,17 +39,40 @@ function eventsEndpoint(filter: Filter) {
   return `events?status=month&from=${from}&to=${to}`;
 }
 
-export default function Events() {
-  const [filter, setFilter] = useState<Filter>("all");
+/// The tab lives in the URL (?status=), so back returns to the same tab.
+function useFilterParam(): [Filter, (next: Filter) => void] {
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const raw = params.get("status");
+  const filter = (FILTERS.find((f) => f.value === raw)?.value ?? "all") as Filter;
+  const setFilter = useCallback(
+    (next: Filter) => router.replace(next === "all" ? pathname : `${pathname}?status=${next}`, { scroll: false }),
+    [pathname, router]
+  );
+  return [filter, setFilter];
+}
+
+export default function EventsPage() {
+  return (
+    <Suspense fallback={<EventsSkeleton />}>
+      <Events />
+    </Suspense>
+  );
+}
+
+function Events() {
+  const [filter, setFilter] = useFilterParam();
   const endpoint = useMemo(() => eventsEndpoint(filter), [filter]);
   const { data: events, hasMore, loading, loadingMore, handlePagination } =
     useData<EventCardProps>(endpoint);
   // Full-page skeleton only on first load; switching tabs keeps the header
   // and filters in place and skeletons just the grid.
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(!loading);
   useEffect(() => {
     if (!loading) setReady(true);
   }, [loading]);
+  useRestoreScroll(ready && !loading);
 
   const liveCount = events.filter((e) => eventTiming(e.start_time, e.end_time).state === "live").length;
 
@@ -89,8 +114,8 @@ export default function Events() {
           {loadingMore && <EventTileSkeletons count={6} />}
         </div>
       )}
-      {!loading && events.length > 0 && hasMore && (
-        <LoadMoreButton onClick={handlePagination} loading={loadingMore} />
+      {!loading && events.length > 0 && (
+        <AutoLoadMore onLoadMore={handlePagination} loading={loadingMore} hasMore={hasMore} count={events.length} />
       )}
     </PageContainer>
   );

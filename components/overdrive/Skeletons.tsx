@@ -240,30 +240,56 @@ export function EventDetailSkeleton() {
   );
 }
 
-export function PanelTileSkeletons({ count = 8 }: { count?: number }) {
-  return (
-    <>
-      {Array.from({ length: count }, (_, i) => (
-        <Bone key={i} className="ov-chamfer h-[140px]" />
-      ))}
-    </>
-  );
-}
-
-function TileGridSkeleton() {
+/// Platforms: heading, the four featured tiles, then a maker section.
+export function PlatformsSkeleton() {
   return (
     <Frame>
       <HeadingBones />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Bone key={i} className="ov-chamfer h-[200px] lg:h-[240px]" />
+        ))}
+      </div>
+      <Bone className="h-7 w-40" />
       <div className={tileGrid(240, 2)}>
-        <PanelTileSkeletons count={8} />
+        {Array.from({ length: 8 }, (_, i) => (
+          <Bone key={i} className="ov-chamfer h-[104px] sm:h-[66px] lg:h-[74px]" />
+        ))}
       </div>
     </Frame>
   );
 }
-
-export const PlatformsSkeleton = TileGridSkeleton;
-export const GenresSkeleton = TileGridSkeleton;
-export const DevelopersSkeleton = TileGridSkeleton;
+/// Same grid and tile size as the genres page, so tiles land where the bones were.
+export function GenresSkeleton() {
+  return (
+    <Frame>
+      <HeadingBones />
+      <div className={tileGrid(260, 2)}>
+        {Array.from({ length: 12 }, (_, i) => (
+          <Bone key={i} className="ov-chamfer h-[148px] lg:h-[168px]" />
+        ))}
+      </div>
+    </Frame>
+  );
+}
+/// Developers: heading, the podium, then leaderboard rows.
+export function DevelopersSkeleton() {
+  return (
+    <Frame>
+      <HeadingBones />
+      <div className="grid gap-3 md:grid-cols-3 lg:gap-4">
+        {Array.from({ length: 3 }, (_, i) => (
+          <Bone key={i} className="ov-chamfer h-[188px] lg:h-[232px]" />
+        ))}
+      </div>
+      <div className="flex flex-col gap-1">
+        {Array.from({ length: 8 }, (_, i) => (
+          <Bone key={i} className="h-[66px]" />
+        ))}
+      </div>
+    </Frame>
+  );
+}
 
 export function ReviewListSkeleton() {
   return (

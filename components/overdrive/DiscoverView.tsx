@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import { useCollection } from "@/context/CollectionContext";
 import type { DiscoverData, EventCardProps, GameCardProps } from "@/utils/types";
 import { saleNote } from "@/utils/price";
@@ -14,6 +13,8 @@ import { EventCard } from "@/components/overdrive/EventCard";
 import { CompactRow, DealCard, MiniCard, RankedCard, RankedRow } from "@/components/overdrive/GameCards";
 import { OvIcon } from "@/components/overdrive/OvIcon";
 import { cx } from "@/utils/cx";
+import { useCachedJson } from "@/utils/hooks/useCachedJson";
+import { useRestoreScroll } from "@/utils/navMemory";
 
 const CONCIERGE_PROMPTS = [
   "Games like Elden Ring",
@@ -22,22 +23,9 @@ const CONCIERGE_PROMPTS = [
   "Short games under ₹1,000",
 ];
 
-function useJson<T>(url: string | null) {
-  const [data, setData] = useState<T | null>(null);
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    if (!url) return;
-    let cancelled = false;
-    axios
-      .get<T>(url)
-      .then((res) => !cancelled && setData(res.data))
-      .catch(() => !cancelled && setFailed(true));
-    return () => {
-      cancelled = true;
-    };
-  }, [url]);
-  return { data, failed };
-}
+/// Session-cached (see useCachedJson), so coming back renders the shelves
+/// at once and back/forward can restore the scroll position.
+const useJson = useCachedJson;
 
 function SectionLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -126,6 +114,9 @@ export function DiscoverView({ initial }: { initial: DiscoverData | null }) {
   const { wishlist, signedIn, ready } = useCollection();
   const wishIds = wishlist.slice(0, 4).join(",");
   const wished = useJson<GameCardProps[]>(signedIn && wishIds ? `/api/games?ids=${wishIds}` : null);
+  // Restore once the client-side shelves have settled (their height decides
+  // where the reader was).
+  useRestoreScroll((events.data !== null || events.failed) && (deals.data !== null || deals.failed));
   const [trendBy, setTrendBy] = useState<"hype" | "rating">("hype");
 
   const data = discover.data;

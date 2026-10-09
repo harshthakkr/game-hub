@@ -1,20 +1,10 @@
-import axios from "axios";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCachedJson } from "@/utils/hooks/useCachedJson";
 
+/// One record from /api/<endpoint>/<slug of this route>, session-cached so
+/// coming back renders at once (and back/forward can restore scroll).
 export function useSingleData<T>(endpoint: string) {
-  const [data, setData] = useState<T>({} as T);
-  const [loading, setLoading] = useState<boolean>(true);
-  const params = useParams();
-  const slug = params.slug;
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await axios.get(`/api/${endpoint}/${slug}`);
-      setData(res.data);
-      setLoading(false);
-    };
-    fetchData();
-  }, [endpoint, slug]);
-
-  return { data, loading };
+  const { slug } = useParams();
+  const { data } = useCachedJson<T>(slug ? `/api/${endpoint}/${slug}` : null);
+  return { data: (data ?? {}) as T, loading: data === null };
 }

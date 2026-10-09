@@ -1,14 +1,21 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { GameCardProps } from "@/utils/types";
+import type { CatalogSort } from "@/utils/catalog";
 import { GameGridCard } from "./GameCards";
-import { LoadMoreButton, NoResults } from "./EmptyState";
+import { AutoLoadMore, NoResults } from "./EmptyState";
 import { PageContainer } from "./PageShell";
 import { useScreenTitle } from "./ScreenTitle";
 import { PageHeading, GAME_GRID } from "@/components/ui";
 import { CatalogueSkeleton, GameTileSkeletons } from "./Skeletons";
-import { GameFilterBar, useGameFilterSort } from "./GameFilterBar";
+import { GameFilterBar } from "./GameFilterBar";
+import { useRestoreScroll } from "@/utils/navMemory";
 
+/// A paginated grid of games (a platform's, a genre's). Sorting happens on
+/// the server: pass `sort` + `onSortChange` to show the control (the page
+/// puts the sort in its request), and pages arrive already in order, so
+/// infinite scroll only ever appends.
 export function GameCatalogue({
   title,
   subtitle,
@@ -17,6 +24,8 @@ export function GameCatalogue({
   loadingMore,
   hasMore,
   onLoadMore,
+  sort,
+  onSortChange,
 }: {
   title: string;
   subtitle?: string;
@@ -25,31 +34,46 @@ export function GameCatalogue({
   loadingMore?: boolean;
   hasMore?: boolean;
   onLoadMore?: () => void;
+  sort?: CatalogSort;
+  onSortChange?: (sort: CatalogSort) => void;
 }) {
-  const { covered, sort, setSort, visible } = useGameFilterSort(games);
   useScreenTitle(title);
+  const covered = games.filter((g) => g.cover);
+  // Full-page skeleton only on first load; a sort change keeps the header
+  // and control in place and skeletons just the grid.
+  const [ready, setReady] = useState(!loading);
+  useEffect(() => {
+    if (!loading) setReady(true);
+  }, [loading]);
 
-  if (loading) return <CatalogueSkeleton />;
+  useRestoreScroll(ready && !loading);
+
+  if (!ready) return <CatalogueSkeleton />;
 
   return (
     <PageContainer>
       <PageHeading title={title} description={subtitle} />
-      {covered.length === 0 ? (
+      {sort && onSortChange && (
+        <div className="flex justify-end border-b border-ov-border pb-4">
+          <GameFilterBar sort={sort} setSort={onSortChange} />
+        </div>
+      )}
+      {loading ? (
+        <div className={GAME_GRID}>
+          <GameTileSkeletons count={12} />
+        </div>
+      ) : covered.length === 0 ? (
         <NoResults description="No games found here yet. Check back later." />
       ) : (
         <>
-          <div className="flex justify-end border-b border-ov-border pb-4">
-            <GameFilterBar sort={sort} setSort={setSort} />
-          </div>
-
           <div className={GAME_GRID}>
-            {visible.map((game) => (
+            {covered.map((game) => (
               <GameGridCard key={game.id || game.slug} game={game} />
             ))}
             {loadingMore && <GameTileSkeletons count={8} />}
           </div>
-          {hasMore && onLoadMore && (
-            <LoadMoreButton onClick={onLoadMore} loading={loadingMore} />
+          {onLoadMore && (
+            <AutoLoadMore onLoadMore={onLoadMore} loading={loadingMore} hasMore={!!hasMore} count={games.length} />
           )}
         </>
       )}

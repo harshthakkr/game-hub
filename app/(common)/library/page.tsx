@@ -13,6 +13,7 @@ import { SavedSwitcher } from "@/components/overdrive/SavedSwitcher";
 import { useIsMobile } from "@/utils/hooks/useMediaQuery";
 import { coverUrl } from "@/utils/overdrive";
 import Image from "next/image";
+import { useRestoreScroll } from "@/utils/navMemory";
 
 type Tab = "ALL" | Shelf;
 
@@ -20,6 +21,7 @@ export default function LibraryPage() {
   const { library, shelfOf, setShelf, ready, signedIn } = useCollection();
   const isMobile = useIsMobile();
   const { games, loading } = useGamesByIds(library, ready && signedIn);
+  useRestoreScroll(ready && !(loading && games.length === 0 && library.length > 0));
   const [tab, setTab] = useState<Tab>("ALL");
 
   const tabs = useMemo(

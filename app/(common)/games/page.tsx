@@ -20,7 +20,9 @@ import {
   GameGridSkeleton,
   GameTileSkeletons,
 } from "@/components/overdrive/Skeletons";
-import { LoadMoreButton } from "@/components/overdrive/EmptyState";
+import { AutoLoadMore } from "@/components/overdrive/EmptyState";
+import { readCache, writeCache } from "@/utils/hooks/useCachedJson";
+import { useRestoreScroll } from "@/utils/navMemory";
 import { OvIcon } from "@/components/overdrive/OvIcon";
 import { Button, ChipGroup, Eyebrow, IconButton, Select, Sheet, SheetOption, Switch, type ChipOption, GAME_GRID } from "@/components/ui";
 import { cx } from "@/utils/cx";
@@ -95,14 +97,29 @@ function useCatalogParams() {
   return { filters, view, set, dataKey };
 }
 
+type CatalogState = { games: GameCardProps[]; total: number | null; hasMore: boolean };
+
+/// The catalogue's results for a filter set. Every loaded page is kept in the
+/// session cache, so the back button brings back everything you'd scrolled
+/// through (and the scroll position, see utils/navMemory).
 function useCatalog(dataKey: string) {
-  const [games, setGames] = useState<GameCardProps[]>([]);
-  const [total, setTotal] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `catalog:${dataKey}`;
+  const [state, setState] = useState<CatalogState>(
+    () => readCache<CatalogState>(cacheKey) ?? { games: [], total: null, hasMore: false }
+  );
+  const [loading, setLoading] = useState(() => !readCache(cacheKey));
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const { games, total, hasMore } = state;
+
+  const update = useCallback(
+    (next: CatalogState) => {
+      writeCache(cacheKey, next);
+      setState(next);
+    },
+    [cacheKey]
+  );
 
   const fetchPage = useCallback(
     (offset: number) => axios.get<GameCardProps[]>(`/api/games?${dataKey}&offset=${offset}`),
@@ -110,37 +127,44 @@ function useCatalog(dataKey: string) {
   );
 
   useEffect(() => {
+    const cached = readCache<CatalogState>(cacheKey);
+    if (cached && attempt === 0) {
+      setState(cached);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setFailed(false);
     fetchPage(0)
       .then((res) => {
         if (cancelled) return;
-        setGames(res.data);
         const header = Number(res.headers["x-total-count"]);
-        setTotal(Number.isFinite(header) && header > 0 ? header : res.data.length || 0);
-        setHasMore(res.data.length >= PAGE_SIZE);
+        update({
+          games: res.data,
+          total: Number.isFinite(header) && header > 0 ? header : res.data.length || 0,
+          hasMore: res.data.length >= PAGE_SIZE,
+        });
       })
       .catch(() => !cancelled && setFailed(true))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [fetchPage, attempt]);
+  }, [cacheKey, fetchPage, attempt, update]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
       const res = await fetchPage(games.length);
-      setGames((prev) => [...prev, ...res.data]);
-      setHasMore(res.data.length >= PAGE_SIZE);
+      update({ games: [...games, ...res.data], total, hasMore: res.data.length >= PAGE_SIZE });
     } catch {
-      setHasMore(false);
+      update({ games, total, hasMore: false });
     } finally {
       setLoadingMore(false);
     }
-  }, [fetchPage, games.length, hasMore, loadingMore]);
+  }, [fetchPage, games, total, hasMore, loadingMore, update]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
@@ -280,6 +304,7 @@ function catalogueTitle(filters: CatalogFilters) {
 function Catalogue() {
   const { filters, view, set, dataKey } = useCatalogParams();
   const { games, total, loading, loadingMore, hasMore, failed, loadMore, retry } = useCatalog(dataKey);
+  useRestoreScroll(!loading);
 
   const [filterSheet, setFilterSheet] = useState(false);
   const [sortSheet, setSortSheet] = useState(false);
@@ -296,7 +321,12 @@ function Catalogue() {
       {/* Desktop: every filter visible in a sticky rail. */}
       <aside
         aria-label="Filters"
-        className="sticky top-[calc(var(--ov-topbar-h)+32px)] hidden flex-col gap-7 xl:flex"
+        // Pinned for good: capped to the space between its sticky top and the
+        // page's bottom padding (32 above, 96 below), so it always fits and
+        // the end of the results can never push it up. Longer than that (short
+        // laptop screens), it scrolls inside itself. The 4px inset keeps focus
+        // rings from being clipped by the scroll box.
+        className="sticky top-[calc(var(--ov-topbar-h)+32px)] -mx-1 hidden max-h-[calc(100dvh-var(--ov-topbar-h)-32px-96px)] flex-col gap-7 overflow-y-auto overscroll-contain px-1 py-1 [scrollbar-color:var(--color-ov-border-strong)_transparent] [scrollbar-width:thin] xl:flex"
       >
         <div className="flex flex-col gap-2">
           <Eyebrow tick>GENRE</Eyebrow>
@@ -523,8 +553,8 @@ function Catalogue() {
           </div>
         )}
 
-        {hasMore && !loading && games.length > 0 && (
-          <LoadMoreButton onClick={loadMore} loading={loadingMore} />
+        {!loading && games.length > 0 && (
+          <AutoLoadMore onLoadMore={loadMore} loading={loadingMore} hasMore={hasMore} count={games.length} />
         )}
       </div>
     </div>
