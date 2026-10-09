@@ -5,7 +5,7 @@
 <br />
 <br />
 
-# GAME//HUB
+<h1><img src="docs/logo.png" alt="GAME//HUB" width="380" /></h1>
 
 **Every game, every price drop, every showcase.**
 
