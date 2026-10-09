@@ -14,7 +14,9 @@ follow live showcases and keep your library, all in one HUD-styled app.
 
 <br />
 
-[**Live demo →**](https://gamehub-harsh.vercel.app/) &nbsp;&nbsp;·&nbsp;&nbsp; [Design system](https://gamehub-harsh.vercel.app/design) &nbsp;&nbsp;·&nbsp;&nbsp; [Features](#features) &nbsp;&nbsp;·&nbsp;&nbsp; [Under the hood](#under-the-hood) &nbsp;&nbsp;·&nbsp;&nbsp; [Run it locally](#run-it-locally)
+<a href="https://gamehub-harsh.vercel.app/"><img alt="Open the live demo" src="https://img.shields.io/badge/%E2%96%B6%EF%B8%8E%20%20Open%20the%20live%20demo-2dd4bf?style=for-the-badge&labelColor=05070e" height="40"></a>
+
+[Design system](https://gamehub-harsh.vercel.app/design) &nbsp;&nbsp;·&nbsp;&nbsp; [Features](#features) &nbsp;&nbsp;·&nbsp;&nbsp; [Under the hood](#under-the-hood) &nbsp;&nbsp;·&nbsp;&nbsp; [Run it locally](#run-it-locally)
 
 <br />
 
