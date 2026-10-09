@@ -1,5 +1,35 @@
 import type { Verdict } from "@/utils/reviews";
 
+export type StoreId = "PLAYSTATION" | "STEAM";
+
+/// A tracked store price, as summarised by lib/prices.ts.
+export interface PriceInfo {
+  free: boolean;
+  /// Whole rupees; 0 when free.
+  amount: number;
+  /// Regular (pre-discount) price in whole rupees.
+  baseAmount: number;
+  current: string;
+  original: string | null;
+  discountPercent: number;
+  fetchedAt: string;
+}
+
+/// The cheapest tracked price for a game across stores.
+export interface BestPriceInfo extends PriceInfo {
+  store: StoreId;
+  storeLabel: string;
+  /// On sale at the lowest price seen in the last 30 days.
+  atLow: boolean;
+}
+
+export interface StoreListing {
+  store: StoreId;
+  label: string;
+  url: string;
+  price: PriceInfo | null;
+}
+
 export interface GamePageProps {
   id?: number;
   name: string;
@@ -13,13 +43,11 @@ export interface GamePageProps {
   screenshots: { url: string; height: number; width: number }[];
   artworks?: { url: string; height: number; width: number }[];
   videos: { video_id: string }[];
-  steamAppId?: string | null;
-  steamPrice?: {
-    free: boolean;
-    current: string;
-    original: string | null;
-    discountPercent: number;
-  } | null;
+  /// Stores the game is listed on, PS Store first, with tracked prices.
+  stores: StoreListing[];
+  /// Vivid hue from the cover (lib/accent.ts) for the hero's ambient light.
+  accent?: string | null;
+  hypes?: number;
   genres: { name: string }[];
   involved_companies: {
     developer: boolean;
@@ -51,11 +79,28 @@ export interface GameCardProps {
   first_release_date?: number;
   genres?: { name: string }[];
   hypes?: number;
+  platforms?: { abbreviation?: string }[];
   involved_companies?: {
     developer: boolean;
     publisher: boolean;
     company: { name: string };
   }[];
+  /// Present only for games whose price we track.
+  price?: BestPriceInfo;
+}
+
+/// A Discover hero slide: a card plus the art and copy the hero needs.
+export interface HeroGame extends GameCardProps {
+  summary?: string;
+  artworks?: { url: string; width?: number; height?: number }[];
+  screenshots?: { url: string; width?: number; height?: number }[];
+  videos?: { video_id: string }[];
+}
+
+export interface DiscoverData {
+  hero: HeroGame[];
+  trending: { hype: GameCardProps[]; rating: GameCardProps[] };
+  releases: GameCardProps[];
 }
 
 export interface CardProps {

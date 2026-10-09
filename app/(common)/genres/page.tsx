@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useData } from "@/utils/hooks/useData";
 import { CardProps } from "@/utils/types";
-import { PageContainer, PageTitle } from "@/components/overdrive/PageShell";
+import { PageContainer } from "@/components/overdrive/PageShell";
 import { NoResults } from "@/components/overdrive/EmptyState";
 import { GenresSkeleton } from "@/components/overdrive/Skeletons";
+import { PageHeading, tileGrid } from "@/components/ui";
 import { genreGradient } from "@/utils/overdrive";
 
 export default function Genres() {
@@ -15,27 +16,19 @@ export default function Genres() {
 
   return (
     <PageContainer>
-      <PageTitle title="GENRES" subtitle="browse by category" />
+      <PageHeading title="Genres" description="Browse by category." />
       {data.length === 0 ? (
         <NoResults description="No genres found right now. Check back later." />
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
+        <div className={tileGrid(260, 2)}>
           {data.map((g) => (
             <Link
               key={g.id}
               href={`/genres/${g.slug}`}
-              className={`group relative overflow-hidden border border-ov-border bg-gradient-to-br p-[22px_18px] transition-all duration-200 hover:-translate-y-1 hover:border-ov-teal active:scale-[0.98] ${genreGradient(g.name)}`}
+              className={`ov-chamfer group h-24 overflow-hidden lg:h-[140px] bg-linear-to-br ${genreGradient(g.name)}`}
             >
-              <div className="absolute inset-0 bg-[rgba(5,8,16,0.72)] transition-opacity duration-200 group-hover:bg-[rgba(5,8,16,0.55)]" />
-              <div className="relative">
-                <div className="font-orbitron text-[18px] font-bold text-white">
-                  {g.name}
-                </div>
-                <div className="mt-2 flex items-center gap-1 text-[11px] tracking-wide text-ov-teal">
-                  BROWSE GAMES
-                  <span className="transition-transform duration-200 group-hover:translate-x-1">▸</span>
-                </div>
-              </div>
+              <span className="absolute inset-0 bg-linear-to-r from-ov-bg/94 from-25% to-ov-bg/55 transition-opacity duration-200 group-hover:opacity-85" />
+              <span className="absolute right-4 bottom-4 left-4 text-body leading-snug font-semibold text-ov-white lg:right-5 lg:bottom-5 lg:left-5 lg:text-xl">{g.name}</span>
             </Link>
           ))}
         </div>

@@ -1,290 +1,540 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useData } from "@/utils/hooks/useData";
-import { GameCardProps } from "@/utils/types";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import axios from "axios";
+import type { GameCardProps } from "@/utils/types";
+import {
+  GENRES,
+  PLATFORMS,
+  RATINGS,
+  DEFAULT_SORT,
+  SORTS,
+  YEARS,
+  type CatalogFilters,
+  type CatalogSort,
+} from "@/utils/catalog";
 import { GameGridCard, GameListRow } from "@/components/overdrive/GameCards";
-import { LoadMoreButton, NoResults } from "@/components/overdrive/EmptyState";
-import { GamesSkeleton, GameTileSkeletons } from "@/components/overdrive/Skeletons";
+import {
+  CatalogueSkeleton,
+  GameGridSkeleton,
+  GameTileSkeletons,
+} from "@/components/overdrive/Skeletons";
+import { LoadMoreButton } from "@/components/overdrive/EmptyState";
 import { OvIcon } from "@/components/overdrive/OvIcon";
+import { Button, ChipGroup, Eyebrow, IconButton, Select, Sheet, SheetOption, Switch, type ChipOption, GAME_GRID } from "@/components/ui";
+import { cx } from "@/utils/cx";
 
-const GENRES = ["All", "Adventure", "RPG", "Indie", "Puzzle", "Shooter", "Platform"];
-const SORTS = [
-  { label: "Rating", key: "rating" },
-  { label: "Release date", key: "date" },
-  { label: "Popularity", key: "popularity" },
-  { label: "A – Z", key: "az" },
+const ANY = "any";
+const PAGE_SIZE = 40;
+
+type FilterKey = "genre" | "platform" | "year" | "rating";
+type Staged = Partial<Record<FilterKey | "sale", string>>;
+
+const FILTERS: {
+  key: FilterKey;
+  label: string;
+  anyLabel: string;
+  options: readonly { value: string; label: string }[];
+}[] = [
+  { key: "genre", label: "GENRE", anyLabel: "All genres", options: GENRES },
+  { key: "platform", label: "PLATFORM", anyLabel: "Any platform", options: PLATFORMS },
+  { key: "year", label: "RELEASE YEAR", anyLabel: "Any year", options: YEARS },
+  { key: "rating", label: "CRITIC RATING", anyLabel: "Any rating", options: RATINGS },
 ];
 
-export default function AllGames() {
-  const { data, hasMore, loading, loadingMore, handlePagination } = useData<GameCardProps>(
-    "games",
-    40
+const VIEWS: readonly ChipOption<"grid" | "list">[] = [
+  { value: "grid", label: "Grid", icon: "grid" },
+  { value: "list", label: "List", icon: "list" },
+];
+
+function withAny(options: readonly { value: string; label: string }[], anyLabel: string) {
+  return [{ value: ANY, label: anyLabel }, ...options];
+}
+
+/// Reads and writes the filter set in the URL, so a filtered catalogue can be
+/// shared, bookmarked and restored with the back button.
+function useCatalogParams() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const filters: CatalogFilters = {
+    genre: params.get("genre") ?? undefined,
+    platform: params.get("platform") ?? undefined,
+    year: params.get("year") ?? undefined,
+    rating: params.get("rating") ?? undefined,
+    sale: params.get("sale") ?? undefined,
+    sort: (params.get("sort") as CatalogSort | null) ?? DEFAULT_SORT,
+  };
+  const view: "grid" | "list" = params.get("view") === "list" ? "list" : "grid";
+
+  const set = useCallback(
+    (changes: Record<string, string | null>) => {
+      const next = new URLSearchParams(params.toString());
+      for (const [key, value] of Object.entries(changes)) {
+        const isDefault =
+          value === null ||
+          value === ANY ||
+          (key === "sort" && value === DEFAULT_SORT) ||
+          (key === "view" && value === "grid");
+        if (isDefault) next.delete(key);
+        else next.set(key, value);
+      }
+      const query = next.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [params, pathname, router]
   );
-  const [genre, setGenre] = useState("All");
-  const [sort, setSort] = useState("rating");
-  const [view, setView] = useState<"grid" | "list">("grid");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [sortMenuOpen, setSortMenuOpen] = useState(false);
-  const filtersMenuRef = useRef<HTMLDivElement>(null);
-  const sortMenuRef = useRef<HTMLDivElement>(null);
+
+  // The data query ignores the view, so changing it doesn't refetch.
+  const dataKey = FILTERS.map((f) => `${f.key}=${filters[f.key] ?? ""}`)
+    .concat(`sale=${filters.sale ?? ""}`, `sort=${filters.sort}`)
+    .join("&");
+
+  return { filters, view, set, dataKey };
+}
+
+function useCatalog(dataKey: string) {
+  const [games, setGames] = useState<GameCardProps[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  const fetchPage = useCallback(
+    (offset: number) => axios.get<GameCardProps[]>(`/api/games?${dataKey}&offset=${offset}`),
+    [dataKey]
+  );
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (filtersMenuRef.current && !filtersMenuRef.current.contains(target)) {
-        setFiltersOpen(false);
-      }
-      if (sortMenuRef.current && !sortMenuRef.current.contains(target)) {
-        setSortMenuOpen(false);
-      }
+    let cancelled = false;
+    setLoading(true);
+    setFailed(false);
+    fetchPage(0)
+      .then((res) => {
+        if (cancelled) return;
+        setGames(res.data);
+        const header = Number(res.headers["x-total-count"]);
+        setTotal(Number.isFinite(header) && header > 0 ? header : res.data.length || 0);
+        setHasMore(res.data.length >= PAGE_SIZE);
+      })
+      .catch(() => !cancelled && setFailed(true))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  }, [fetchPage, attempt]);
 
-  const currentSort = SORTS.find((s) => s.key === sort) ?? SORTS[0];
-
-  const games = useMemo(() => {
-    let list = data.filter((g) => g.cover);
-    if (genre !== "All") {
-      list = list.filter((g) =>
-        (g.genres || []).some((x) =>
-          x.name.toLowerCase().includes(genre.toLowerCase())
-        )
-      );
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetchPage(games.length);
+      setGames((prev) => [...prev, ...res.data]);
+      setHasMore(res.data.length >= PAGE_SIZE);
+    } catch {
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
     }
-    return [...list].sort((a, b) => {
-      if (sort === "rating")
-        return (b.aggregated_rating || 0) - (a.aggregated_rating || 0);
-      if (sort === "date")
-        return (b.first_release_date || 0) - (a.first_release_date || 0);
-      if (sort === "az") return a.name.localeCompare(b.name);
-      return 0;
-    });
-  }, [data, genre, sort]);
+  }, [fetchPage, games.length, hasMore, loadingMore]);
 
-  if (loading) return <GamesSkeleton />;
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+
+  return { games, total, loading, loadingMore, hasMore, failed, loadMore, retry };
+}
+
+/// Live result count for a staged filter set, so the sheet's button can say
+/// "Apply · 24 results" before anything is applied.
+function useStagedCount(staged: Staged, enabled: boolean) {
+  const [count, setCount] = useState<number | null>(null);
+  const key = JSON.stringify(staged);
+  useEffect(() => {
+    if (!enabled) return;
+    setCount(null);
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({ count: "1" });
+      for (const [k, v] of Object.entries(staged)) if (v) params.set(k, v);
+      axios
+        .get<{ count: number }>(`/api/games?${params.toString()}`, { signal: controller.signal })
+        .then((res) => setCount(res.data.count))
+        .catch(() => {});
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+    // `key` is the serialised staged set.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, enabled]);
+  return count;
+}
+
+/// Phone filters: choices are staged in the sheet and applied together.
+function FilterSheet({
+  open,
+  onOpenChange,
+  filters,
+  onApply,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  filters: CatalogFilters;
+  onApply: (staged: Staged) => void;
+}) {
+  const initial: Staged = {
+    genre: filters.genre,
+    platform: filters.platform,
+    year: filters.year,
+    rating: filters.rating,
+    sale: filters.sale,
+  };
+  const [staged, setStaged] = useState<Staged>(initial);
+  const count = useStagedCount(staged, open);
+
+  useEffect(() => {
+    if (open) setStaged(initial);
+    // Re-seed from the applied filters each time the sheet opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   return (
-    <div className="mx-auto max-w-[1320px] px-4 pb-0 pt-3 lg:px-6 xl:pt-0">
-      <div className="flex flex-col gap-4 pb-[60px] xl:sticky xl:top-[74px] xl:h-[calc(100vh-74px)] xl:flex-row xl:gap-7 xl:overflow-hidden xl:pb-0 xl:pt-6 xl:[background-color:#05070e] xl:[background-image:linear-gradient(rgba(45,212,191,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(45,212,191,.035)_1px,transparent_1px)] xl:[background-size:38px_38px]">
-        <aside className="w-full shrink-0 xl:w-[210px] xl:overflow-y-auto xl:pb-6 xl:pt-1">
-          {/* Desktop: filters and sort sit fully expanded in the sidebar. */}
-          <div className="hidden xl:block">
-            <div className="mb-3.5 border-l-[3px] border-ov-rose pl-2 font-orbitron text-[11px] font-bold tracking-[2px] text-ov-rose">
-              FILTERS
-            </div>
-            <div className="mb-2 text-[11px] tracking-wide text-ov-dim">GENRE</div>
-            <div className="mb-5 flex flex-wrap gap-1.5">
-              {GENRES.map((g) => {
-                const active = genre === g;
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Filters"
+      actions={
+        <Button variant="ghost" size="sm" onClick={() => setStaged({})} className="h-11">
+          Reset
+        </Button>
+      }
+      footer={
+        <Button
+          variant="primary"
+          size="lg"
+          className="w-full"
+          disabled={count === 0}
+          onClick={() => {
+            onApply(staged);
+            onOpenChange(false);
+          }}
+        >
+          {count === null ? "Apply" : count === 0 ? "No results" : `Apply · ${count.toLocaleString("en-IN")} results`}
+        </Button>
+      }
+    >
+      <div className="flex flex-col gap-5.5 p-4">
+        {FILTERS.map((f) => (
+          <div key={f.key} className="flex flex-col gap-2.5">
+            <Eyebrow tick>{f.label}</Eyebrow>
+            <div role="radiogroup" aria-label={f.label.toLowerCase()} className="flex flex-wrap gap-2">
+              {withAny(f.options, "Any").map((o) => {
+                const on = (staged[f.key] ?? ANY) === o.value;
                 return (
                   <button
-                    key={g}
+                    key={o.value}
                     type="button"
-                    onClick={() => setGenre(g)}
-                    className={`border px-2.5 py-1 text-[11px] transition-colors duration-150 active:scale-95 ${
-                      active
-                        ? "border-ov-teal bg-ov-teal text-ov-bg"
-                        : "border-ov-border bg-transparent text-ov-text hover:border-ov-teal hover:text-ov-teal"
-                    }`}
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => setStaged((prev) => ({ ...prev, [f.key]: o.value === ANY ? undefined : o.value }))}
+                    className={cx(
+                      "h-11 border px-3.5 text-sm transition-colors",
+                      on
+                        ? "border-ov-teal-deep bg-ov-teal/8 text-ov-teal-hover"
+                        : "border-ov-border text-ov-text hover:border-ov-border-strong"
+                    )}
                   >
-                    {g}
+                    {o.label}
                   </button>
                 );
               })}
             </div>
-            <div className="mb-3.5 border-l-[3px] border-ov-rose pl-2 font-orbitron text-[11px] font-bold tracking-[2px] text-ov-rose">
-              SORT BY
-            </div>
-            <div className="mb-5 flex flex-wrap gap-1.5">
-              {SORTS.map((s) => {
-                const active = s.key === sort;
-                return (
-                  <button
-                    key={s.key}
-                    type="button"
-                    onClick={() => setSort(s.key)}
-                    className={`border px-2.5 py-1 text-[11px] transition-colors duration-150 active:scale-95 ${
-                      active
-                        ? "border-ov-teal bg-ov-teal text-ov-bg"
-                        : "border-ov-border bg-transparent text-ov-text hover:border-ov-teal hover:text-ov-teal"
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                );
-              })}
-            </div>
           </div>
-
-          {/* Smaller screens: compact heading + dropdown pairs replace the
-              always-expanded sidebar, keeping the catalogue close by. */}
-          <div className="flex items-center gap-2.5 xl:hidden">
-            <div ref={filtersMenuRef} className="relative flex flex-col gap-1.5">
-              <span className="text-[11px] tracking-wide text-ov-dim">Filter by</span>
-              <button
-                type="button"
-                onClick={() => setFiltersOpen((v) => !v)}
-                aria-haspopup="listbox"
-                aria-expanded={filtersOpen}
-                className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[11px] tracking-[1px] transition-colors duration-150 active:scale-95 ${
-                  filtersOpen || genre !== "All"
-                    ? "border-ov-teal text-ov-teal"
-                    : "border-ov-border text-ov-text"
-                }`}
-              >
-                {genre.toUpperCase()}
-                <OvIcon
-                  name="chevron-down"
-                  className={`text-[10px] transition-transform ${filtersOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {filtersOpen && (
-                <div
-                  role="listbox"
-                  className="animate-ov-pop absolute left-0 top-[calc(100%+6px)] z-50 w-[170px] origin-top-left border border-ov-teal bg-ov-panel shadow-[0_12px_30px_rgba(0,0,0,0.5)]"
-                >
-                  {GENRES.map((g) => {
-                    const active = g === genre;
-                    return (
-                      <button
-                        key={g}
-                        type="button"
-                        role="option"
-                        aria-selected={active}
-                        onClick={() => {
-                          setGenre(g);
-                          setFiltersOpen(false);
-                        }}
-                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-[12px] tracking-[0.5px] transition-colors duration-150 hover:bg-[#0f1a2e] ${
-                          active ? "text-ov-teal" : "text-ov-text"
-                        }`}
-                      >
-                        {g}
-                        {active && <OvIcon name="check" className="text-[10px]" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div ref={sortMenuRef} className="relative ml-auto flex flex-col items-end gap-1.5">
-              <span className="text-[11px] tracking-wide text-ov-dim">Sort by</span>
-              <button
-                type="button"
-                onClick={() => setSortMenuOpen((v) => !v)}
-                aria-haspopup="listbox"
-                aria-expanded={sortMenuOpen}
-                className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[11px] tracking-[1px] transition-colors duration-150 active:scale-95 ${
-                  sortMenuOpen ? "border-ov-teal text-ov-teal" : "border-ov-border text-ov-text"
-                }`}
-              >
-                {currentSort.label.toUpperCase()}
-                <OvIcon
-                  name="chevron-down"
-                  className={`text-[10px] transition-transform ${sortMenuOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {sortMenuOpen && (
-                <div
-                  role="listbox"
-                  className="animate-ov-pop absolute right-0 top-[calc(100%+6px)] z-50 w-[170px] origin-top-right border border-ov-teal bg-ov-panel shadow-[0_12px_30px_rgba(0,0,0,0.5)]"
-                >
-                  {SORTS.map((s) => {
-                    const active = s.key === sort;
-                    return (
-                      <button
-                        key={s.key}
-                        type="button"
-                        role="option"
-                        aria-selected={active}
-                        onClick={() => {
-                          setSort(s.key);
-                          setSortMenuOpen(false);
-                        }}
-                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-[12px] tracking-[0.5px] transition-colors duration-150 hover:bg-[#0f1a2e] ${
-                          active ? "text-ov-teal" : "text-ov-text"
-                        }`}
-                      >
-                        {s.label}
-                        {active && <OvIcon name="check" className="text-[10px]" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3 xl:pt-1">
-            <span className="font-orbitron text-[17px] font-bold tracking-[2px] text-white">
-              CATALOGUE
-            </span>
-            <span className="text-[13px] text-ov-muted">
-              // {games.length} titles
-            </span>
-            <div className="ml-auto flex gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => setView("grid")}
-                className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-[12px] leading-none transition-colors duration-150 active:scale-95 ${
-                  view === "grid"
-                    ? "border-[#2dd4bf] bg-[#2dd4bf] text-[#05070e]"
-                    : "border-[#16324a] text-[#5b6b82] hover:border-ov-teal hover:text-ov-teal"
-                }`}
-              >
-                <OvIcon name="grid" className="text-[12px] leading-none" />
-                <span>GRID</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("list")}
-                className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-[12px] leading-none transition-colors duration-150 active:scale-95 ${
-                  view === "list"
-                    ? "border-[#2dd4bf] bg-[#2dd4bf] text-[#05070e]"
-                    : "border-[#16324a] text-[#5b6b82] hover:border-ov-teal hover:text-ov-teal"
-                }`}
-              >
-                <OvIcon name="list" className="text-[12px] leading-none" />
-                <span>LIST</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="min-h-0 flex-1 xl:overflow-y-auto xl:pb-8">
-            {games.length === 0 ? (
-              <NoResults
-                title="NO MATCHES"
-                description="No games match this filter right now. Try a different genre."
-              />
-            ) : view === "grid" ? (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-[18px]">
-                {games.map((game) => (
-                  <GameGridCard key={game.id || game.slug} game={game} />
-                ))}
-                {loadingMore && <GameTileSkeletons count={8} />}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2.5">
-                {games.map((game) => (
-                  <GameListRow key={game.id || game.slug} game={game} />
-                ))}
-              </div>
-            )}
-
-            {hasMore && games.length > 0 && (
-              <LoadMoreButton onClick={handlePagination} loading={loadingMore} />
-            )}
-          </div>
+        ))}
+        <div className="flex items-center gap-3 border-t border-ov-border pt-4">
+          <span className="flex flex-1 flex-col gap-0.5">
+            <span className="text-body font-medium">On sale only</span>
+            <span className="text-ui text-ov-muted">Discounted on PS Store or Steam</span>
+          </span>
+          <Switch
+            checked={staged.sale === "1"}
+            onCheckedChange={(on) => setStaged((prev) => ({ ...prev, sale: on ? "1" : undefined }))}
+          >
+            <span className="sr-only">On sale only</span>
+          </Switch>
         </div>
       </div>
+    </Sheet>
+  );
+}
+
+function catalogueTitle(filters: CatalogFilters) {
+  const genre = GENRES.find((g) => g.value === filters.genre);
+  return genre ? genre.label : "Catalogue";
+}
+
+function Catalogue() {
+  const { filters, view, set, dataKey } = useCatalogParams();
+  const { games, total, loading, loadingMore, hasMore, failed, loadMore, retry } = useCatalog(dataKey);
+
+  const [filterSheet, setFilterSheet] = useState(false);
+  const [sortSheet, setSortSheet] = useState(false);
+  const active: { key: FilterKey | "sale"; label: string }[] = FILTERS.flatMap(({ key, options }) => {
+    const option = options.find((o) => o.value === filters[key]);
+    return option ? [{ key, label: option.label }] : [];
+  });
+  if (filters.sale === "1") active.push({ key: "sale", label: "On sale" });
+  const clearAll = () => set({ genre: null, platform: null, year: null, rating: null, sale: null });
+  const sortLabel = SORTS.find((o) => o.value === filters.sort)?.label ?? "Popularity";
+
+  return (
+    <div className="mx-auto grid max-w-[1440px] items-start gap-10 px-4 pt-5 pb-12 md:px-8 lg:pt-10 lg:pb-24 xl:grid-cols-[232px_minmax(0,1fr)]">
+      {/* Desktop: every filter visible in a sticky rail. */}
+      <aside
+        aria-label="Filters"
+        className="sticky top-[calc(var(--ov-topbar-h)+32px)] hidden flex-col gap-7 xl:flex"
+      >
+        <div className="flex flex-col gap-2">
+          <Eyebrow tick>GENRE</Eyebrow>
+          <ChipGroup
+            label="Genre"
+            variant="list"
+            options={withAny(GENRES, "All genres")}
+            value={filters.genre ?? ANY}
+            onValueChange={(v) => set({ genre: v })}
+          />
+        </div>
+        {FILTERS.slice(1).map((f) => (
+          <div key={f.key} className="flex flex-col gap-2.5">
+            <Eyebrow tick>{f.label}</Eyebrow>
+            <ChipGroup
+              label={f.label.toLowerCase()}
+              options={withAny(f.options, "Any")}
+              value={filters[f.key] ?? ANY}
+              onValueChange={(v) => set({ [f.key]: v })}
+            />
+          </div>
+        ))}
+        <Switch checked={filters.sale === "1"} onCheckedChange={(on) => set({ sale: on ? "1" : null })}>
+          On sale only
+        </Switch>
+      </aside>
+
+      {/* Page blocks: heading → toolbar → results, 24/32 apart. */}
+      <div className="flex min-w-0 flex-col gap-6 lg:gap-8">
+        <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+          <h1 className="font-orbitron text-[24px] leading-tight font-bold tracking-[0.04em] uppercase lg:text-[34px]">
+            {catalogueTitle(filters)}
+          </h1>
+          {total !== null && !loading && !failed && (
+            <span className="font-hud text-ui text-ov-muted lg:text-body" aria-live="polite">
+              <span aria-hidden className="text-ov-teal">{"// "}</span>
+              {total.toLocaleString("en-IN")} {total === 1 ? "title" : "titles"}
+            </span>
+          )}
+        </div>
+
+        {/* Phones: a sticky Filters / Sort / view bar opening sheets, with the
+            applied filters as a scrollable row of removable chips. */}
+        <div className="sticky top-(--ov-topbar-h) z-20 -mx-4 border-b md:-mx-8 border-ov-border bg-ov-bg/94 backdrop-blur-[14px] lg:hidden">
+          <div className="flex gap-2 px-4 py-2 md:px-8">
+            <button
+              type="button"
+              onClick={() => setFilterSheet(true)}
+              className="flex h-11 flex-1 items-center justify-center gap-2 border border-ov-border-strong bg-ov-field text-sm font-medium"
+            >
+              <OvIcon name="list" className="text-base" />
+              Filters
+              {active.length > 0 && (
+                <span className="bg-ov-teal px-1.5 font-hud text-label text-ov-teal-ink">{active.length}</span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortSheet(true)}
+              className="flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 border border-ov-border-strong bg-ov-field text-sm font-medium"
+            >
+              <span className="text-ov-muted">Sort</span>
+              <span className="truncate">{sortLabel}</span>
+              <OvIcon name="chevron-down" className="text-sm text-ov-dim" />
+            </button>
+            <IconButton
+              icon={view === "grid" ? "list" : "grid"}
+              label={view === "grid" ? "Show as list" : "Show as grid"}
+              onClick={() => set({ view: view === "grid" ? "list" : "grid" })}
+              size="lg"
+              className="border border-ov-border-strong bg-ov-field"
+            />
+          </div>
+          {active.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:px-8">
+              {active.map((chip) => (
+                <button
+                  key={chip.key}
+                  type="button"
+                  onClick={() => set({ [chip.key]: null })}
+                  aria-label={`Remove filter: ${chip.label}`}
+                  className="flex h-11 shrink-0 items-center"
+                >
+                  <span className="flex h-[34px] items-center gap-1.5 border border-ov-teal-deep bg-ov-teal/8 pr-2 pl-3 text-ui whitespace-nowrap text-ov-teal-hover">
+                    {chip.label}
+                    <OvIcon name="close" className="text-xs" />
+                  </span>
+                </button>
+              ))}
+              <button type="button" onClick={clearAll} className="h-11 shrink-0 px-1.5 text-ui whitespace-nowrap text-ov-dim">
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
+        <FilterSheet
+          open={filterSheet}
+          onOpenChange={setFilterSheet}
+          filters={filters}
+          onApply={(staged) =>
+            set({
+              genre: staged.genre ?? null,
+              platform: staged.platform ?? null,
+              year: staged.year ?? null,
+              rating: staged.rating ?? null,
+              sale: staged.sale ?? null,
+            })
+          }
+        />
+        <Sheet open={sortSheet} onOpenChange={setSortSheet} title="Sort by">
+          <div role="radiogroup" aria-label="Sort by" className="pb-2">
+            {SORTS.map((o) => (
+              <SheetOption
+                key={o.value}
+                label={o.label}
+                selected={(filters.sort ?? DEFAULT_SORT) === o.value}
+                onSelect={() => {
+                  set({ sort: o.value });
+                  setSortSheet(false);
+                }}
+              />
+            ))}
+          </div>
+        </Sheet>
+
+        {/* Tablets: the filters collapse into a row of dropdowns. */}
+        <div className="hidden gap-3 overflow-x-auto pb-1 lg:flex xl:hidden">
+          {FILTERS.map((f) => (
+            <Select
+              key={f.key}
+              label={f.label}
+              options={withAny(f.options, f.anyLabel)}
+              value={filters[f.key] ?? ANY}
+              onValueChange={(v) => set({ [f.key]: v })}
+              className="shrink-0"
+            />
+          ))}
+        </div>
+
+        <div className="hidden flex-wrap items-center gap-3 border-b border-ov-border pb-4 lg:flex">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            {active.map((chip) => (
+              <span
+                key={chip.key}
+                className="flex items-center gap-1.5 border border-ov-teal-deep bg-ov-teal/8 py-1 pr-1.5 pl-2.5 text-ui text-ov-teal-hover"
+              >
+                {chip.label}
+                <button
+                  type="button"
+                  onClick={() => set({ [chip.key]: null })}
+                  aria-label={`Remove filter: ${chip.label}`}
+                  className="flex size-[18px] items-center justify-center hover:text-ov-white"
+                >
+                  <OvIcon name="close" className="text-xs" />
+                </button>
+              </span>
+            ))}
+            {active.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearAll}>
+                Clear all
+              </Button>
+            )}
+          </div>
+          <ChipGroup
+            label="Sort by"
+            variant="segmented"
+            options={SORTS}
+            value={filters.sort ?? DEFAULT_SORT}
+            onValueChange={(v) => set({ sort: v })}
+          />
+          <ChipGroup
+            label="View"
+            variant="segmented"
+            options={VIEWS}
+            value={view}
+            onValueChange={(v) => set({ view: v })}
+          />
+        </div>
+
+        {loading ? (
+          <GameGridSkeleton />
+        ) : failed ? (
+          <div
+            role="alert"
+            className="flex flex-col items-center gap-3 border border-dashed border-ov-border-strong px-6 py-16 text-center"
+          >
+            <p className="text-lg font-semibold">Couldn&apos;t load the catalogue</p>
+            <p className="text-sm text-ov-dim">The game database didn&apos;t respond. Try again in a moment.</p>
+            <Button variant="secondary" onClick={retry}>
+              Try again
+            </Button>
+          </div>
+        ) : games.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 border border-dashed border-ov-border-strong px-6 py-[72px] text-center">
+            <Eyebrow>NO MATCHES</Eyebrow>
+            <p className="text-lg font-semibold">No games fit these filters</p>
+            <p className="text-sm text-ov-dim">Try removing a filter or widening the year range.</p>
+            <Button variant="secondary" onClick={clearAll} className="mt-2">
+              Clear all filters
+            </Button>
+          </div>
+        ) : view === "grid" ? (
+          <div className={GAME_GRID}>
+            {games.map((game) => (
+              <GameGridCard key={game.id ?? game.slug} game={game} />
+            ))}
+            {loadingMore && <GameTileSkeletons count={8} />}
+          </div>
+        ) : (
+          <div>
+            <div
+              aria-hidden
+              className="hidden grid-cols-[48px_minmax(0,1fr)_120px_52px_110px_36px_150px] gap-x-4 px-2.5 pb-2.5 font-hud text-micro tracking-label text-ov-muted lg:grid"
+            >
+              <span />
+              <span>TITLE</span>
+              <span>GENRE</span>
+              <span>RATING</span>
+              <span className="text-right">BEST PRICE</span>
+            </div>
+            {games.map((game) => (
+              <GameListRow key={game.id ?? game.slug} game={game} />
+            ))}
+          </div>
+        )}
+
+        {hasMore && !loading && games.length > 0 && (
+          <LoadMoreButton onClick={loadMore} loading={loadingMore} />
+        )}
+      </div>
     </div>
+  );
+}
+
+export default function CataloguePage() {
+  return (
+    <Suspense fallback={<CatalogueSkeleton />}>
+      <Catalogue />
+    </Suspense>
   );
 }

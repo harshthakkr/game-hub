@@ -1,16 +1,13 @@
-import axios from "axios";
-import { getIgdbHeaders } from "@/lib/igdb";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { igdb } from "@/lib/igdb";
+import { publicJson } from "@/lib/http";
 
 export const GET = async (request: NextRequest) => {
-  const offset = request.nextUrl.searchParams?.get("offset");
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/companies`,
-    `fields name,slug; sort start_date desc; limit 40; offset ${offset || 0};`,
-    {
-      headers: await getIgdbHeaders(),
-    }
+  const offset = Math.max(0, Number(request.nextUrl.searchParams.get("offset")) || 0);
+  const developers = await igdb(
+    "/companies",
+    `fields name,slug; sort start_date desc; limit 40; offset ${offset};`,
+    { revalidate: 86400 }
   );
-  const developers = res.data;
-  return NextResponse.json(developers);
+  return publicJson(developers, 86400);
 };

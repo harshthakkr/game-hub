@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useSingleData } from "@/utils/hooks/useSingleData";
 import { DeveloperPageProps } from "@/utils/types";
-import { PageContainer, PageTitle } from "@/components/overdrive/PageShell";
+import { PageContainer } from "@/components/overdrive/PageShell";
+import { useScreenTitle } from "@/components/overdrive/ScreenTitle";
+import { PageHeading, SectionHeader, GAME_GRID } from "@/components/ui";
 import { GameGridCard } from "@/components/overdrive/GameCards";
 import { NoResults } from "@/components/overdrive/EmptyState";
 import { GameFilterBar, useGameFilterSort } from "@/components/overdrive/GameFilterBar";
@@ -13,6 +14,7 @@ import { abbrev } from "@/utils/overdrive";
 export default function Developer() {
   const { data, loading } = useSingleData<DeveloperPageProps>("developers");
   const { covered, sort, setSort, visible } = useGameFilterSort(data?.developed || []);
+  useScreenTitle(data?.name);
 
   if (loading) return <DeveloperDetailSkeleton />;
   if (!data?.name) {
@@ -25,49 +27,52 @@ export default function Developer() {
 
   return (
     <PageContainer>
-      <div className="mb-6 flex items-start gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center border border-ov-rose font-orbitron text-xl font-black text-ov-rose">
-          {abbrev(data.name)}
+      {/* Page header: identity, links and blurb read as one block. */}
+      <div className="flex flex-col gap-3 lg:gap-4">
+        <div className="flex items-center gap-4">
+          <span className="ov-chamfer ov-chamfer-sm flex size-14 shrink-0 items-center justify-center border border-ov-border-strong bg-ov-raised font-orbitron text-lg font-bold">
+            {abbrev(data.name)}
+          </span>
+          <PageHeading title={data.name} />
         </div>
-        <PageTitle title={data.name.toUpperCase()} subtitle="studio profile" />
+
+        {data.websites && data.websites.length > 0 && (
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+            {data.websites.slice(0, 4).map((website) => (
+              <a
+                key={website.id}
+                href={website.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-ov-teal hover:text-ov-teal-hover"
+              >
+                {website.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {data.description && (
+          <p className="max-w-[720px] font-body text-base leading-relaxed text-ov-text">{data.description}</p>
+        )}
       </div>
 
-      {data.websites && data.websites.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-3 text-[13px]">
-          {data.websites.map((website) => (
-            <Link
-              key={website.id}
-              href={website.url}
-              target="_blank"
-              className="text-ov-teal transition-colors duration-150 hover:text-ov-white hover:underline"
-            >
-              {website.url}
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {data.description && (
-        <p className="mb-8 max-w-[720px] text-[15px] leading-relaxed text-ov-text">
-          {data.description}
-        </p>
-      )}
-
-      <div className="mb-4 font-orbitron text-[13px] font-bold tracking-[2px] text-ov-rose">
-        DEVELOPED GAMES
-      </div>
-      {covered.length === 0 ? (
-        <NoResults description="No games listed for this developer yet." />
-      ) : (
-        <>
-          <GameFilterBar sort={sort} setSort={setSort} />
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-[18px]">
+      <section className="flex flex-col gap-4 lg:gap-5" aria-label="Games">
+        <SectionHeader
+          title="Games"
+          meta={covered.length ? `${covered.length}` : undefined}
+          action={covered.length > 0 ? <GameFilterBar sort={sort} setSort={setSort} /> : undefined}
+        />
+        {covered.length === 0 ? (
+          <NoResults description="No games listed for this developer yet." />
+        ) : (
+          <div className={GAME_GRID}>
             {visible.map((game) => (
               <GameGridCard key={game.id || game.slug} game={game} />
             ))}
           </div>
-        </>
-      )}
+        )}
+      </section>
     </PageContainer>
   );
 }

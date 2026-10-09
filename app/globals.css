@@ -1,23 +1,234 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-@theme inline {
+/* ---------------------------------------------------------------------------
+   Overdrive design tokens. Every color, size, chamfer, shadow and motion value
+   the UI uses lives here; components reference these through Tailwind
+   utilities (bg-ov-panel, text-label, tracking-hud, shadow-ov-pop, ...) or
+   var(--color-ov-*) when a value has to be computed at runtime.
+   --------------------------------------------------------------------------- */
+@theme static {
+  /* Surfaces, darkest to lightest: page, panels/cards, fields/menus, chips and
+     hover fills. */
   --color-ov-bg: #05070e;
-  --color-ov-panel: #0a1220;
-  --color-ov-border: #16324a;
+  --color-ov-panel: #0a0e18;
+  --color-ov-field: #0f1521;
+  --color-ov-raised: #151c2a;
+
+  /* Lines: default dividers and card edges, then interactive edges. */
+  --color-ov-border: #1e2737;
+  --color-ov-border-strong: #2c3749;
+  /* Decorative only (separators, the logo slashes); below text contrast. */
+  --color-ov-faint: #4a5669;
+
+  /* Text, strongest to weakest. Every step clears WCAG AA (4.5:1) on bg,
+     panel and field. */
+  --color-ov-white: #e6ebf2;
+  --color-ov-text: #c9d1dd;
+  --color-ov-dim: #a3aebf;
+  --color-ov-muted: #7a8699;
+
+  /* Brand / interactive accent. `ink` is text on a teal fill; `deep` the
+     border of a teal-tinted chip. */
   --color-ov-teal: #2dd4bf;
-  --color-ov-teal-dark: #14b8a6;
+  --color-ov-teal-hover: #5eead4;
+  --color-ov-teal-ink: #03201b;
+  --color-ov-teal-deep: #1f5f58;
+
+  /* Rose is reserved for wishlist, live and destructive actions. */
   --color-ov-rose: #f43f5e;
-  --color-ov-text: #c3cede;
-  --color-ov-muted: #5b6b82;
-  --color-ov-dim: #7c8aa0;
-  --color-ov-white: #e6edf6;
-  --font-orbitron: var(--font-orbitron-next), sans-serif;
-  --font-chakra: var(--font-chakra-next), sans-serif;
+  --color-ov-rose-soft: #fda4af;
+  /* Solid fill under white text (4.7:1); plain rose is 3.7:1. */
+  --color-ov-rose-strong: #e11d48;
+  --color-ov-rose-deep: #9f1239;
+  --color-ov-rose-wash: #2a0e17;
+
+  /* Discounts and price drops. */
+  --color-ov-deal: #4ade80;
+  --color-ov-deal-ink: #052e14;
+
+  /* Warnings: spoilers. */
+  --color-ov-amber: #fbbf24;
+
+  /* Review verdicts, worst to best. Hues step slate, blue, teal, violet,
+     orchid, avoiding amber (spoilers), rose (wishlist, live) and green
+     (discounts); each clears 6.5:1 on panel. The 5-bar meter carries the
+     rank without colour. */
+  --color-ov-verdict-1: #8e97a8;
+  --color-ov-verdict-2: #6aa7f8;
+  --color-ov-verdict-3: #2dd4bf;
+  --color-ov-verdict-4: #b197fc;
+  --color-ov-verdict-5: #f08bef;
+
+  /* Type scale. micro is the mono caps label size; Tailwind's xs (12) /
+     sm (14) / base (16) / lg (18) / xl (20) / 4xl (36) fill the gaps. */
+  --text-micro: 11px;
+  --text-label: 12px;
+  --text-ui: 13px;
+  --text-body: 15px;
+  --text-lead: 17px;
+  --text-section: 22px;
+  --text-title: 28px;
+  --text-page: 40px;
+  --text-display: 52px;
+  --text-hero: 60px;
+
+  /* Letter-spacing for mono caps labels, and legacy HUD caps. */
+  --tracking-label: 0.08em;
+  --tracking-hud: 1px;
+  --tracking-hud-wide: 2px;
+  --tracking-hud-xwide: 3px;
+
+  /* Chamfer (cut-corner) sizes, consumed by the .ov-chamfer utilities below:
+     sm for controls, md for cards and panels. */
+  --chamfer-sm: 8px;
+  --chamfer-md: 16px;
+  --chamfer-lg: 16px;
+
+  --shadow-ov-pop: 0 24px 48px rgb(0 0 0 / 0.55);
+
+  /* Entrances fill `backwards`, not `both`: a finished animation must not
+     leave a transform behind, or fixed-position descendants (the phone action
+     bar) would be positioned against the animated element instead of the
+     viewport. */
+  --animate-ov-pop: ov-pop 0.14s ease-out backwards;
+  --animate-ov-fade-up: ov-fade-up 0.25s ease-out backwards;
+  --animate-ov-fade-out: ov-fade-out 0.15s ease-in both;
+  --animate-ov-pop-out: ov-pop-out 0.1s ease-in both;
+  --animate-ov-pulse: ov-pulse 2s ease-in-out infinite;
+  --animate-ov-sheet-in: ov-sheet-in 0.25s ease-out backwards;
+  --animate-ov-sheet-out: ov-sheet-in 0.2s ease-in reverse both;
+  --animate-ov-heart: ov-heart 0.42s cubic-bezier(0.3, 1.6, 0.5, 1);
+  --animate-ov-draw: ov-draw 0.7s cubic-bezier(0.3, 0.8, 0.3, 1) backwards;
+  --animate-ov-shimmer: ov-shimmer 1.2s linear infinite;
+  --animate-ov-think: ov-think 0.8s linear infinite;
+  /* Sign-in cover wall: ~18px/s, slow enough to read as ambient. */
+  --animate-ov-scrollup: ov-scrollup 110s linear infinite;
+  --animate-ov-scrollup-slow: ov-scrollup 135s linear infinite;
+  --animate-ov-scrolldown: ov-scrollup 120s linear infinite reverse;
+
+  /* All breakpoints in px: Tailwind orders variants by value, and mixing px
+     with the default rem values breaks that ordering. */
+  --breakpoint-sm: 480px;
   --breakpoint-md: 586px;
   --breakpoint-lg: 800px;
   --breakpoint-xl: 1080px;
   --breakpoint-2xl: 1352px;
+
+  @keyframes ov-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(-2px);
+    }
+  }
+
+  @keyframes ov-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  @keyframes ov-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes ov-pop-out {
+    to {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+  }
+
+  @keyframes ov-pulse {
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes ov-sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+
+  /* Wishlist "on": a quick overshoot, so the state change is felt. */
+  @keyframes ov-heart {
+    35% {
+      transform: scale(1.32);
+    }
+    70% {
+      transform: scale(0.92);
+    }
+  }
+
+  /* Chart lines drawn left to right. A clip reveal, not a dash offset, so
+     dashed series (Steam) and the area fill animate the same way. */
+  @keyframes ov-draw {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
+  @keyframes ov-shimmer {
+    from {
+      background-position: -400px 0;
+    }
+    to {
+      background-position: 400px 0;
+    }
+  }
+
+  @keyframes ov-think {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes ov-scrollup {
+    to {
+      transform: translateY(-50%);
+    }
+  }
+}
+
+/* next/font exposes its families as variables on <body>, so these must stay
+   inline to resolve there rather than on :root. */
+@theme inline {
+  /* Type roles. Chakra Petch is the voice of the UI; Geist is only for
+     long reading text; Orbitron for the logo, page titles and numerals.
+     font-hud marks small readouts (labels, counts, tags): same face as
+     sans, named for intent so it survives inside font-body regions. */
+  --font-sans: var(--font-chakra-next), system-ui, sans-serif;
+  --font-hud: var(--font-chakra-next), system-ui, sans-serif;
+  --font-body: var(--font-geist-next), system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  /* Orbitron has no ₹, so prices fall back to Chakra Petch, not Arial. */
+  --font-orbitron: var(--font-orbitron-next), var(--font-chakra-next), sans-serif;
+}
+
+/* Sticky header height (plus its 1px rule), for layouts that fill or stick
+   below it: the 56px phone bar, then the desktop bar, which carries a second
+   row (the nav strip) between lg and xl. */
+:root {
+  --ov-topbar-h: 57px;
+}
+
+@media (width >= 800px) {
+  :root {
+    --ov-topbar-h: 109px;
+  }
+}
+
+@media (width >= 1080px) {
+  :root {
+    --ov-topbar-h: 65px;
+  }
 }
 
 /* Tailwind v4 puts utility classes inside a cascade layer; unlayered CSS
@@ -25,15 +236,12 @@
    must live in @layer base so a Tailwind text-color class on an <a> (or any
    element below) can still override them normally. */
 @layer base {
-  * {
-    box-sizing: border-box;
-  }
-
   body {
     margin: 0;
-    background: #05070e;
-    color: #c3cede;
-    font-family: var(--font-chakra), sans-serif;
+    background: var(--color-ov-bg);
+    color: var(--color-ov-white);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 
   a {
@@ -41,205 +249,197 @@
     text-decoration: none;
   }
 
-  input {
+  input,
+  textarea,
+  button {
     font-family: inherit;
   }
 
   ::selection {
-    background: #2dd4bf;
-    color: #05070e;
+    background: var(--color-ov-teal);
+    color: var(--color-ov-teal-ink);
+  }
+
+  /* One focus ring for everything keyboard-reachable. Mouse clicks don't
+     trigger :focus-visible, so this never shows on pointer interaction. */
+  :focus-visible {
+    outline: 2px solid var(--color-ov-teal-hover);
+    outline-offset: 2px;
+  }
+
+  ::placeholder {
+    color: var(--color-ov-muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-@keyframes ov-scrollup {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-50%);
-  }
+/* Focus on chamfered controls. The cut corner is a clip-path, which also
+   clips the normal outside outline, leaving no visible focus at all. Draw
+   the ring inside instead: teal at the edge, a dark band within, so it
+   reads on teal (primary) and dark (secondary) fills alike. Unlayered so
+   no utility can override it. */
+.ov-chamfer:focus-visible,
+.ov-chamfer-x:focus-visible,
+.ov-chamfer-bl:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 2px var(--color-ov-teal-hover),
+    inset 0 0 0 4px var(--color-ov-bg);
 }
 
-@keyframes ov-scrolldown {
-  from {
-    transform: translateY(-50%);
-  }
-  to {
-    transform: translateY(0);
-  }
+/* Card → game page hero transition (utils/heroNav.ts). The page itself
+   cross-fades quickly; the cover and title travel on a longer ease-out. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
 }
 
-@keyframes ov-pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
+::view-transition-group(game-cover),
+::view-transition-group(game-title) {
+  animation-duration: 440ms;
+  animation-timing-function: cubic-bezier(0.2, 0.9, 0.1, 1);
 }
 
-@keyframes ov-think {
-  0% {
-    transform: rotate(0);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+/* Portrait cover into a landscape band (phones): crop, don't squash. */
+::view-transition-group(game-cover) {
+  overflow: clip;
+}
+::view-transition-old(game-cover),
+::view-transition-new(game-cover) {
+  height: 100%;
+  object-fit: cover;
 }
 
-@keyframes ov-pop {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+/* Titles scale with the box height and keep their aspect, so the card's
+   one-line name grows into the H1 instead of stretching. */
+::view-transition-old(game-title),
+::view-transition-new(game-title) {
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+  object-position: left top;
 }
 
-@keyframes ov-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-ov-scrollup {
-  animation: ov-scrollup 26s linear infinite;
-}
-
-.animate-ov-scrolldown {
-  animation: ov-scrolldown 30s linear infinite;
-}
-
-.animate-ov-scrollup-slow {
-  animation: ov-scrollup 34s linear infinite;
-}
-
-.animate-ov-pulse {
-  animation: ov-pulse 2s infinite;
-}
-
-.animate-ov-think {
-  animation: ov-think 0.8s linear infinite;
-}
-
-.animate-ov-pop {
-  animation: ov-pop 0.14s ease-out;
-}
-
-.animate-ov-fade-up {
-  animation: ov-fade-up 0.25s ease-out both;
-}
-
-.ov-grid-bg {
-  min-height: 100vh;
-  background-color: #05070e;
+/* HUD grid backdrop. A utility (not a component class) so it takes variants,
+   e.g. xl:ov-grid-bg. */
+@utility ov-grid-bg {
+  background-color: var(--color-ov-bg);
   background-image:
-    linear-gradient(rgba(45, 212, 191, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(45, 212, 191, 0.035) 1px, transparent 1px);
+    linear-gradient(
+      color-mix(in srgb, var(--color-ov-teal) 3.5%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-ov-teal) 3.5%, transparent) 1px,
+      transparent 1px
+    );
   background-size: 38px 38px;
 }
 
-.ov-clip-sm {
-  clip-path: polygon(
-    8px 0,
-    100% 0,
-    100% calc(100% - 8px),
-    calc(100% - 8px) 100%,
-    0 100%,
-    0 8px
-  );
-}
+@layer components {
 
-.ov-clip-md {
-  clip-path: polygon(
-    10px 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%,
-    0 10px
-  );
-}
+  /* Chamfered corners, the Overdrive signature.
+     - .ov-chamfer      cuts the bottom-right corner
+     - .ov-chamfer-x    cuts top-left and bottom-right
+     - .ov-chamfer-bl   cuts bottom-left (outgoing chat bubble; borderless)
+     Size defaults to md; add .ov-chamfer-sm or .ov-chamfer-lg to change it.
 
-.ov-clip-card {
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 14px),
-    calc(100% - 14px) 100%,
-    0 100%
-  );
-}
+     clip-path alone slices the border off at the cut, leaving the diagonal
+     edge unstroked. The pseudo-elements redraw it as a rotated hairline that
+     inherits the element's border width, style and color, so it follows hover
+     and focus color changes and vanishes on borderless elements. They are
+     positioned against the padding box, hence the -1px offsets for the 1px
+     borders used throughout. Don't put these on a scroll container: the
+     hairline would scroll with the content. */
+  .ov-chamfer,
+  .ov-chamfer-x,
+  .ov-chamfer-bl {
+    --ov-chamfer: var(--chamfer-md);
+    position: relative;
+  }
 
-.ov-clip-row {
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%
-  );
-}
+  .ov-chamfer-sm {
+    --ov-chamfer: var(--chamfer-sm);
+  }
 
-.ov-clip-hero {
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 26px),
-    calc(100% - 26px) 100%,
-    0 100%
-  );
-}
+  .ov-chamfer-lg {
+    --ov-chamfer: var(--chamfer-lg);
+  }
 
-.ov-clip-panel {
-  clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%, 0 16px);
-}
+  .ov-chamfer {
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% calc(100% - var(--ov-chamfer)),
+      calc(100% - var(--ov-chamfer)) 100%,
+      0 100%
+    );
+  }
 
-.ov-clip-chat {
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 16px),
-    calc(100% - 16px) 100%,
-    0 100%
-  );
-}
+  .ov-chamfer-x {
+    clip-path: polygon(
+      var(--ov-chamfer) 0,
+      100% 0,
+      100% calc(100% - var(--ov-chamfer)),
+      calc(100% - var(--ov-chamfer)) 100%,
+      0 100%,
+      0 var(--ov-chamfer)
+    );
+  }
 
-.ov-clip-input {
-  clip-path: polygon(
-    12px 0,
-    100% 0,
-    100% calc(100% - 12px),
-    calc(100% - 12px) 100%,
-    0 100%,
-    0 12px
-  );
-}
+  .ov-chamfer-bl {
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% 100%,
+      var(--ov-chamfer) 100%,
+      0 calc(100% - var(--ov-chamfer))
+    );
+  }
 
-.ov-bubble-user {
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% 100%,
-    10px 100%,
-    0 calc(100% - 10px)
-  );
-}
+  .ov-chamfer::after,
+  .ov-chamfer-x::after,
+  .ov-chamfer-x::before {
+    content: "";
+    position: absolute;
+    width: calc(var(--ov-chamfer) * 1.4142);
+    height: 0;
+    border-top-style: inherit;
+    border-top-width: inherit;
+    border-top-color: inherit;
+    pointer-events: none;
+  }
 
-.ov-bubble-ai {
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%
-  );
+  .ov-chamfer::after,
+  .ov-chamfer-x::after {
+    right: -1px;
+    bottom: calc(var(--ov-chamfer) - 1px);
+    transform-origin: right bottom;
+    transform: rotate(-45deg);
+  }
+
+  .ov-chamfer-x::before {
+    left: -1px;
+    top: calc(var(--ov-chamfer) - 1px);
+    transform-origin: left top;
+    transform: rotate(-45deg);
+  }
+
+  /* The clip would cut an outset focus ring away; draw it inside instead. */
+  .ov-chamfer:focus-visible,
+  .ov-chamfer-x:focus-visible,
+  .ov-chamfer-bl:focus-visible {
+    outline-offset: -3px;
+  }
 }

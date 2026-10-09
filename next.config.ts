@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    // AVIF is ~20-30% smaller than WebP for IGDB key art, which is the LCP
+    // element on Discover and game pages. Encoded once, then cached.
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 60 * 60 * 24 * 7,
     remotePatterns: [
       {
         protocol: "https",

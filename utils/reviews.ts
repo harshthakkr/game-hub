@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 // Client-safe review constants and helpers. Nothing here may import Prisma —
 // these run inside client components alongside the server routes.
 
@@ -12,6 +14,8 @@ export interface VerdictMeta {
   value: Verdict;
   label: string;
   blurb: string;
+  /// A CSS color (a theme token reference). Components hand it to the
+  /// `--verdict` custom property and style with `text-(--verdict)` and friends.
   color: string;
 }
 
@@ -20,33 +24,33 @@ export interface VerdictMeta {
 export const VERDICTS: readonly VerdictMeta[] = [
   {
     value: "SKIP",
-    label: "SKIP",
+    label: "Skip",
     blurb: "Not worth your time",
-    color: "#f43f5e",
+    color: "var(--color-ov-verdict-1)",
   },
   {
     value: "TIMEPASS",
-    label: "TIMEPASS",
+    label: "Timepass",
     blurb: "Fine on a slow weekend",
-    color: "#7c8aa0",
+    color: "var(--color-ov-verdict-2)",
   },
   {
     value: "WORTH_IT",
-    label: "WORTH IT",
+    label: "Worth it",
     blurb: "Solid — no regrets",
-    color: "#38bdf8",
+    color: "var(--color-ov-verdict-3)",
   },
   {
     value: "GO_FOR_IT",
-    label: "GO FOR IT",
+    label: "Go for it",
     blurb: "Buy it, play it",
-    color: "#2dd4bf",
+    color: "var(--color-ov-verdict-4)",
   },
   {
     value: "MASTERPIECE",
-    label: "MASTERPIECE",
+    label: "Masterpiece",
     blurb: "An all-timer",
-    color: "#fbbf24",
+    color: "var(--color-ov-verdict-5)",
   },
 ] as const;
 
@@ -54,13 +58,23 @@ export const VERDICT_VALUES = VERDICTS.map((v) => v.value);
 
 const FALLBACK_VERDICT: VerdictMeta = {
   value: "WORTH_IT",
-  label: "WORTH IT",
+  label: "Worth it",
   blurb: "",
-  color: "#5b6b82",
+  color: "var(--color-ov-muted)",
 };
 
 export function verdictMeta(verdict: string): VerdictMeta {
   return VERDICTS.find((v) => v.value === verdict) ?? FALLBACK_VERDICT;
+}
+
+/// Inline style that exposes a verdict's color as `--verdict`.
+export function verdictVars(color: string) {
+  return { "--verdict": color } as CSSProperties;
+}
+
+/// 1-based rank of a verdict on the five-tier scale (Skip = 1).
+export function verdictRank(verdict: string) {
+  return VERDICTS.findIndex((v) => v.value === verdict) + 1;
 }
 
 export function isVerdict(value: unknown): value is Verdict {
@@ -80,9 +94,9 @@ export function countWords(text: string) {
 export type ReviewSort = "latest" | "liked" | "discussed";
 
 export const REVIEW_SORTS: { value: ReviewSort; label: string }[] = [
-  { value: "latest", label: "LATEST" },
-  { value: "liked", label: "MOST LIKED" },
-  { value: "discussed", label: "MOST DISCUSSED" },
+  { value: "latest", label: "Latest" },
+  { value: "liked", label: "Most liked" },
+  { value: "discussed", label: "Most discussed" },
 ];
 
 export function isReviewSort(value: unknown): value is ReviewSort {

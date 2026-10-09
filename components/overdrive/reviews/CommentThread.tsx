@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { OvIcon } from "../OvIcon";
+import { Button, CharCount, Textarea } from "@/components/ui";
 import { Avatar } from "./Avatar";
 import { LikeButton } from "./LikeButton";
 import {
@@ -59,7 +60,6 @@ function CommentBox({
   autoFocus?: boolean;
 }) {
   const [value, setValue] = useState("");
-  const [focused, setFocused] = useState(false);
   const tooLong = value.length > MAX_COMMENT_CHARS;
   const canSend = value.trim().length > 0 && !tooLong && !submitting;
 
@@ -69,12 +69,11 @@ function CommentBox({
     <div className="flex items-start gap-2.5">
       <Avatar author={viewer} size={28} />
       <div className="min-w-0 flex-1">
-        <textarea
+        <Textarea
+          size="sm"
           value={value}
           autoFocus={autoFocus}
           onChange={(e) => setValue(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && canSend) {
               onSubmit(value.trim());
@@ -83,39 +82,29 @@ function CommentBox({
           }}
           rows={2}
           placeholder={placeholder}
-          className="w-full resize-y border bg-[#070d18] px-3 py-2 text-[13px] leading-[1.7] text-ov-white outline-none transition-colors duration-150 placeholder:text-ov-muted"
-          style={{
-            borderColor: tooLong ? "#f43f5e" : focused ? "#2dd4bf" : "#16324a",
-          }}
+          aria-label={placeholder}
+          invalid={tooLong}
         />
         <div className="mt-1.5 flex items-center gap-2.5">
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant="secondary"
+            icon="send"
             disabled={!canSend}
+            loading={submitting}
             onClick={() => {
               onSubmit(value.trim());
               setValue("");
             }}
-            className="flex items-center gap-1.5 border border-ov-teal px-3 py-1.5 text-[10px] tracking-[1px] text-ov-teal transition-all duration-150 hover:bg-[rgba(45,212,191,0.1)] active:scale-95 disabled:opacity-40 disabled:active:scale-100"
           >
-            <OvIcon name="send" className="text-[11px]" />
-            {submitting ? "SENDING..." : "SEND"}
-          </button>
+            {submitting ? "Sending" : "Send"}
+          </Button>
           {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="text-[10px] tracking-[1px] text-ov-muted transition-colors duration-150 hover:text-ov-text"
-            >
-              CANCEL
-            </button>
+            <Button size="sm" variant="ghost" onClick={onCancel}>
+              Cancel
+            </Button>
           )}
-          <span
-            className="ml-auto text-[10px]"
-            style={{ color: tooLong ? "#f43f5e" : "#5b6b82" }}
-          >
-            {value.length}/{MAX_COMMENT_CHARS}
-          </span>
+          <CharCount count={value.length} max={MAX_COMMENT_CHARS} className="ml-auto" />
         </div>
       </div>
     </div>
@@ -149,14 +138,14 @@ function CommentRow({
         <Avatar author={comment.author} size={isReply ? 24 : 28} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-[13px] font-semibold text-ov-white">
+            <span className="text-ui font-semibold text-ov-white">
               {displayName(comment.author)}
             </span>
-            <span className="text-[10px] tracking-wide text-ov-muted">
+            <span className="text-micro tracking-wide text-ov-muted">
               {relativeTime(comment.createdAt)}
             </span>
           </div>
-          <p className="mt-1 whitespace-pre-wrap text-[13px] leading-[1.75] text-ov-text">
+          <p className="mt-1 whitespace-pre-wrap font-body text-ui leading-[1.75] text-ov-text">
             {comment.body}
           </p>
           <div className="mt-1.5 flex items-center gap-4">
@@ -173,19 +162,19 @@ function CommentRow({
                 onClick={() =>
                   onReplyOpen(replyingTo === comment.id ? null : comment.id)
                 }
-                className="flex items-center gap-1 text-[11px] tracking-[1px] text-ov-muted transition-colors duration-150 hover:text-ov-teal"
+                className="flex items-center gap-1 text-label text-ov-muted transition-colors duration-150 hover:text-ov-teal"
               >
-                <OvIcon name="reply" className="text-[11px]" />
-                REPLY
+                <OvIcon name="reply" className="text-label" />
+                Reply
               </button>
             )}
             {comment.isMine && (
               <button
                 type="button"
                 onClick={() => onDelete(comment.id)}
-                className="text-[11px] tracking-[1px] text-ov-muted transition-colors duration-150 hover:text-ov-rose"
+                className="text-label text-ov-muted transition-colors duration-150 hover:text-ov-rose"
               >
-                DELETE
+                Delete
               </button>
             )}
           </div>
@@ -345,8 +334,8 @@ export function CommentThread({
     // review instead of looking like the next item in the feed.
     <div className="mt-4 border-l-2 border-ov-border pl-4">
       {loading ? (
-        <div className="text-[12px] tracking-[1px] text-ov-muted">
-          LOADING COMMENTS...
+        <div className="text-xs text-ov-muted">
+          Loading comments…
         </div>
       ) : (
         <>
@@ -379,7 +368,7 @@ export function CommentThread({
               onSubmit={(body) => post(body)}
             />
           ) : (
-            <div className="text-[12px] text-ov-muted">
+            <div className="text-xs text-ov-muted">
               Sign in to join the discussion.
             </div>
           )}

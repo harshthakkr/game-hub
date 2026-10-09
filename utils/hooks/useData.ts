@@ -9,6 +9,10 @@ export function useData<T>(endpoint: string, limit: number = 20) {
 
   useEffect(() => {
     let cancelled = false;
+    // A new endpoint (e.g. a different filter) starts a fresh list.
+    setData([]);
+    setHasMore(false);
+    setLoading(true);
     const fetchData = async () => {
       try {
         const res = await axios.get(`/api/${endpoint}`);
@@ -35,7 +39,8 @@ export function useData<T>(endpoint: string, limit: number = 20) {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const res = await axios.get(`/api/${endpoint}?offset=${data.length}`);
+      const sep = endpoint.includes("?") ? "&" : "?";
+      const res = await axios.get(`/api/${endpoint}${sep}offset=${data.length}`);
       const batch = res.data as T[];
       setData((prev) => [...prev, ...batch]);
       setHasMore(batch.length >= limit);

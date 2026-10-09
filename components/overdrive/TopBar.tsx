@@ -2,398 +2,303 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
+import { useSession } from "next-auth/react";
 import { useCollection } from "@/context/CollectionContext";
-import { GameCardProps } from "@/utils/types";
-import { coverUrl, formatRating, formatYear } from "@/utils/overdrive";
+import { IconButton } from "@/components/ui";
+import { cx } from "@/utils/cx";
 import { OvIcon } from "./OvIcon";
 import { AccountChip } from "./AccountChip";
-import { SearchResultsSkeleton } from "./Skeletons";
-import Image from "next/image";
+import { useCommandPalette } from "./CommandPalette";
+import { useScreenTitleValue } from "./ScreenTitle";
+import { Avatar } from "./reviews/Avatar";
+import type { EventCardProps } from "@/utils/types";
+import { eventTiming } from "@/utils/overdrive";
+
+/// Routes shown as pushed screens on phones: a back button and the screen's
+/// title replace the logo.
+const PUSHED = /^\/(games|events|developers|genres|platforms)\/[^/]+/;
+/// Pushed screens that bring their own sticky action bar instead of tabs.
+const NO_TABS = /^\/games\/[^/]+/;
+
+export function hidesTabBar(pathname: string) {
+  return NO_TABS.test(pathname);
+}
 
 const NAV = [
-  { label: "Games", href: "/games" },
+  { label: "Discover", href: "/" },
+  { label: "Catalogue", href: "/games" },
   { label: "Events", href: "/events" },
   { label: "Platforms", href: "/platforms" },
   { label: "Genres", href: "/genres" },
   { label: "Developers", href: "/developers" },
-  { label: "Chat", href: "/ai" },
+  { label: "Concierge", href: "/ai" },
 ];
 
 function isNavActive(pathname: string, href: string) {
-  if (href === "/games") {
-    return (
-      pathname === "/games" ||
-      pathname.startsWith("/games/") ||
-      pathname === "/search"
-    );
-  }
-  if (href === "/events") {
-    return pathname === "/events" || pathname.startsWith("/events/");
-  }
+  if (href === "/") return pathname === "/";
+  if (href === "/games") return pathname.startsWith("/games") || pathname === "/search";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-type SearchBoxProps = {
-  query: string;
-  setQuery: (v: string) => void;
-  dropdownOpen: boolean;
-  setDropdownOpen: (v: boolean) => void;
-  results: GameCardProps[];
-  searching: boolean;
-  goSearch: () => void;
-  innerRef: React.RefObject<HTMLDivElement | null>;
-  inputRef?: React.RefObject<HTMLInputElement | null>;
-  className?: string;
-};
-
-function SearchBox({
-  query,
-  setQuery,
-  dropdownOpen,
-  setDropdownOpen,
-  results,
-  searching,
-  goSearch,
-  innerRef,
-  inputRef,
-  className = "",
-}: SearchBoxProps) {
+function NavLinks({ pathname, className }: { pathname: string; className?: string }) {
   return (
-    <div ref={innerRef} className={`relative ${className}`}>
-      <div
-        className={`ov-clip-md flex items-center gap-2.5 border bg-ov-panel px-3.5 py-2 transition-colors duration-200 ${
-          query ? "border-ov-teal" : "border-ov-border"
-        }`}
-      >
-        <OvIcon name="search" className="shrink-0 text-[14px] text-[#2dd4bf]" />
-        <input
-          ref={inputRef}
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setDropdownOpen(true);
-          }}
-          onFocus={() => query.trim() && setDropdownOpen(true)}
-          onKeyDown={(e) => e.key === "Enter" && goSearch()}
-          placeholder="SEARCH THE GRID"
-          className="min-w-0 flex-1 border-none bg-transparent text-[13px] tracking-wide text-[#e6edf6] outline-none placeholder:text-[#5b6b82]"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            aria-label="Clear search"
-            className="flex shrink-0 items-center border-0 bg-transparent p-0 leading-none text-[#5b6b82] transition-colors duration-150 hover:text-ov-teal active:scale-90"
-          >
-            <OvIcon name="close" className="text-[14px]" />
-          </button>
-        )}
-      </div>
-
-      {dropdownOpen && query.trim() && (
-        <div className="animate-ov-pop absolute left-0 right-0 top-[calc(100%+8px)] z-[60] max-h-[360px] origin-top overflow-y-auto border border-ov-teal bg-ov-panel shadow-[0_12px_30px_rgba(0,0,0,0.5)]">
-          {searching && <SearchResultsSkeleton />}
-          {!searching && results.length === 0 && (
-            <div className="px-3.5 py-4 text-center text-[12px] text-ov-muted">
-              No games match “{query.trim()}”.
-            </div>
-          )}
-          {!searching &&
-            results.slice(0, 6).map((game) => {
-              const cover = coverUrl(game.cover);
-              return (
-                <Link
-                  key={game.id}
-                  href={`/games/${game.slug}`}
-                  onClick={() => {
-                    setQuery("");
-                    setDropdownOpen(false);
-                  }}
-                  className="flex items-center gap-3 border-b border-ov-border px-3 py-2.5 transition-colors duration-150 hover:bg-[#0f1a2e]"
-                >
-                  {cover && (
-                    <Image
-                      src={cover}
-                      alt=""
-                      width={30}
-                      height={40}
-                      className="h-10 w-[30px] shrink-0 border border-ov-border object-cover"
-                    />
-                  )}
-                  <div className="min-w-0">
-                    <div className="truncate text-[13px] text-white">{game.name}</div>
-                    <div className="text-[10px] uppercase tracking-wide text-ov-muted">
-                      {game.genres?.[0]?.name || "Game"} · {formatYear(game.first_release_date)}
-                    </div>
-                  </div>
-                  <span className="ml-auto font-orbitron text-xs font-bold text-ov-teal">
-                    {formatRating(game.aggregated_rating)}
-                  </span>
-                </Link>
-              );
-            })}
-          {!searching && results.length > 0 && (
-            <button
-              type="button"
-              onClick={goSearch}
-              className="w-full px-3 py-2.5 text-center text-[11px] tracking-[2px] text-ov-teal transition-colors duration-150 hover:bg-[#0f1a2e]"
-            >
-              SEE ALL RESULTS ▸
-            </button>
-          )}
-        </div>
+    <nav
+      aria-label="Primary"
+      className={cx(
+        // Caps, tracked: the nav speaks in the HUD voice.
+        "flex min-w-0 overflow-x-auto text-ui font-semibold tracking-[0.08em] uppercase [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        className
       )}
+    >
+      {NAV.map((item) => {
+        const active = isNavActive(pathname, item.href);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={active ? "page" : undefined}
+            className={cx(
+              "flex shrink-0 items-center whitespace-nowrap transition-colors duration-150 hover:text-ov-white",
+              active
+                ? "text-ov-white shadow-[inset_0_-2px_0_var(--color-ov-teal)]"
+                : "text-ov-dim"
+            )}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+/// Wishlist / library shortcut: an icon and its count.
+function CountLink({
+  href,
+  label,
+  count,
+  icon,
+  active,
+}: {
+  href: string;
+  label: string;
+  count: number;
+  icon: "heart" | "library";
+  active: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-label={`${label}, ${count} ${count === 1 ? "game" : "games"}`}
+      aria-current={active ? "page" : undefined}
+      className={cx(
+        "flex h-10 items-center gap-1.5 px-2.5 transition-colors duration-150 hover:bg-ov-field hover:text-ov-white",
+        active ? "text-ov-white" : "text-ov-dim"
+      )}
+    >
+      <OvIcon name={icon} className={cx("text-lg", icon === "heart" && "text-ov-rose")} />
+      <span className="font-hud text-ui">{count}</span>
+    </Link>
+  );
+}
+
+/// Phone top bar (below lg): logo or back + title, search, account.
+function PhoneTopBar({ pathname }: { pathname: string }) {
+  const router = useRouter();
+  const palette = useCommandPalette();
+  const title = useScreenTitleValue();
+  const { data: session } = useSession();
+  const pushed = PUSHED.test(pathname);
+
+  return (
+    <div className="flex h-14 items-center gap-1 pr-1.5 pl-4 lg:hidden">
+      {pushed ? (
+        <>
+          <IconButton
+            icon="chevron-left"
+            label="Back"
+            iconClassName="text-xl"
+            size="lg"
+            className="-ml-3"
+            onClick={() => (window.history.length > 1 ? router.back() : router.push("/"))}
+          />
+          <span className="min-w-0 flex-1 truncate text-body font-semibold">{title}</span>
+        </>
+      ) : (
+        <>
+          <Link
+            href="/"
+            aria-label="GAME//HUB home"
+            className="font-orbitron text-base font-extrabold tracking-[0.06em] text-ov-teal"
+          >
+            GAME<span className="text-ov-faint">{"//"}</span>HUB
+          </Link>
+          <span className="flex-1" />
+        </>
+      )}
+      <IconButton icon="search" label="Search" onClick={palette.open} iconClassName="text-xl" size="lg" />
+      {!pushed &&
+        (session?.user ? (
+          <Link href="/wishlist" aria-label="Your saved games" className="flex size-11 items-center justify-center">
+            <span className="ov-chamfer ov-chamfer-sm">
+              <Avatar
+                author={{
+                  username: session.user.username ?? null,
+                  name: session.user.name ?? null,
+                  image: session.user.image ?? null,
+                }}
+                size={30}
+              />
+            </span>
+          </Link>
+        ) : (
+          <Link
+            href={`/register?mode=login&callbackUrl=${encodeURIComponent(pathname)}`}
+            className="flex h-11 items-center px-2.5 text-ui font-semibold tracking-[0.08em] text-ov-teal uppercase"
+          >
+            Sign in
+          </Link>
+        ))}
     </div>
+  );
+}
+
+const TABS: { label: string; href: string; icon: "grid" | "list" | "clock" | "sparkles" | "heart"; match: (p: string) => boolean }[] = [
+  { label: "Discover", href: "/", icon: "grid", match: (p) => p === "/" },
+  {
+    label: "Catalogue",
+    href: "/games",
+    icon: "list",
+    match: (p) => /^\/(games|search|platforms|genres|developers)/.test(p),
+  },
+  { label: "Events", href: "/events", icon: "clock", match: (p) => p.startsWith("/events") },
+  { label: "Concierge", href: "/ai", icon: "sparkles", match: (p) => p.startsWith("/ai") },
+  { label: "Saved", href: "/wishlist", icon: "heart", match: (p) => p === "/wishlist" || p === "/library" },
+];
+
+/// Whether any event is live right now, for the dot on the Events tab.
+function useAnyLive() {
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    axios
+      .get<EventCardProps[]>("/api/events?upcoming=1")
+      .then((res) => setLive(res.data.some((e) => eventTiming(e.start_time, e.end_time).state === "live")))
+      .catch(() => {});
+  }, []);
+  return live;
+}
+
+/// Phone navigation: five destinations one thumb-tap away. Platforms, Genres
+/// and Developers live under Catalogue; search and account sit in the top bar.
+export function BottomTabBar() {
+  const pathname = usePathname();
+  const anyLive = useAnyLive();
+  if (hidesTabBar(pathname)) return null;
+
+  return (
+    <nav
+      aria-label="Primary"
+      // Background spans the screen; the five tabs stay a compact centred
+      // group on tablets (capped columns) rather than spreading apart.
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-[repeat(5,minmax(0,112px))] justify-center border-t border-ov-border bg-ov-bg/96 pb-[env(safe-area-inset-bottom)] backdrop-blur-[14px] lg:hidden"
+    >
+      {TABS.map((tab) => {
+        const active = tab.match(pathname);
+        return (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            aria-current={active ? "page" : undefined}
+            className={cx(
+              "relative flex h-16 flex-col items-center justify-center gap-1 transition-colors",
+              active ? "text-ov-white" : "text-ov-muted hover:text-ov-text"
+            )}
+          >
+            <span
+              aria-hidden
+              className={cx("absolute -top-px right-[22%] left-[22%] h-0.5", active ? "bg-ov-teal" : "bg-transparent")}
+            />
+            <span className="relative">
+              <OvIcon name={tab.icon} className="text-xl" />
+              {tab.href === "/events" && anyLive && (
+                <span className="absolute -top-0.5 -right-1 size-2 rounded-full border-2 border-ov-bg bg-ov-rose">
+                  <span className="sr-only"> (live now)</span>
+                </span>
+              )}
+            </span>
+            <span className="text-[11px] font-medium">{tab.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
 export function TopBar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { wishlist, library } = useCollection();
-  const [query, setQuery] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [results, setResults] = useState<GameCardProps[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const desktopSearchRef = useRef<HTMLDivElement>(null);
-  const mobileSearchRef = useRef<HTMLDivElement>(null);
-  const mobileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      setSearching(false);
-      return;
-    }
-    // Flip to searching as soon as the query changes so the dropdown shows
-    // progress through the debounce window too, not just the request itself.
-    setSearching(true);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(async () => {
-      try {
-        const res = await axios.get(
-          `/api/search?q=${encodeURIComponent(query)}`
-        );
-        setResults(res.data.filter((g: GameCardProps) => g.cover));
-      } catch {
-        setResults([]);
-      } finally {
-        setSearching(false);
-      }
-    }, 300);
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [query]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const target = e.target as Node;
-      const inDesktop = desktopSearchRef.current?.contains(target);
-      const inMobile = mobileSearchRef.current?.contains(target);
-      if (!inDesktop && !inMobile) setDropdownOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  // Close the mobile search row automatically once the viewport grows into
-  // the desktop layout, so it can't be left open behind the inline search.
-  useEffect(() => {
-    const mql = window.matchMedia("(min-width: 1080px)");
-    const handler = () => setMobileSearchOpen(false);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, []);
-
-  useEffect(() => {
-    if (mobileSearchOpen) mobileInputRef.current?.focus();
-  }, [mobileSearchOpen]);
-
-  const goSearch = () => {
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-      setDropdownOpen(false);
-      setMobileSearchOpen(false);
-    }
-  };
-
-  const searchBoxCommonProps = {
-    query,
-    setQuery,
-    dropdownOpen,
-    setDropdownOpen,
-    results,
-    searching,
-    goSearch,
-  };
+  const palette = useCommandPalette();
 
   return (
-    <header
-      className="sticky top-0 z-40 backdrop-blur-[10px]"
-      style={{
-        borderBottom: "1px solid #16324a",
-        background: "rgba(5,8,16,.92)",
-      }}
-    >
-      <div className="mx-auto flex max-w-[1320px] items-center gap-3 px-4 py-3 sm:gap-4 lg:px-6 lg:py-4">
+    <header className="sticky top-0 z-40 border-b border-ov-border bg-ov-bg/88 backdrop-blur-[14px]">
+      <PhoneTopBar pathname={pathname} />
+      <div className="mx-auto hidden h-16 max-w-[1440px] items-center gap-4 px-8 lg:flex xl:gap-6">
         <Link
-          href="/games"
-          className="shrink-0 font-orbitron text-[15px] font-black transition-opacity duration-150 hover:opacity-80 sm:text-[17px]"
-          style={{ color: "#2dd4bf", letterSpacing: "1px" }}
+          href="/"
+          aria-label="GAME//HUB home"
+          className="shrink-0 font-orbitron text-lg font-extrabold tracking-[0.06em] text-ov-teal transition-opacity duration-150 hover:opacity-80"
         >
-          GAME//HUB
+          GAME<span className="text-ov-faint">{"//"}</span>HUB
         </Link>
 
-        {/* Desktop (xl+): nav, search and the wishlist/library links share one row. */}
-        <div className="hidden min-w-0 flex-1 items-center gap-4 xl:flex 2xl:gap-6">
-          <nav
-            className="flex shrink-0 gap-3.5 text-[13px] uppercase 2xl:gap-5"
-            style={{ letterSpacing: "1px" }}
-          >
-            {NAV.map((item) => {
-              const active = isNavActive(pathname, item.href);
-              const accent = active ? "#2dd4bf" : "#c3cede";
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="cursor-pointer whitespace-nowrap pb-1 transition-colors duration-150 hover:opacity-80"
-                  style={{
-                    color: accent,
-                    borderBottom: `2px solid ${active ? accent : "transparent"}`,
-                  }}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+        <NavLinks pathname={pathname} className="hidden h-16 flex-1 gap-[22px] xl:flex" />
 
-          <SearchBox
-            {...searchBoxCommonProps}
-            innerRef={desktopSearchRef}
-            className="min-w-[140px] max-w-[360px] flex-1 2xl:max-w-[440px]"
-          />
-
-          <Link
-            href="/wishlist"
-            title="Wishlist"
-            className="flex shrink-0 items-center gap-1.5 transition-transform duration-150 hover:scale-105 active:scale-95"
-            style={{ color: "#f43f5e", cursor: "pointer" }}
-          >
-            <OvIcon name="heart" className="text-[14px]" />
-            <span className="hidden text-[11px] tracking-[1px] text-ov-text 2xl:inline">
-              WISHLIST
-            </span>
-            <span className="font-orbitron text-[11px] font-bold" style={{ color: "#c3cede" }}>
-              {wishlist.length}
-            </span>
-          </Link>
-
-          <Link
-            href="/library"
-            title="Library"
-            className="flex shrink-0 items-center gap-1.5 transition-transform duration-150 hover:scale-105 active:scale-95"
-            style={{ color: "#2dd4bf", cursor: "pointer" }}
-          >
-            <OvIcon name="library" className="text-[15px]" />
-            <span className="hidden text-[11px] tracking-[1px] text-ov-text 2xl:inline">
-              LIBRARY
-            </span>
-            <span className="font-orbitron text-[11px] font-bold" style={{ color: "#c3cede" }}>
-              {library.length}
-            </span>
-          </Link>
-        </div>
-
-        {/* Below xl: a compact icon cluster replaces the inline nav/search/links. */}
-        <div className="ml-auto flex items-center gap-4 sm:gap-5 xl:hidden">
+        <div className="ml-auto flex items-center gap-1 xl:ml-0">
+          {/* Desktop: a search field that opens the palette. Smaller: an icon. */}
           <button
             type="button"
-            onClick={() => setMobileSearchOpen((v) => !v)}
-            aria-label={mobileSearchOpen ? "Close search" : "Open search"}
-            aria-expanded={mobileSearchOpen}
-            className="transition-transform duration-150 active:scale-90"
-            style={{ color: mobileSearchOpen ? "#2dd4bf" : "#c3cede" }}
+            onClick={palette.open}
+            className="mr-2 hidden h-[38px] w-60 items-center gap-2.5 border border-ov-border bg-ov-field px-3 text-sm text-ov-muted transition-colors duration-150 hover:border-ov-border-strong hover:text-ov-dim xl:flex"
           >
-            <OvIcon name={mobileSearchOpen ? "close" : "search"} className="text-[18px]" />
+            <OvIcon name="search" className="text-base" />
+            <span className="flex-1 text-left">Search the grid</span>
+            <kbd className="border border-ov-border-strong px-1.5 font-hud text-label text-ov-dim">
+              ⌘K
+            </kbd>
           </button>
-
-          <Link
+          <IconButton
+            icon="search"
+            label="Search"
+            onClick={palette.open}
+            iconClassName="text-lg"
+            className="xl:hidden"
+          />
+          <CountLink
             href="/wishlist"
-            title="Wishlist"
-            className="flex items-center gap-1 transition-transform duration-150 active:scale-90"
-            style={{ color: "#f43f5e" }}
-          >
-            <OvIcon name="heart" className="text-[16px]" />
-            <span className="font-orbitron text-[11px] font-bold" style={{ color: "#c3cede" }}>
-              {wishlist.length}
-            </span>
-          </Link>
-
-          <Link
+            label="Wishlist"
+            count={wishlist.length}
+            icon="heart"
+            active={pathname === "/wishlist"}
+          />
+          <CountLink
             href="/library"
-            title="Library"
-            className="flex items-center gap-1 transition-transform duration-150 active:scale-90"
-            style={{ color: "#2dd4bf" }}
-          >
-            <OvIcon name="library" className="text-[17px]" />
-            <span className="font-orbitron text-[11px] font-bold" style={{ color: "#c3cede" }}>
-              {library.length}
-            </span>
-          </Link>
-        </div>
-
-        {/* Account slot: pinned to the far right at every breakpoint. */}
-        <div className="shrink-0 xl:ml-auto">
-          <AccountChip />
+            label="Library"
+            count={library.length}
+            icon="library"
+            active={pathname === "/library"}
+          />
+          <div className="ml-1.5">
+            <AccountChip />
+          </div>
         </div>
       </div>
 
-      {/* Below xl: search expands into its own row, toggled by the icon above. */}
-      {mobileSearchOpen && (
-        <div className="animate-ov-fade-up xl:hidden" style={{ borderTop: "1px solid #16324a" }}>
-          <div className="mx-auto max-w-[1320px] px-4 py-3 md:px-6 lg:px-6">
-            <SearchBox
-              {...searchBoxCommonProps}
-              innerRef={mobileSearchRef}
-              inputRef={mobileInputRef}
-              className="w-full"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Below xl: the primary nav is a persistent, horizontally scrollable strip
-          instead of a hidden hamburger menu, so every section stays one tap away. */}
-      <div className="xl:hidden" style={{ borderTop: "1px solid #16324a" }}>
-        <nav
-          className="mx-auto flex max-w-[1320px] gap-5 overflow-x-auto px-4 py-2.5 text-[12px] uppercase [-ms-overflow-style:none] [scrollbar-width:none] md:gap-7 md:px-6 md:py-3 md:text-[13px] lg:px-6 [&::-webkit-scrollbar]:hidden"
-          style={{ letterSpacing: "1px" }}
-        >
-          {NAV.map((item) => {
-            const active = isNavActive(pathname, item.href);
-            const accent = active ? "#2dd4bf" : "#c3cede";
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="shrink-0 whitespace-nowrap pb-1 transition-colors duration-150 hover:opacity-80"
-                style={{
-                  color: accent,
-                  borderBottom: `2px solid ${active ? accent : "transparent"}`,
-                }}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+      {/* Below xl the primary nav gets its own scrollable row instead of a
+          hamburger, so every section stays one tap away. */}
+      <div className="hidden border-t border-ov-border lg:block xl:hidden">
+        <NavLinks pathname={pathname} className="mx-auto h-11 max-w-[1440px] gap-6 px-8" />
       </div>
     </header>
   );

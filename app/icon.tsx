@@ -30,7 +30,7 @@ export default async function Icon() {
             letterSpacing: "-2px",
           }}
         >
-          //
+          {"//"}
         </div>
       </div>
     ),

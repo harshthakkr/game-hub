@@ -19,46 +19,44 @@ const COVERS = [
   "/covers/Alan_Wake_II_cover.jpg",
 ];
 
+/// One endlessly scrolling strip (the list twice, translated by -50%).
+/// `phase` is a negative delay, so the columns start staggered, not aligned.
 function Column({
   covers,
   animation,
+  phase,
 }: {
   covers: string[];
   animation: string;
+  phase: string;
 }) {
   const loop = [...covers, ...covers];
   return (
     <div className="overflow-hidden">
-      <div className={`grid gap-4 ${animation}`}>
+      {/* Hovering a column pauses it, so a cover can actually be looked at. */}
+      <div
+        className={`grid gap-4 ${animation} hover:[animation-play-state:paused]`}
+        style={{ animationDelay: phase }}
+      >
         {loop.map((src, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={`${src}-${i}`}
-            src={src}
-            alt=""
-            className="aspect-[3/4] w-full rounded-lg object-cover"
-          />
+          <div key={`${src}-${i}`} className="ov-chamfer aspect-[3/4] overflow-hidden bg-ov-panel">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={src} alt="" className="size-full object-cover" />
+          </div>
         ))}
       </div>
     </div>
   );
 }
 
+/// Sign-in cover wall: three chamfered columns bleeding off the top and
+/// bottom edges, drifting in alternate directions.
 export function CoverMarquee() {
-  const a = COVERS.slice(0, 6);
-  const b = COVERS.slice(6, 12);
-  const c = COVERS.slice(12, 18);
   return (
-    <div className="absolute inset-0 grid grid-cols-3 gap-4 p-4">
-      <Column covers={a} animation="animate-ov-scrollup" />
-      <Column
-        covers={b}
-        animation="animate-ov-scrolldown"
-      />
-      <Column
-        covers={c}
-        animation="animate-ov-scrollup-slow"
-      />
+    <div className="absolute inset-0 grid grid-cols-3 gap-4 px-4">
+      <Column covers={COVERS.slice(0, 6)} animation="animate-ov-scrollup" phase="-12s" />
+      <Column covers={COVERS.slice(6, 12)} animation="animate-ov-scrolldown" phase="-70s" />
+      <Column covers={COVERS.slice(12, 18)} animation="animate-ov-scrollup-slow" phase="-40s" />
     </div>
   );
 }

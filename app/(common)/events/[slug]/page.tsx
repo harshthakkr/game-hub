@@ -5,135 +5,122 @@ import Image from "next/image";
 import { useSingleData } from "@/utils/hooks/useSingleData";
 import { EventPageProps } from "@/utils/types";
 import { PageContainer } from "@/components/overdrive/PageShell";
-import { OvIcon } from "@/components/overdrive/OvIcon";
+import { useScreenTitle } from "@/components/overdrive/ScreenTitle";
+import { Button, Eyebrow, SectionHeader, StatStrip, GAME_GRID } from "@/components/ui";
 import { GameGridCard } from "@/components/overdrive/GameCards";
 import { EventDetailSkeleton } from "@/components/overdrive/Skeletons";
-import {
-  eventStatus,
-  formatEventDateTime,
-  googleCalendarUrl,
-  isUpcoming,
-} from "@/utils/overdrive";
+import { eventTiming, formatEventDateTime, googleCalendarUrl, igdbImage } from "@/utils/overdrive";
+import { cx } from "@/utils/cx";
 
-export default function Event() {
+export default function EventPage() {
   const { data, loading } = useSingleData<EventPageProps>("events");
+  useScreenTitle(data?.name);
 
   if (loading) return <EventDetailSkeleton />;
-  if (!data) {
+  if (!data?.name) {
     return (
-      <div className="px-8 py-20 text-center text-ov-muted">Event not found.</div>
+      <PageContainer className="items-center text-center">
+        <p className="text-lg font-semibold">We couldn&apos;t find that event</p>
+        <Button asChild variant="secondary">
+          <Link href="/events">All events</Link>
+        </Button>
+      </PageContainer>
     );
   }
 
-  const logo = data.event_logo?.url
-    ? `https:${data.event_logo.url.replace("t_thumb", "t_1080p")}`
-    : null;
-  const status = eventStatus(data.start_time, data.end_time);
-  const games = (data.games || []).filter((g) => g.cover).slice(0, 8);
-  const upcoming = isUpcoming(data.start_time);
+  const logo = data.event_logo?.url ? igdbImage(data.event_logo.url, "t_1080p") : null;
+  const timing = eventTiming(data.start_time, data.end_time);
+  const games = (data.games || []).filter((g) => g.cover).slice(0, 10);
+  // Past events can't be reminded about, so the calendar link is upcoming-only.
   const calendarUrl =
-    upcoming && data.start_time
+    timing.state === "upcoming" && data.start_time
       ? googleCalendarUrl({
-          title: data.name || "Gaming event",
+          title: data.name,
           start: data.start_time,
           end: data.end_time,
-          details: [data.description, data.live_stream_url]
-            .filter(Boolean)
-            .join("\n\n"),
+          details: [data.description, data.live_stream_url].filter(Boolean).join("\n\n"),
           location: data.live_stream_url,
         })
       : null;
 
   return (
-    <PageContainer>
-      <Link
-        href="/events"
-        className="mb-5 inline-block border border-ov-teal px-3.5 py-2 text-xs tracking-wide text-ov-teal transition-colors duration-150 hover:bg-ov-teal hover:text-ov-bg active:scale-95"
-      >
-        ◂ BACK TO EVENTS
-      </Link>
+    <PageContainer rhythm="sections">
+      {/* Header block: the back link stays close to the event it leaves. */}
+      <div className="flex flex-col gap-6 lg:gap-8">
+        <span className="hidden lg:contents">
+          <Button asChild size="sm" variant="ghost" icon="chevron-left" className="w-max">
+            <Link href="/events">All events</Link>
+          </Button>
+        </span>
 
-      <div className="flex flex-wrap gap-7">
-        <div className="max-w-[440px] min-w-[280px] flex-1">
-          <div className="ov-clip-hero relative h-[240px] overflow-hidden border border-ov-border bg-gradient-to-br from-sky-700 to-slate-950">
-            {logo && (
-              <Image src={logo} alt="" fill className="object-cover" sizes="440px" />
-            )}
-            <span className="absolute left-3 top-3 bg-ov-teal px-2 py-0.5 text-[10px] tracking-wide text-ov-bg">
-              EVENT
+        <div className="flex flex-wrap items-start gap-10">
+          <div className="ov-chamfer relative aspect-video max-w-[600px] flex-[1_1_420px] overflow-hidden bg-ov-raised">
+            {logo && <Image src={logo} alt="" fill sizes="(min-width: 800px) 600px, 100vw" className="object-cover" />}
+          </div>
+
+          <div className="flex min-w-0 flex-[1_1_420px] flex-col gap-5">
+            <span
+              className={cx(
+                "flex items-center gap-2 text-ui font-semibold",
+                timing.state === "live" ? "text-ov-rose-soft" : timing.state === "past" ? "text-ov-dim" : "text-ov-teal"
+              )}
+            >
+              {timing.state === "live" && (
+                <span aria-hidden className="size-[7px] animate-ov-pulse rounded-full bg-ov-rose" />
+              )}
+              {timing.badge}
             </span>
-          </div>
-        </div>
-
-        <div className="min-w-[280px] flex-1">
-          <h1 className="font-orbitron text-[30px] font-black tracking-wide text-white">
-            {data.name}
-          </h1>
-          <div className="mt-[18px] flex flex-wrap gap-5 text-[13px]">
-            <div>
-              <div className="tracking-wide text-ov-dim">START</div>
-              <div className="mt-1 text-ov-teal">
-                {formatEventDateTime(data.start_time)}
+            <h1 className="text-[32px] leading-[1.08] font-semibold tracking-[-0.02em] text-balance md:text-page">
+              {data.name}
+            </h1>
+            <StatStrip>
+              <div className="flex flex-col gap-1.5">
+                <Eyebrow>STARTS</Eyebrow>
+                <span className="text-body font-medium">{formatEventDateTime(data.start_time)}</span>
               </div>
-            </div>
-            <div>
-              <div className="tracking-wide text-ov-dim">END</div>
-              <div className="mt-1 text-ov-teal">
-                {formatEventDateTime(data.end_time)}
+              <div className="flex flex-col gap-1.5">
+                <Eyebrow>ENDS</Eyebrow>
+                <span className="text-body font-medium">{formatEventDateTime(data.end_time)}</span>
               </div>
-            </div>
-            <div>
-              <div className="tracking-wide text-ov-dim">STATUS</div>
-              <div className="mt-1 text-ov-rose">{status.label}</div>
-            </div>
+              <div className="flex flex-col gap-1.5">
+                <Eyebrow>{timing.countdownLabel}</Eyebrow>
+                <span className="font-orbitron text-lg font-bold text-ov-teal">{timing.countdown}</span>
+              </div>
+            </StatStrip>
+            {data.description && (
+              <p className="max-w-[620px] font-body text-base leading-relaxed text-pretty text-ov-text">{data.description}</p>
+            )}
+            {(data.live_stream_url || calendarUrl) && (
+              <div className="flex flex-wrap gap-3">
+                {data.live_stream_url && (
+                  <Button asChild size="lg" variant={timing.state === "live" ? "live" : "secondary"} icon="play">
+                    <a href={data.live_stream_url} target="_blank" rel="noreferrer">
+                      {timing.state === "past" ? "Watch replay" : timing.state === "live" ? "Watch live" : "Stream page"}
+                    </a>
+                  </Button>
+                )}
+                {calendarUrl && (
+                  <Button asChild size="lg" variant="secondary" icon="calendar-add">
+                    <a href={calendarUrl} target="_blank" rel="noreferrer">
+                      Add to calendar
+                    </a>
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
-          {data.description && (
-            <p className="mt-5 max-w-[520px] text-[15px] leading-relaxed text-ov-text">
-              {data.description}
-            </p>
-          )}
-          {(data.live_stream_url || calendarUrl) && (
-            <div className="mt-[22px] flex flex-wrap gap-3">
-              {/* Only rendered when there is somewhere to actually send the viewer. */}
-              {data.live_stream_url && (
-                <a
-                  href={data.live_stream_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="ov-clip-sm flex items-center bg-[#f43f5e] px-5 py-3 font-orbitron text-xs font-bold tracking-[1px] text-[#05070e] transition-transform duration-150 hover:brightness-110 active:scale-95"
-                >
-                  <OvIcon name="play" className="mr-1.5 text-[12px]" />
-                  WATCH STREAM
-                </a>
-              )}
-              {/* Past events cannot be reminded about, so this is upcoming-only. */}
-              {calendarUrl && (
-                <a
-                  href={calendarUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="ov-clip-sm flex items-center border border-[#2dd4bf] bg-[rgba(45,212,191,0.08)] px-5 py-3 text-[13px] tracking-[1px] text-[#2dd4bf] transition-colors duration-150 hover:bg-[rgba(45,212,191,0.18)] active:scale-95"
-                >
-                  <OvIcon name="reminder" className="mr-1.5 text-[13px]" />
-                  ADD TO CALENDAR
-                </a>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
       {games.length > 0 && (
-        <>
-          <div className="mb-4 mt-10 font-orbitron text-[13px] font-bold tracking-[2px] text-ov-teal">
-            FEATURED GAMES
-          </div>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-[18px]">
+        <section className="flex flex-col gap-4 lg:gap-5" aria-label="Featured games">
+          <SectionHeader title="Featured games" />
+          <div className={GAME_GRID}>
             {games.map((game) => (
               <GameGridCard key={game.id || game.slug} game={game} />
             ))}
           </div>
-        </>
+        </section>
       )}
     </PageContainer>
   );

@@ -1,27 +1,15 @@
-import { verdictMeta } from "@/utils/reviews";
+import { verdictMeta, verdictVars } from "@/utils/reviews";
+import { VerdictPips } from "./VerdictPips";
 
-export function VerdictBadge({
-  verdict,
-  size = "md",
-}: {
-  verdict: string;
-  size?: "sm" | "md";
-}) {
+/// A reviewer's verdict: the rank meter and the label in the tier's colour.
+export function VerdictBadge({ verdict }: { verdict: string }) {
   const meta = verdictMeta(verdict);
-  const compact = size === "sm";
-
   return (
     <span
-      className={`ov-clip-sm inline-block whitespace-nowrap font-orbitron font-bold ${
-        compact ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-1 text-[10px]"
-      }`}
-      style={{
-        color: meta.color,
-        border: `1px solid ${meta.color}`,
-        background: `${meta.color}14`,
-        letterSpacing: "1.5px",
-      }}
+      style={verdictVars(meta.color)}
+      className="inline-flex items-center gap-1.5 border border-ov-border-strong px-2.5 py-1 text-ui font-semibold whitespace-nowrap text-(--verdict)"
     >
+      <VerdictPips verdict={verdict} />
       {meta.label}
     </span>
   );

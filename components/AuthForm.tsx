@@ -5,16 +5,14 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import axios from "axios";
 import { USERNAME_HINT, USERNAME_PATTERN } from "@/utils/reviews";
+import { Button, FieldLabel, Input, PasswordInput } from "@/components/ui";
 
 export type AuthMode = "signup" | "login";
-
-const fieldClass =
-  "w-full border bg-ov-panel px-4 py-3 text-[13px] text-ov-white outline-none placeholder:text-ov-muted transition-colors duration-150 focus:border-ov-teal";
 
 export function AuthForm({
   mode,
   onToggleMode,
-  callbackUrl = "/games",
+  callbackUrl = "/",
 }: {
   mode: AuthMode;
   onToggleMode: () => void;
@@ -84,69 +82,52 @@ export function AuthForm({
     <form onSubmit={submit} noValidate>
       {isSignup && (
         <>
-          <label
-            htmlFor="auth-username"
-            className="mb-2 block text-[11px] tracking-wide text-ov-dim"
-          >
-            USERNAME
-          </label>
-          <input
+          <FieldLabel htmlFor="auth-username">Username</FieldLabel>
+          <Input
             id="auth-username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="neon_drifter"
             autoComplete="username"
-            className={`${fieldClass} mb-1 border-ov-border`}
+            className="mb-1"
           />
-          <p className="mb-3.5 text-[10px] text-ov-muted">{USERNAME_HINT}</p>
+          <p className="mb-3.5 text-label text-ov-muted">{USERNAME_HINT}</p>
         </>
       )}
 
-      <label
-        htmlFor="auth-email"
-        className="mb-2 block text-[11px] tracking-wide text-ov-dim"
-      >
-        EMAIL
-      </label>
-      <input
+      <FieldLabel htmlFor="auth-email">Email</FieldLabel>
+      <Input
         id="auth-email"
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="player@grid.io"
         autoComplete="email"
-        className={`${fieldClass} mb-3.5 border-ov-border`}
+        className="mb-3.5"
       />
 
-      <label
-        htmlFor="auth-password"
-        className="mb-2 block text-[11px] tracking-wide text-ov-dim"
-      >
-        PASSWORD
-      </label>
-      <input
+      <FieldLabel htmlFor="auth-password">Password</FieldLabel>
+      <PasswordInput
         id="auth-password"
-        type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        placeholder="••••••••••"
+        placeholder={isSignup ? "At least 8 characters" : "••••••••"}
         autoComplete={isSignup ? "new-password" : "current-password"}
-        className={`${fieldClass} mb-5 border-ov-border`}
+        className="mb-5"
       />
 
       {error && (
-        <div className="animate-ov-fade-up mb-4 border border-ov-rose bg-[rgba(244,63,94,0.08)] px-3.5 py-2.5 text-[12px] text-ov-rose">
+        <div
+          role="alert"
+          className="animate-ov-fade-up mb-4 border border-ov-rose bg-ov-rose/8 px-3.5 py-2.5 text-xs text-ov-rose"
+        >
           {error}
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="ov-clip-md w-full border border-ov-teal bg-[rgba(45,212,191,0.06)] px-4 py-3.5 font-orbitron text-[13px] font-bold tracking-[2px] text-ov-teal transition-all duration-150 hover:bg-[rgba(45,212,191,0.14)] active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
-      >
-        {busy ? "..." : isSignup ? "CREATE ACCOUNT" : "LOG IN"}
-      </button>
+      <Button type="submit" variant="primary" size="lg" loading={busy} className="w-full">
+        {isSignup ? "Create account" : "Sign in"}
+      </Button>
 
       <div className="mt-5 text-center text-xs text-ov-muted">
         {isSignup ? "Already have an account? " : "Need an account? "}
@@ -158,7 +139,7 @@ export function AuthForm({
           }}
           className="text-ov-teal transition-colors duration-150 hover:text-ov-white hover:underline"
         >
-          {isSignup ? "Log in" : "Sign up"}
+          {isSignup ? "Sign in" : "Create one"}
         </button>
       </div>
     </form>

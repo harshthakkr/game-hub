@@ -1,16 +1,13 @@
-import axios from "axios";
-import { getIgdbHeaders } from "@/lib/igdb";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { igdb } from "@/lib/igdb";
+import { publicJson } from "@/lib/http";
 
 export const GET = async (request: NextRequest) => {
-  const offset = request.nextUrl.searchParams?.get("offset");
-  const platformRes = await axios.post(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/platforms`,
-    `fields name,slug,platform_family.name; sort generation desc; limit 40; offset ${offset || 0};`,
-    {
-      headers: await getIgdbHeaders(),
-    }
+  const offset = Math.max(0, Number(request.nextUrl.searchParams.get("offset")) || 0);
+  const platforms = await igdb(
+    "/platforms",
+    `fields name,slug,platform_family.name; sort generation desc; limit 40; offset ${offset};`,
+    { revalidate: 86400 }
   );
-  const res = platformRes.data;
-  return NextResponse.json(res);
+  return publicJson(platforms, 86400);
 };

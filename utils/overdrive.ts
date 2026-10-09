@@ -145,15 +145,6 @@ export function formatEventDateTime(timestamp?: number) {
   });
 }
 
-export function isThisCalendarMonth(timestamp?: number) {
-  if (!timestamp) return false;
-  const d = new Date(timestamp * 1000);
-  const now = new Date();
-  return (
-    d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
-  );
-}
-
 export function isUpcoming(timestamp?: number) {
   if (!timestamp) return false;
   return timestamp * 1000 > Date.now();
@@ -188,4 +179,59 @@ export function googleCalendarUrl({
   if (location) params.set("location", location);
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+/// IGDB image at a given size preset (t_1080p, t_screenshot_big, ...).
+export function igdbImage(url: string, size: string) {
+  return `https:${url.replace("t_thumb", size)}`;
+}
+
+type Art = { url: string; width?: number; height?: number };
+
+/// Best landscape image for heroes and banners, searching the lists in order
+/// (e.g. artworks, then screenshots): first the largest image shaped like key
+/// art (roughly 4:3 to 21:9) in any list, else any landscape image. Ultra-wide
+/// strips (logo banners) crop to almost nothing in a hero, and portrait box
+/// art upscaled into one looks blurry, so callers fall back to a designed
+/// treatment rather than the cover when this returns null.
+export function landscapeArt(...lists: (Art[] | undefined)[]) {
+  const ratio = (i: Art) => (i.width && i.height ? i.width / i.height : 16 / 9);
+  const largest = (items: Art[]) => [...items].sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0];
+  for (const list of lists) {
+    const keyArt = (list ?? []).filter((i) => ratio(i) >= 1.3 && ratio(i) <= 2.4);
+    if (keyArt.length) return igdbImage(largest(keyArt).url, "t_1080p");
+  }
+  const wide = lists.flatMap((l) => l ?? []).filter((i) => ratio(i) >= 1);
+  return wide.length ? igdbImage(largest(wide).url, "t_1080p") : null;
+}
+
+function duration(seconds: number) {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.max(1, Math.floor((seconds % 3600) / 60));
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+/// Event state for badges and countdowns, in sentence case.
+export function eventTiming(start?: number, end?: number, now = Date.now() / 1000) {
+  if (!start) {
+    return { state: "tba" as const, badge: "Date TBA", countdownLabel: "STARTS", countdown: "TBA" };
+  }
+  const finish = end && end > start ? end : start + 3600;
+  if (now >= start && now <= finish) {
+    return { state: "live" as const, badge: "Live now", countdownLabel: "ENDS IN", countdown: duration(finish - now) };
+  }
+  if (now > finish) {
+    return { state: "past" as const, badge: "Ended", countdownLabel: "ENDED", countdown: formatEventDate(finish) };
+  }
+  const days = Math.floor((start - now) / 86400);
+  const sameDay = new Date(start * 1000).toDateString() === new Date(now * 1000).toDateString();
+  return {
+    state: "upcoming" as const,
+    badge: sameDay ? "Today" : days <= 1 ? "Tomorrow" : `In ${days} days`,
+    countdownLabel: "STARTS IN",
+    countdown: duration(start - now),
+  };
 }

@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { OvIcon } from "./OvIcon";
+import { OvIcon, type IconName } from "./OvIcon";
+import { Button } from "@/components/ui";
 
+/// Empty collection or page: a short title, why it's empty, and one way out.
 export function EmptyState({
   icon,
   title,
   description,
   actionLabel,
   actionHref,
-  iconClassName = "text-[#f43f5e]",
+  iconClassName = "text-ov-dim",
 }: {
-  icon: string;
+  icon?: IconName;
   title: string;
   description: string;
   actionLabel: string;
@@ -19,37 +21,28 @@ export function EmptyState({
   iconClassName?: string;
 }) {
   return (
-    <div className="border border-dashed border-ov-border px-8 py-[60px] text-center">
-      <div className={`mx-auto mb-3 flex justify-center ${iconClassName}`}>
-        <OvIcon name={icon} className="text-[40px]" />
-      </div>
-      <div className="font-orbitron text-base font-bold tracking-wide text-ov-text">
-        {title}
-      </div>
-      <p className="mt-2.5 text-[13px] text-ov-muted">{description}</p>
-      <Link
-        href={actionHref}
-        className="mt-5 inline-block bg-ov-teal px-5 py-2.5 font-orbitron text-[11px] font-bold tracking-[2px] text-ov-bg transition-transform duration-150 hover:brightness-110 active:scale-95"
-      >
-        {actionLabel}
-      </Link>
+    <div className="flex flex-col items-center gap-3 border border-dashed border-ov-border-strong px-6 py-[72px] text-center">
+      {icon && <OvIcon name={icon} className={`mb-1 text-3xl ${iconClassName}`} />}
+      <p className="text-lg font-semibold text-ov-white">{title}</p>
+      <p className="max-w-md text-sm text-ov-dim">{description}</p>
+      <Button asChild variant="primary" className="mt-2">
+        <Link href={actionHref}>{actionLabel}</Link>
+      </Button>
     </div>
   );
 }
 
 export function NoResults({
-  title = "NO RESULTS",
+  title = "No results",
   description = "Nothing matches these filters right now. Try a different combination.",
 }: {
   title?: string;
   description?: string;
 }) {
   return (
-    <div className="border border-dashed border-ov-border px-8 py-[60px] text-center text-ov-muted">
-      <div className="font-orbitron text-base font-bold tracking-[2px] text-ov-text">
-        {title}
-      </div>
-      <p className="mt-3 text-[13px]">{description}</p>
+    <div className="flex flex-col items-center gap-2 border border-dashed border-ov-border-strong px-6 py-14 text-center">
+      <p className="text-lg font-semibold text-ov-white">{title}</p>
+      <p className="max-w-md text-sm text-ov-dim">{description}</p>
     </div>
   );
 }
@@ -62,22 +55,16 @@ export function LoadMoreButton({
   loading?: boolean;
 }) {
   return (
-    <div className="mt-8 flex justify-center">
-      <button
-        type="button"
+    // No margin: the page's own block gap places it under the grid.
+    <div className="flex justify-center">
+      <Button
+        variant="secondary"
         onClick={onClick}
-        disabled={loading}
-        className="flex items-center gap-2 border border-ov-teal bg-[rgba(45,212,191,0.06)] px-7 py-3 font-orbitron text-[11px] font-bold tracking-[2px] text-ov-teal transition-all duration-150 hover:bg-[rgba(45,212,191,0.14)] active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+        loading={loading}
+        iconRight={loading ? undefined : "chevron-down"}
       >
-        {loading ? (
-          <>
-            <span className="inline-block h-3 w-3 animate-ov-think border-2 border-ov-teal border-t-transparent" />
-            LOADING
-          </>
-        ) : (
-          "LOAD MORE ▾"
-        )}
-      </button>
+        {loading ? "Loading" : "Load more"}
+      </Button>
     </div>
   );
 }
