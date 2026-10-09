@@ -261,7 +261,25 @@ function TileGridSkeleton() {
   );
 }
 
-export const PlatformsSkeleton = TileGridSkeleton;
+/// Platforms: heading, the four featured tiles, then a maker section.
+export function PlatformsSkeleton() {
+  return (
+    <Frame>
+      <HeadingBones />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Bone key={i} className="ov-chamfer h-[200px] lg:h-[240px]" />
+        ))}
+      </div>
+      <Bone className="h-7 w-40" />
+      <div className={tileGrid(240, 2)}>
+        {Array.from({ length: 8 }, (_, i) => (
+          <Bone key={i} className="ov-chamfer h-[104px] sm:h-[66px] lg:h-[74px]" />
+        ))}
+      </div>
+    </Frame>
+  );
+}
 /// Same grid and tile size as the genres page, so tiles land where the bones were.
 export function GenresSkeleton() {
   return (
