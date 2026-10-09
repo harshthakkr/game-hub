@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
@@ -15,6 +15,7 @@ import { useScreenTitleValue } from "./ScreenTitle";
 import { Avatar } from "./reviews/Avatar";
 import type { EventCardProps } from "@/utils/types";
 import { eventTiming } from "@/utils/overdrive";
+import { usePagePath } from "@/utils/hooks/usePagePath";
 
 /// Routes shown as pushed screens on phones: a back button and the screen's
 /// title replace the logo.
@@ -193,7 +194,7 @@ function useAnyLive() {
 /// Phone navigation: five destinations one thumb-tap away. Platforms, Genres
 /// and Developers live under Catalogue; search and account sit in the top bar.
 export function BottomTabBar() {
-  const pathname = usePathname();
+  const pathname = usePagePath();
   const anyLive = useAnyLive();
   if (hidesTabBar(pathname)) return null;
 
@@ -237,7 +238,7 @@ export function BottomTabBar() {
 }
 
 export function TopBar() {
-  const pathname = usePathname();
+  const pathname = usePagePath();
   const { wishlist, library } = useCollection();
   const palette = useCommandPalette();
 

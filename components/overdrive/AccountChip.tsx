@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Avatar } from "./reviews/Avatar";
 import { displayName } from "@/utils/reviews";
 import { Button, Menu, MenuHeader, MenuItem, MenuSeparator } from "@/components/ui";
+import { usePagePath } from "@/utils/hooks/usePagePath";
 
 /// Top-bar account slot: "Sign in" when signed out; when signed in, the
 /// avatar opens a menu with who's signed in and sign-out. (Wishlist and
@@ -13,7 +13,7 @@ import { Button, Menu, MenuHeader, MenuItem, MenuSeparator } from "@/components/
 /// already link to them.)
 export function AccountChip() {
   const { data: session, status } = useSession();
-  const pathname = usePathname();
+  const pathname = usePagePath();
 
   if (status === "loading") {
     return <div className="size-[34px] animate-ov-pulse bg-ov-raised" />;
