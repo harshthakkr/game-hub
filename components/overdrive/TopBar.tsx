@@ -244,7 +244,7 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-40 border-b border-ov-border bg-ov-bg/88 backdrop-blur-[14px]">
       <PhoneTopBar pathname={pathname} />
-      <div className="mx-auto hidden h-16 max-w-[1440px] items-center gap-4 px-8 lg:flex xl:gap-6">
+      <div className="mx-auto hidden h-16 max-w-[1440px] items-center gap-4 px-8 lg:flex 2xl:gap-6">
         <Link
           href="/"
           aria-label="GAME//HUB home"
@@ -253,14 +253,17 @@ export function TopBar() {
           GAME<span className="text-ov-faint">{"//"}</span>HUB
         </Link>
 
-        <NavLinks pathname={pathname} className="hidden h-16 flex-1 gap-[22px] xl:flex" />
+        {/* Single-row header from xl. Until 2xl the caps nav needs the room, so
+            items sit closer and search collapses to an icon (same palette, ⌘K
+            still works); the full search field returns at 2xl. */}
+        <NavLinks pathname={pathname} className="hidden h-16 flex-1 gap-4 xl:flex 2xl:gap-[22px]" />
 
         <div className="ml-auto flex items-center gap-1 xl:ml-0">
-          {/* Desktop: a search field that opens the palette. Smaller: an icon. */}
+          {/* Wide desktop: a search field that opens the palette. Smaller: an icon. */}
           <button
             type="button"
             onClick={palette.open}
-            className="mr-2 hidden h-[38px] w-60 items-center gap-2.5 border border-ov-border bg-ov-field px-3 text-sm text-ov-muted transition-colors duration-150 hover:border-ov-border-strong hover:text-ov-dim xl:flex"
+            className="mr-2 hidden h-[38px] w-60 items-center gap-2.5 border border-ov-border bg-ov-field px-3 text-sm text-ov-muted transition-colors duration-150 hover:border-ov-border-strong hover:text-ov-dim 2xl:flex"
           >
             <OvIcon name="search" className="text-base" />
             <span className="flex-1 text-left">Search the grid</span>
@@ -273,7 +276,7 @@ export function TopBar() {
             label="Search"
             onClick={palette.open}
             iconClassName="text-lg"
-            className="xl:hidden"
+            className="2xl:hidden"
           />
           <CountLink
             href="/wishlist"

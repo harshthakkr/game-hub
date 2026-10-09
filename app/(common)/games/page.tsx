@@ -296,7 +296,12 @@ function Catalogue() {
       {/* Desktop: every filter visible in a sticky rail. */}
       <aside
         aria-label="Filters"
-        className="sticky top-[calc(var(--ov-topbar-h)+32px)] hidden flex-col gap-7 xl:flex"
+        // Pinned for good: capped to the space between its sticky top and the
+        // page's bottom padding (32 above, 96 below), so it always fits and
+        // the end of the results can never push it up. Longer than that (short
+        // laptop screens), it scrolls inside itself. The 4px inset keeps focus
+        // rings from being clipped by the scroll box.
+        className="sticky top-[calc(var(--ov-topbar-h)+32px)] -mx-1 hidden max-h-[calc(100dvh-var(--ov-topbar-h)-32px-96px)] flex-col gap-7 overflow-y-auto overscroll-contain px-1 py-1 [scrollbar-color:var(--color-ov-border-strong)_transparent] [scrollbar-width:thin] xl:flex"
       >
         <div className="flex flex-col gap-2">
           <Eyebrow tick>GENRE</Eyebrow>
