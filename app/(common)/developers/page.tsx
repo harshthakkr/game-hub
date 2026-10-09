@@ -75,7 +75,7 @@ function LeaderRow({ studio }: { studio: RankedStudio }) {
     <li>
       <Link
         href={`/developers/${studio.slug}`}
-        className="grid grid-cols-[32px_minmax(0,1fr)] items-center gap-x-3 border-b border-ov-raised px-2 py-3 transition-colors duration-150 hover:bg-ov-panel sm:grid-cols-[40px_minmax(0,1fr)_auto] lg:grid-cols-[48px_minmax(0,1.1fr)_minmax(0,1.4fr)_auto] lg:gap-x-5"
+        className="grid grid-cols-[32px_minmax(0,1fr)] items-center gap-x-3 border-b border-ov-raised px-2 py-3 transition-colors duration-150 hover:bg-ov-panel sm:grid-cols-[40px_minmax(0,1fr)_116px] lg:grid-cols-[48px_minmax(0,1.1fr)_minmax(0,1.4fr)_116px] lg:gap-x-5"
       >
         <span className="font-orbitron text-sm font-bold text-ov-muted lg:text-base">
           <span className="sr-only">Rank </span>
@@ -91,7 +91,9 @@ function LeaderRow({ studio }: { studio: RankedStudio }) {
           <span className="text-ov-muted">Known for </span>
           {knownFor(studio, 2)}
         </span>
-        <span aria-hidden className="hidden gap-1 sm:flex">
+        {/* Fixed-width column (3 × 36px + gaps), right-aligned: each row is its
+            own grid, so a row with fewer covers mustn't shift the columns. */}
+        <span aria-hidden className="hidden justify-end gap-1 sm:flex">
           {studio.games.slice(0, 3).map((g) =>
             g.cover ? (
               <span key={g.slug} className="relative h-12 w-9 overflow-hidden bg-ov-raised">
