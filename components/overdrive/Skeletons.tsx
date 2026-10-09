@@ -262,7 +262,19 @@ function TileGridSkeleton() {
 }
 
 export const PlatformsSkeleton = TileGridSkeleton;
-export const GenresSkeleton = TileGridSkeleton;
+/// Same grid and tile size as the genres page, so tiles land where the bones were.
+export function GenresSkeleton() {
+  return (
+    <Frame>
+      <HeadingBones />
+      <div className={tileGrid(260, 2)}>
+        {Array.from({ length: 12 }, (_, i) => (
+          <Bone key={i} className="ov-chamfer h-[148px] lg:h-[168px]" />
+        ))}
+      </div>
+    </Frame>
+  );
+}
 export const DevelopersSkeleton = TileGridSkeleton;
 
 export function ReviewListSkeleton() {

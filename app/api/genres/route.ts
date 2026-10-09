@@ -1,7 +1,4 @@
-import { igdb } from "@/lib/igdb";
+import { getGenreTiles } from "@/lib/genres";
 import { publicJson } from "@/lib/http";
 
-export const GET = async () => {
-  const genres = await igdb("/genres", "fields name,slug; limit 40;", { revalidate: 86400 });
-  return publicJson(genres, 86400);
-};
+export const GET = async () => publicJson(await getGenreTiles(), 86400);

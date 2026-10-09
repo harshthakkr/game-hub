@@ -36,29 +36,6 @@ export function platformAbbr(name: string) {
   return map[name] || abbrev(name);
 }
 
-const genreGradients: Record<string, string> = {
-  "Role-playing (RPG)": "from-violet-600 to-violet-950",
-  Shooter: "from-red-600 to-red-950",
-  Fighting: "from-rose-500 to-rose-950",
-  Adventure: "from-teal-600 to-teal-950",
-  Strategy: "from-sky-500 to-sky-950",
-  Racing: "from-amber-500 to-amber-900",
-  Horror: "from-slate-500 to-slate-800",
-  Platform: "from-purple-500 to-purple-950",
-  Simulator: "from-cyan-400 to-cyan-950",
-  Sport: "from-lime-500 to-lime-900",
-  Indie: "from-pink-500 to-pink-950",
-  Puzzle: "from-teal-500 to-teal-950",
-  MOBA: "from-orange-500 to-orange-900",
-  Roguelite: "from-violet-500 to-violet-950",
-  "Card & Board": "from-red-500 to-red-950",
-  "Visual Novel": "from-fuchsia-500 to-fuchsia-950",
-};
-
-export function genreGradient(name: string) {
-  return genreGradients[name] || "from-teal-600 to-slate-900";
-}
-
 export function formatYear(date?: number) {
   if (!date) return "";
   return new Date(date * 1000).getFullYear().toString();
