@@ -220,6 +220,6 @@ Game data from [IGDB](https://www.igdb.com/). Prices are read from the public Pl
 
 Designed and built by **Harsh Thakkar**
 
-[LinkedIn](https://www.linkedin.com/in/harshthakkr/) &nbsp;·&nbsp; [X / Twitter](https://x.com/harshthkkr) &nbsp;·&nbsp; [GitHub](https://github.com/harshthakkr) &nbsp;·&nbsp; [iharshthkkr@gmail.com](mailto:iharshthkkr@gmail.com)
+<a href="https://www.linkedin.com/in/harshthakkr/"><img src="docs/icons/linkedin.svg" alt="LinkedIn" width="22" height="22" /></a> &nbsp;&nbsp;&nbsp; <a href="https://x.com/harshthkkr"><img src="docs/icons/x.svg" alt="X" width="22" height="22" /></a> &nbsp;&nbsp;&nbsp; <a href="https://github.com/harshthakkr"><img src="docs/icons/github.svg" alt="GitHub" width="22" height="22" /></a> &nbsp;&nbsp;&nbsp; <a href="mailto:iharshthkkr@gmail.com"><img src="docs/icons/mail.svg" alt="Email" width="22" height="22" /></a>
 
 </div>
