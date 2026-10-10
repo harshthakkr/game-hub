@@ -26,6 +26,10 @@ keep your library, catch every showcase, and track prices in rupees.
 
 <br />
 
+https://github.com/user-attachments/assets/58264804-2348-44cb-a197-5e7ff02946b9
+
+<br />
+
 ## Features
 
 ### Discover
