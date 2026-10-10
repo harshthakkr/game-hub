@@ -7,10 +7,10 @@
 
 <h1><img src="docs/logo.png" alt="GAME//HUB" width="380" /></h1>
 
-**Every game, every price drop, every showcase.**
+**Where players hang out.**
 
-Discover games, track PlayStation Store and Steam prices in rupees,<br />
-follow live showcases and keep your library, all in one HUD-styled app.
+Rate games from Skip to Masterpiece, review them and talk about them,<br />
+keep your library, catch every showcase, and track prices in rupees.
 
 <br />
 
