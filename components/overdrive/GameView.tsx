@@ -468,7 +468,7 @@ export function GameView({ data, slug }: { data: GamePageProps; slug: string }) 
         <div
           className={cx(
             // Full-width background; the buttons stay a centred group on tablets.
-            "ov-bottom-bleed fixed inset-x-0 bottom-0 z-40 grid justify-center gap-2 border-t border-ov-border bg-ov-bg/96 px-4 pt-2.5 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-[14px] lg:hidden",
+            "fixed inset-x-0 bottom-0 z-40 grid justify-center gap-2 border-t border-ov-border bg-ov-bg/96 px-4 pt-2.5 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-[14px] lg:hidden",
             trailer ? "grid-cols-[repeat(3,minmax(0,200px))]" : "grid-cols-[repeat(2,minmax(0,240px))]"
           )}
         >

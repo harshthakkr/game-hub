@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { OvIcon, type IconName } from "./OvIcon";
 import { Button } from "@/components/ui";
+import { observerRoot } from "@/utils/scroller";
 
 /// Empty collection or page: a short title, why it's empty, and one way out.
 export function EmptyState({
@@ -75,7 +76,7 @@ export function AutoLoadMore({
     if (!el || !hasMore || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(
       ([entry]) => entry.isIntersecting && load.current(),
-      { rootMargin: "0px 0px 150% 0px" }
+      { root: observerRoot(), rootMargin: "0px 0px 150% 0px" }
     );
     observer.observe(el);
     return () => observer.disconnect();

@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { OvIcon } from "./OvIcon";
 import { cx } from "@/utils/cx";
+import { getScrollY, onPageScroll, scrollRoot, scrollToY, scrollViewportHeight } from "@/utils/scroller";
 
 const SUGGESTIONS = [
   "Games like Elden Ring",
@@ -48,26 +49,25 @@ export function AIChat({
   // reader scrolling away.
   const following = useRef(true);
   const scrollToEnd = useCallback(() => {
-    window.scrollTo({ top: document.documentElement.scrollHeight });
+    scrollToY(scrollRoot().scrollHeight);
   }, []);
 
   useEffect(() => {
     // Judge intent by direction: only scrolling *up* means the reader left
     // the bottom. (A gap check alone races: our own scroll's event lands a
     // frame later, after more text has streamed in, and reads as "away".)
-    let lastY = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      const { scrollHeight } = document.documentElement;
+    let lastY = getScrollY();
+    const offScroll = onPageScroll(() => {
+      const y = getScrollY();
+      const { scrollHeight } = scrollRoot();
       if (y < lastY - 2) following.current = false;
-      else if (scrollHeight - (y + window.innerHeight) < 80) following.current = true;
+      else if (scrollHeight - (y + scrollViewportHeight()) < 80) following.current = true;
       lastY = y;
-    };
+    });
     const onViewportResize = () => following.current && scrollToEnd();
-    window.addEventListener("scroll", onScroll, { passive: true });
     window.visualViewport?.addEventListener("resize", onViewportResize);
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      offScroll();
       window.visualViewport?.removeEventListener("resize", onViewportResize);
     };
   }, [scrollToEnd]);

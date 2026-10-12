@@ -235,24 +235,24 @@
    always wins over layered styles regardless of specificity. These resets
    must live in @layer base so a Tailwind text-color class on an <a> (or any
    element below) can still override them normally. */
-/* Bars pinned to the bottom of the screen (phone tab bar, game actions,
-   sheets). iOS browsers animate their own toolbars as the page scrolls, and
-   while they do (in iOS Chrome sometimes after, too) the page's fixed bottom
-   edge can sit above the real bottom of the screen, opening a strip where
-   the scrolling page shows through under the bar. Painting the bar's own
-   background past its bottom edge means that strip only ever shows more bar,
-   whatever the browser does. It sits off-screen the rest of the time. */
-@utility ov-bottom-bleed {
-  &::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 100%;
-    height: 50vh;
-    /* Opaque on purpose: a blur here would only see the bar itself (the
-       bar's own backdrop blur already claims what's behind it). */
-    background: var(--ov-bleed-bg, var(--color-ov-bg));
+/* Touch screens below laptop width (where the bottom bars live): the app
+   scrolls inside #ov-scroll, not the document. iOS browsers shrink their
+   toolbars while the document scrolls and only report the new size after
+   the animation, so fixed bottom bars trailed behind it. If the document
+   never scrolls, the toolbar never moves. See utils/scroller.ts. */
+@media (max-width: 1023.98px) and (pointer: coarse) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  #ov-scroll {
+    position: fixed;
+    inset: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
   }
 }
 

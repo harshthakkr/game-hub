@@ -50,7 +50,8 @@ export default function RootLayout({
       <body
         className={`${chakra.variable} ${geist.variable} ${orbitron.variable} bg-ov-bg font-sans text-ov-white antialiased`}
       >
-        {children}
+        {/* the page's scroller on touch screens; see utils/scroller.ts */}
+        <div id="ov-scroll">{children}</div>
       </body>
     </html>
   );

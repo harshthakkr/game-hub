@@ -52,7 +52,7 @@ export function Sheet({
             }
           }}
           className={cx(
-            "max-md:ov-bottom-bleed [--ov-bleed-bg:var(--color-ov-field)] fixed inset-x-0 bottom-0 z-[100] flex flex-col border-t border-ov-border-strong bg-ov-field pb-[env(safe-area-inset-bottom)] focus:outline-none data-[state=closed]:animate-ov-sheet-out data-[state=open]:animate-ov-sheet-in",
+            "fixed inset-x-0 bottom-0 z-[100] flex flex-col border-t border-ov-border-strong bg-ov-field pb-[env(safe-area-inset-bottom)] focus:outline-none data-[state=closed]:animate-ov-sheet-out data-[state=open]:animate-ov-sheet-in",
             // Tablet: centred with inset-0 + margin auto, not a translate, so
             // the pop animation's transform can't knock it off centre.
             "md:inset-0 md:m-auto md:w-[min(560px,calc(100%-64px))] md:border md:pb-0 md:shadow-ov-pop md:data-[state=closed]:animate-ov-pop-out md:data-[state=open]:animate-ov-pop",
