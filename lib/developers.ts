@@ -144,8 +144,8 @@ export async function searchStudios(term: string): Promise<StudioMatch[]> {
   if (safe.length < 2) return [];
   const fields = "fields name,slug,country,start_date;";
   const [prefix, contains, board] = await Promise.all([
-    igdb<CompanyRow[]>("/companies", `${fields} where name ~ "${safe}"* & developed != null; limit 30;`),
-    igdb<CompanyRow[]>("/companies", `${fields} where name ~ *"${safe}"* & developed != null; limit 50;`),
+    igdb<CompanyRow[]>("/companies", `${fields} where name ~ "${safe}"* & developed != null; limit 30;`, { cache: false }),
+    igdb<CompanyRow[]>("/companies", `${fields} where name ~ *"${safe}"* & developed != null; limit 50;`, { cache: false }),
     getStudioLeaderboard(),
   ]);
   const rankOf = new Map(board.map((s) => [s.id, s.rank]));

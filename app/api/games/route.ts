@@ -27,7 +27,8 @@ export const GET = async (request: NextRequest) => {
       if (idList.length === 0) return NextResponse.json([]);
       const games = await igdb<GameCardProps[]>(
         "/games",
-        `${FIELDS}; where id = (${idList.join(",")}); limit ${idList.length};`
+        `${FIELDS}; where id = (${idList.join(",")}); limit ${idList.length};`,
+        { cache: false } // a personal list of ids
       );
       return publicJson(await withPrices(games), 300);
     }
@@ -55,19 +56,24 @@ export const GET = async (request: NextRequest) => {
       saleIds
     );
 
+    // Only first pages without the sale filter go in the data cache; deeper
+    // pages and sale results (a moving id list) rely on the CDN copy.
+    const cache = offset === 0 && !saleIds;
+
     // Count only: the phone filter sheet's live "Apply · N results".
     if (params.get("count") === "1") {
-      const data = await igdb<{ count?: number }>("/games/count", `where ${where};`);
+      const data = await igdb<{ count?: number }>("/games/count", `where ${where};`, { cache });
       return publicJson({ count: data.count ?? 0 }, 3600);
     }
 
     const [games, countRes] = await Promise.all([
       igdb<GameCardProps[]>(
         "/games",
-        `${FIELDS}; sort ${sort}; limit ${PAGE_SIZE}; offset ${offset}; where ${where};`
+        `${FIELDS}; sort ${sort}; limit ${PAGE_SIZE}; offset ${offset}; where ${where};`,
+        { cache }
       ),
       // The total only matters for the first page's "N games" heading.
-      offset === 0 ? igdb<{ count?: number }>("/games/count", `where ${where};`).catch(() => null) : null,
+      offset === 0 ? igdb<{ count?: number }>("/games/count", `where ${where};`, { cache }).catch(() => null) : null,
     ]);
     // Card prices are checked every 3 hours at most, so a 5-minute CDN copy is plenty.
     const response = publicJson(await withPrices(games), 300);

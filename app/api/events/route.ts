@@ -43,7 +43,10 @@ export const GET = async (request: NextRequest) => {
   }
 
   try {
-    return publicJson(await igdb("/events", query, { revalidate: 600 }), 300);
+    // Not in the data cache: `now` changes every 5 minutes, so each would be
+    // a fresh (billed) write read only until the next one. The CDN copy
+    // (5 minutes) covers repeat visits.
+    return publicJson(await igdb("/events", query, { cache: false }), 300);
   } catch {
     return NextResponse.json({ error: "Failed to load events" }, { status: 500 });
   }

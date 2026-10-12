@@ -53,22 +53,25 @@ export async function getIgdbHeaders() {
 ///
 /// Queries must be stable to be cacheable: anything time-based should use
 /// `igdbNow()` rather than the current second.
+///
+/// `cache: false` skips the data cache for queries with endless variations
+/// (search terms, someone's wishlist, page 7 of a filter): every distinct
+/// query stored is a billed write on Vercel, and these are rarely read
+/// twice. Their API routes still set CDN cache headers, so repeats of the
+/// same URL stay fast without touching the data cache.
 export async function igdb<T = unknown>(
   endpoint: string,
   body: string,
-  { revalidate = 3600 }: { revalidate?: number } = {}
+  { revalidate = 3600, cache = true }: { revalidate?: number; cache?: boolean } = {}
 ): Promise<T> {
-  const run = unstable_cache(
-    async () => {
-      const { data } = await axios.post<T>(`${process.env.NEXT_PUBLIC_BASE_URL}${endpoint}`, body, {
-        headers: await getIgdbHeaders(),
-      });
-      return data;
-    },
-    ["igdb", endpoint, body],
-    { revalidate, tags: ["igdb"] }
-  );
-  return run();
+  const fetchIt = async () => {
+    const { data } = await axios.post<T>(`${process.env.NEXT_PUBLIC_BASE_URL}${endpoint}`, body, {
+      headers: await getIgdbHeaders(),
+    });
+    return data;
+  };
+  if (!cache) return fetchIt();
+  return unstable_cache(fetchIt, ["igdb", endpoint, body], { revalidate, tags: ["igdb"] })();
 }
 
 /// "Now" in Unix seconds, rounded down to `stepSeconds`, for time-based

@@ -20,7 +20,8 @@ export const GET = async (
   const extra = where.map((w) => ` & ${w}`).join("");
   const games = await igdb(
     "/games",
-    `${FIELDS}; where genres.slug = "${slug}" & cover != null${extra}; sort ${order}; limit 40; offset ${offset};`
+    `${FIELDS}; where genres.slug = "${slug}" & cover != null${extra}; sort ${order}; limit 40; offset ${offset};`,
+    { cache: offset === 0 } // deeper pages: CDN copy only
   );
   return publicJson(games, 3600);
 };
