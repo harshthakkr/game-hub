@@ -13,6 +13,7 @@
     "@auth/prisma-adapter": "^2.11.3",
     "@google/genai": "^1.25.0",
     "@prisma/client": "^6.16.1",
+    "@vercel/analytics": "^2.0.1",
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.3",
     "cmdk": "^1.1.1",

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Chakra_Petch, Geist, Orbitron } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 // The product's voice: angular, HUD-like. All UI type (headings, nav,
@@ -52,6 +53,7 @@ export default function RootLayout({
       >
         {/* the page's scroller on touch screens; see utils/scroller.ts */}
         <div id="ov-scroll">{children}</div>
+        <Analytics />
       </body>
     </html>
   );
