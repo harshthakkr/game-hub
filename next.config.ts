@@ -5,10 +5,10 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    // AVIF is ~20-30% smaller than WebP for IGDB key art, which is the LCP
-    // element on Discover and game pages. Encoded once, then cached.
-    formats: ["image/avif", "image/webp"],
-    minimumCacheTTL: 60 * 60 * 24 * 7,
+    // IGDB already serves preset sizes, so images bypass Vercel's (metered)
+    // optimizer and load straight from IGDB's CDN. See lib/image-loader.ts.
+    loader: "custom",
+    loaderFile: "./lib/image-loader.ts",
     remotePatterns: [
       {
         protocol: "https",
