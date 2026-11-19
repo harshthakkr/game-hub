@@ -39,7 +39,7 @@ A hero carousel of recent, well-rated games with their key art, critic score and
 - **PlayStation Store India and Steam India, side by side, in ₹.** When both sell a game, the cheaper store is flagged.
 - **30-day price history** for both stores on one chart, with low, high and change at a glance.
 - **Price drops** on Discover and an **"On sale only"** filter in the catalogue.
-- The 2,000 most popular games are tracked before anyone opens them. Wishlisted and recently viewed games are re-checked every 3 hours, everything else daily.
+- The 2,000 most popular games are tracked before anyone opens them. Wishlisted and recently viewed games are re-checked every 6 hours, everything else daily.
 
 ### Your library
 Wishlist any game (the price on the card is the best one we've seen), and sort your library onto three shelves: **Playing**, **Backlog** and **Finished**.
@@ -120,7 +120,7 @@ flowchart LR
   V -->|"queries cached 10 min – 1 day"| I[(IGDB)]
   V -->|"Prisma"| D[("Postgres · Neon<br/>Singapore")]
   V -->|"streamed chat"| G[Gemini]
-  A["GitHub Actions<br/>every 3 hours"] -->|"price sweep"| D
+  A["GitHub Actions<br/>every 6 hours"] -->|"price sweep"| D
   A -->|"Steam: 100 per request<br/>PS Store: paced"| S[(Stores)]
 ```
 
@@ -131,7 +131,7 @@ flowchart LR
 - **Functions run in Singapore (`sin1`)**, next to the database and the Indian audience.
 
 **Price tracking as a pipeline, not page views.**
-- **A GitHub Action runs `scripts/price-sweep.ts` straight against the database every 3 hours**, so it isn't bound by serverless time limits.
+- **A GitHub Action runs `scripts/price-sweep.ts` straight against the database every 6 hours**, so it isn't bound by serverless time limits.
 - **Two tiers:** wishlisted, shelved or recently viewed games every run; the rest of the tracked catalogue daily. A daily seed adds IGDB's 2,000 most-rated games that are sold on either store.
 - **Steam prices in batches of 100 per request; PlayStation Store pages fetched one at a time, gently paced.**
 - **Only price changes are stored.** The history stays small (about 25–30 MB at steady state) and the latest price is never pruned.
@@ -189,7 +189,7 @@ npx tsx --env-file=.env scripts/price-sweep.ts --seed   # first add the popular 
 
 ### Deploying
 1. **Vercel.** Import the repo and add the variables above. Functions are pinned to Singapore in `vercel.json`.
-2. **Price tracker.** In GitHub, add repository secrets `DATABASE_URL`, `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET`. The workflow in `.github/workflows/price-tracker.yml` then runs every 3 hours from the default branch, and can be started by hand from the Actions tab (tick *Seed* for the first run).
+2. **Price tracker.** In GitHub, add repository secrets `DATABASE_URL`, `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET`. The workflow in `.github/workflows/price-tracker.yml` then runs every 6 hours from the default branch, and can be started by hand from the Actions tab (tick *Seed* for the first run).
 
 <br />
 

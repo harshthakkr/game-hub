@@ -7,10 +7,10 @@ import { formatYear } from "@/utils/overdrive";
 type Props = { params: Promise<{ slug: string }> };
 
 // Rendered on first visit, then served from cache and regenerated in the
-// background at most every 3 hours, matching the price sweep: each
+// background at most every 6 hours, matching the price sweep: each
 // regeneration is a billed ISR write. The render is read-only; views are
 // recorded by a beacon from GameView.
-export const revalidate = 10800;
+export const revalidate = 21600;
 
 // None are pre-built; an empty list (vs. no export) is what tells Next to
 // cache each game page after its first visit instead of rendering per request.

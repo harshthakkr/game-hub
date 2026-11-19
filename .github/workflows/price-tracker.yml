@@ -1,14 +1,14 @@
 name: Price tracker
 
-# Price sweep every 3 hours, run as a script straight against the database
+# Price sweep every 6 hours, run as a script straight against the database
 # (so it isn't bound by the 60s serverless limit and doesn't depend on the
-# deploy). Every 3 hours rather than hourly keeps the database's awake time
+# deploy). Every 6 hours rather than more often keeps the database's awake time
 # (Neon compute) low; store prices rarely change more often than that.
 #
 # - Hot listings (wishlisted, in a library, or viewed in the last 14 days)
 #   are re-checked every run.
 # - The rest of the tracked catalogue is re-checked once a day.
-# - Once a day (the 21:07 UTC run, ~02:37 IST) the popular catalogue is
+# - Once a day (the 18:07 UTC run, ~23:37 IST) the popular catalogue is
 #   seeded from IGDB first, so popular games have prices before anyone
 #   opens them.
 #
@@ -16,7 +16,7 @@ name: Price tracker
 # Repository secrets: DATABASE_URL, IGDB_CLIENT_ID, IGDB_CLIENT_SECRET.
 on:
   schedule:
-    - cron: "7 */3 * * *"
+    - cron: "7 */6 * * *"
   workflow_dispatch:
     inputs:
       seed:
@@ -52,7 +52,7 @@ jobs:
           SEED_LIMIT: 2000
           BUDGET_MINUTES: 20
         run: |
-          if [ "$(date -u +%H)" = "21" ] || [ "${{ inputs.seed }}" = "true" ]; then
+          if [ "$(date -u +%H)" = "18" ] || [ "${{ inputs.seed }}" = "true" ]; then
             npx tsx scripts/price-sweep.ts --seed
           else
             npx tsx scripts/price-sweep.ts

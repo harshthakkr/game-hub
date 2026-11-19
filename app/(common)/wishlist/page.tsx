@@ -68,7 +68,7 @@ export default function WishlistPage() {
       <PageHeading
         title="Wishlist"
         titleHiddenOnPhone
-        description="Prices checked every 3 hours on PlayStation Store and Steam."
+        description="Prices checked every 6 hours on PlayStation Store and Steam."
       >
         {wishlist.length > 0 && (
           <StatStrip>

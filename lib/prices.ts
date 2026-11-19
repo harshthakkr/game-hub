@@ -3,15 +3,15 @@ import { fetchPsStorePrice, psStoreConceptUrl } from "@/lib/psStore";
 import { fetchSteamPrice, fetchSteamPrices, STEAM_BATCH_SIZE, steamAppUrl, type StorePrice } from "@/lib/steam";
 import type { PriceListing, PriceSnapshot, PriceStore } from "@/app/generated/prisma";
 
-/// Two refresh tiers (the sweep runs every 3 hours):
+/// Two refresh tiers (the sweep runs every 6 hours):
 /// - hot: on someone's wishlist/library, or opened in the last 14 days —
-///   re-checked every run, i.e. every 3 hours (a page view past the TTL
+///   re-checked every run, i.e. every 6 hours (a page view past the TTL
 ///   also refreshes it);
 /// - catalogue: every other tracked listing (incl. the seeded popular set) —
 ///   re-checked daily.
-// Just under the 3-hour schedule, so a listing checked last run is due again
+// Just under the 6-hour schedule, so a listing checked last run is due again
 // this run despite GitHub's few minutes of scheduling jitter.
-export const PRICE_TTL_MS = (2 * 60 + 50) * 60 * 1000;
+export const PRICE_TTL_MS = (5 * 60 + 50) * 60 * 1000;
 const CATALOGUE_TTL_MS = 23 * 60 * 60 * 1000;
 const HOT_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 /// Snapshots are stored only when a price changes, so history is small; older

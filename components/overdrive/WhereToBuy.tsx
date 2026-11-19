@@ -213,7 +213,7 @@ export function WhereToBuy({
             <OvIcon name="trend-down" className="text-base" />
             {priced.length > 1 ? "Price history · both stores" : "Price history"}
           </Button>
-          {checked && <p className="text-label text-ov-muted">Checked {checked} · refreshes every 3 hours</p>}
+          {checked && <p className="text-label text-ov-muted">Checked {checked} · refreshes every 6 hours</p>}
           <PriceHistoryModal open={historyOpen} onOpenChange={setHistoryOpen} slug={slug} gameName={gameName} />
         </>
       )}
