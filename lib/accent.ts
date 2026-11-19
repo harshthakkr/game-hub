@@ -1,3 +1,4 @@
+import axios from "axios";
 import sharp from "sharp";
 import { unstable_cache } from "next/cache";
 
@@ -19,11 +20,14 @@ export async function coverAccent(coverUrl: string): Promise<string | null> {
 export async function extractAccent(coverUrl: string): Promise<string | null> {
   try {
     const src = coverUrl.startsWith("//") ? `https:${coverUrl}` : coverUrl;
-    const res = await fetch(src.replace(/\/t_[a-z0-9_]+\//, "/t_cover_small/"), {
-      cache: "no-store",
+    // axios, not fetch: Next treats an uncached fetch inside the ISR game page
+    // as dynamic and fails the render with a 500 ("static to dynamic at
+    // runtime"). axios isn't patched, so nothing is cached and nothing bails.
+    const res = await axios.get<ArrayBuffer>(src.replace(/\/t_[a-z0-9_]+\//, "/t_cover_small/"), {
+      responseType: "arraybuffer",
+      timeout: 5000,
     });
-    if (!res.ok) return null;
-    const { data } = await sharp(Buffer.from(await res.arrayBuffer()))
+    const { data } = await sharp(Buffer.from(res.data))
       .resize(24, 32, { fit: "fill" })
       .removeAlpha()
       .raw()
