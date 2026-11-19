@@ -12,7 +12,7 @@ import {
   trackListing,
 } from "@/lib/prices";
 import type { PriceSnapshot, PriceStore } from "@/app/generated/prisma";
-import type { GamePageProps } from "@/utils/types";
+import type { GamePageProps, StoreListing } from "@/utils/types";
 
 const FIRST_FETCH_TIMEOUT_MS = 6000;
 
@@ -45,9 +45,11 @@ async function getStorePrice(
   }
 }
 
-/// Full game page data: IGDB details plus every store the game is listed on
-/// with its tracked price. Shared by the page (server render, metadata, OG
-/// image) and /api/games/[slug]; `cache` dedupes calls within one request.
+/// Game page data from IGDB, plus every store the game is listed on (prices
+/// left null). No database access: the page is rendered for crawlers too, and
+/// each render would wake the database. Prices are filled in by
+/// `getStorePrices`, which the page calls from the browser and which skips
+/// bots. `cache` dedupes calls within one request.
 export const getGame = cache(async (slug: string): Promise<GamePageProps | null> => {
   // Slugs are [a-z0-9-]; anything else could break out of the query string.
   const safe = slug.replace(/[^a-z0-9-]/gi, "");
@@ -72,15 +74,34 @@ export const getGame = cache(async (slug: string): Promise<GamePageProps | null>
 
   // Every store the game is listed on, PS Store first, each with its tracked
   // price (null while the first fetch is pending or the store has no price).
-  const [stores, accent] = await Promise.all([
-    Promise.all(listed.map(async ({ store, externalId }) => ({
-      store,
-      label: STORES[store].label,
-      url: STORES[store].url(externalId),
-      price: await getStorePrice({ id: res.id as number, slug: safe }, store, externalId),
-    }))),
-    res.cover?.url ? extractAccent(res.cover.url) : null,
-  ]);
+  const stores = listed.map(({ store, externalId }) => ({
+    store,
+    label: STORES[store].label,
+    url: STORES[store].url(externalId),
+    price: null,
+  }));
+  const accent = res.cover?.url ? await extractAccent(res.cover.url) : null;
 
-  return { ...res, stores, accent } as GamePageProps;
+  return { ...res, slug: safe, stores, accent } as GamePageProps;
+});
+
+/// Every store the game is listed on, with its tracked price (null while the
+/// first fetch is pending or the store has no price). Reads the database.
+export async function getStorePrices(game: GamePageProps): Promise<StoreListing[]> {
+  const externalGames = ((game as { external_games?: { external_game_source: number; uid: string }[] })
+    .external_games ?? []);
+  const ref = { id: game.id as number, slug: (game as { slug?: string }).slug ?? "" };
+  return Promise.all(
+    game.stores.map(async (listing) => {
+      const source = STORE_SOURCES.find((s) => s.store === listing.store)!.source;
+      const externalId = externalGames.find((g) => g.external_game_source === source)!.uid;
+      return { ...listing, price: await getStorePrice(ref, listing.store, externalId) };
+    })
+  );
+}
+
+/// `getGame` with prices filled in, for the OG image and /api/games/[slug].
+export const getGameWithPrices = cache(async (slug: string): Promise<GamePageProps | null> => {
+  const game = await getGame(slug);
+  return game && { ...game, stores: await getStorePrices(game) };
 });

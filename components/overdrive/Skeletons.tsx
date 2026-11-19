@@ -3,7 +3,7 @@ import { GAME_GRID, tileGrid } from "@/components/ui/Layout";
 
 /// Placeholder block with a slow left-to-right shimmer. Decorative: loading
 /// regions announce themselves via aria-busy on their container instead.
-function Bone({ className }: { className?: string }) {
+export function Bone({ className }: { className?: string }) {
   return (
     <div
       aria-hidden

@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { getGame } from "@/lib/games";
+import { getGameWithPrices } from "@/lib/games";
 import { ogFonts } from "@/lib/og";
 import { coverUrl, developerName, formatYear, landscapeArt } from "@/utils/overdrive";
 
@@ -11,7 +11,7 @@ export const alt = "Game card from GAME//HUB";
 /// best tracked price, so a shared link reads like the page itself.
 export default async function OpenGraphImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const game = await getGame(slug);
+  const game = await getGameWithPrices(slug);
   const art = game ? landscapeArt(game.artworks, game.screenshots) : null;
   const cover = game ? coverUrl(game.cover) : null;
   const score = game?.aggregated_rating ? Math.round(game.aggregated_rating) : null;

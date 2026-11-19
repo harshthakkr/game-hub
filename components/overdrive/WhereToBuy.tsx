@@ -8,6 +8,7 @@ import { Button, Eyebrow, Tag } from "@/components/ui";
 import { cx } from "@/utils/cx";
 import { OvIcon } from "./OvIcon";
 import { PriceHistoryModal } from "./PriceHistoryModal";
+import { Bone } from "./Skeletons";
 
 type Series = {
   store: StoreListing["store"];
@@ -34,6 +35,26 @@ function useWeekTrend(slug: string, enabled: boolean) {
     };
   }, [slug, enabled]);
   return series;
+}
+
+/// Current store prices. The cached page ships the store list without prices
+/// (so rendering it for crawlers never touches the database); they load here.
+function useStorePrices(slug: string, initial: StoreListing[]) {
+  const [stores, setStores] = useState(initial);
+  const [loading, setLoading] = useState(initial.length > 0);
+  useEffect(() => {
+    if (initial.length === 0) return;
+    let cancelled = false;
+    axios
+      .get<{ stores: StoreListing[] | null }>(`/api/games/${slug}/store-prices`)
+      .then((res) => !cancelled && res.data.stores && setStores(res.data.stores))
+      .catch(() => {})
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, initial]);
+  return { stores, loading };
 }
 
 function Sparkline({ points, label }: { points: { price: number }[]; label: string }) {
@@ -75,13 +96,14 @@ function timeAgo(iso: string | null | undefined) {
 export function WhereToBuy({
   slug,
   gameName,
-  stores,
+  stores: listed,
 }: {
   slug: string;
   gameName: string;
   stores: StoreListing[];
 }) {
   const [historyOpen, setHistoryOpen] = useState(false);
+  const { stores, loading } = useStorePrices(slug, listed);
   const priced = stores.filter((s) => s.price);
   const cheapest = priced.length > 1 ? [...priced].sort((a, b) => a.price!.amount - b.price!.amount)[0] : null;
   const trend = useWeekTrend(slug, priced.length > 0);
@@ -158,10 +180,17 @@ export function WhereToBuy({
               </div>
             ) : (
               <div className="flex items-center gap-2.5">
-                <span className="flex flex-1 flex-col gap-0.5">
-                  <span className="text-body font-semibold text-ov-text">Price unavailable</span>
-                  <span className="text-ui text-ov-muted">We&apos;ll have it after the next check, within 3 hours.</span>
-                </span>
+                {loading ? (
+                  <span role="status" aria-busy="true" aria-label="Loading price" className="flex flex-1 flex-col gap-1.5">
+                    <Bone className="h-6 w-28 lg:h-7" />
+                    <Bone className="h-3.5 w-20" />
+                  </span>
+                ) : (
+                  <span className="flex flex-1 flex-col gap-0.5">
+                    <span className="text-body font-semibold text-ov-text">Price unavailable</span>
+                    <span className="text-ui text-ov-muted">We&apos;ll have it after the next check, within 6 hours.</span>
+                  </span>
+                )}
                 <Button asChild variant="outline" size="md" iconRight="external" chamfer={false}>
                   <a href={store.url} target="_blank" rel="noreferrer" aria-label={`Open ${store.label}`}>
                     Open

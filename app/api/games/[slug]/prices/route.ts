@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, userAgent } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { STORES, formatPrice } from "@/lib/prices";
 import { publicJson } from "@/lib/http";
@@ -12,6 +12,9 @@ export const GET = async (
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) => {
+  // Crawlers get nothing rather than waking the database. Not cached, so the
+  // CDN never serves this empty answer to people.
+  if (userAgent(request).isBot) return new NextResponse(null, { status: 204, headers: { "Cache-Control": "no-store" } });
   const { slug } = await params;
   const rangeParam = request.nextUrl.searchParams.get("range") ?? "24h";
   const range: Range = rangeParam in RANGES ? (rangeParam as Range) : "24h";

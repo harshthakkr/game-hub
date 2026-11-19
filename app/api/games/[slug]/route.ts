@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getGame } from "@/lib/games";
+import { getGameWithPrices } from "@/lib/games";
 import { publicJson } from "@/lib/http";
 
 export const GET = async (
@@ -7,5 +7,5 @@ export const GET = async (
   { params }: { params: Promise<{ slug: string }> }
 ) => {
   const { slug } = await params;
-  return publicJson(await getGame(slug), 300);
+  return publicJson(await getGameWithPrices(slug), 300);
 };
