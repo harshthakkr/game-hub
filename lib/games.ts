@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { after } from "next/server";
 import { igdb } from "@/lib/igdb";
-import { coverAccent } from "@/lib/accent";
+import { extractAccent } from "@/lib/accent";
 import {
   STORES,
   findListing,
@@ -53,7 +53,10 @@ export const getGame = cache(async (slug: string): Promise<GamePageProps | null>
   const safe = slug.replace(/[^a-z0-9-]/gi, "");
   const found = await igdb<GamePageProps[]>(
     "/games",
-    `fields id,name,summary,hypes,videos.video_id,involved_companies.developer,involved_companies.publisher,involved_companies.company.name,genres.name,aggregated_rating,first_release_date,screenshots.url,screenshots.height,screenshots.width,artworks.url,artworks.height,artworks.width,cover.url,release_dates.human,platforms.name,external_games.external_game_source,external_games.uid,similar_games.id,similar_games.name,similar_games.cover.url,similar_games.slug,similar_games.aggregated_rating,similar_games.first_release_date,similar_games.genres.name,similar_games.hypes; where slug = "${safe}";`
+    `fields id,name,summary,hypes,videos.video_id,involved_companies.developer,involved_companies.publisher,involved_companies.company.name,genres.name,aggregated_rating,first_release_date,screenshots.url,screenshots.height,screenshots.width,artworks.url,artworks.height,artworks.width,cover.url,release_dates.human,platforms.name,external_games.external_game_source,external_games.uid,similar_games.id,similar_games.name,similar_games.cover.url,similar_games.slug,similar_games.aggregated_rating,similar_games.first_release_date,similar_games.genres.name,similar_games.hypes; where slug = "${safe}";`,
+    // Not data-cached: the game page is itself the cache (ISR), and with 300k+
+    // games a data-cache entry per game is a second billed write per page.
+    { cache: false }
   );
   const res = found[0] as GamePageProps & { external_games?: { external_game_source: number; uid: string }[] };
   if (!res) return null;
@@ -76,7 +79,7 @@ export const getGame = cache(async (slug: string): Promise<GamePageProps | null>
       url: STORES[store].url(externalId),
       price: await getStorePrice({ id: res.id as number, slug: safe }, store, externalId),
     }))),
-    res.cover?.url ? coverAccent(res.cover.url) : null,
+    res.cover?.url ? extractAccent(res.cover.url) : null,
   ]);
 
   return { ...res, stores, accent } as GamePageProps;

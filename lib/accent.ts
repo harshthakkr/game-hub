@@ -14,11 +14,13 @@ export async function coverAccent(coverUrl: string): Promise<string | null> {
   return unstable_cache(() => extractAccent(coverUrl), ["cover-accent", coverUrl], { revalidate: false })();
 }
 
-async function extractAccent(coverUrl: string): Promise<string | null> {
+/// Same, uncached: for callers whose output is cached already (the ISR game
+/// page), where a data-cache entry per game would be another billed write.
+export async function extractAccent(coverUrl: string): Promise<string | null> {
   try {
     const src = coverUrl.startsWith("//") ? `https:${coverUrl}` : coverUrl;
     const res = await fetch(src.replace(/\/t_[a-z0-9_]+\//, "/t_cover_small/"), {
-      next: { revalidate: 60 * 60 * 24 * 30 },
+      cache: "no-store",
     });
     if (!res.ok) return null;
     const { data } = await sharp(Buffer.from(await res.arrayBuffer()))
