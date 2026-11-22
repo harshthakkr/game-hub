@@ -117,7 +117,8 @@ An AI chat (Gemini 2.5 Flash) for "what should I play next?": recommendations, c
 ```mermaid
 flowchart LR
   U([Browser]) -->|"pages: ISR, CDN-cached<br/>data: session-cached"| V["Next.js 15<br/>Vercel · sin1"]
-  V -->|"queries cached 10 min – 1 day"| I[(IGDB)]
+  U -->|"images at preset sizes"| C[(IGDB image CDN)]
+  V -->|"list queries cached 10 min – 1 day"| I[(IGDB)]
   V -->|"Prisma"| D[("Postgres · Neon<br/>Singapore")]
   V -->|"streamed chat"| G[Gemini]
   A["GitHub Actions<br/>every 6 hours"] -->|"price sweep"| D
@@ -125,10 +126,16 @@ flowchart LR
 ```
 
 **Fast without a backend of its own to babysit.**
-- **IGDB responses are cached on the server** (Next.js data cache), so most navigations never wait on IGDB at all. List and search endpoints went from **~800 ms to 2–5 ms** once warm.
-- **Game pages are incrementally regenerated** (refreshed every 5 minutes) and served from the CDN: **~2 ms** warm, versus 0.75–2 s rendered per view before.
+- **IGDB list queries are cached on the server** (Next.js data cache), so most navigations never wait on IGDB at all. List endpoints went from **~800 ms to 2–5 ms** once warm. Queries with endless variations (search terms, deep filter pages) skip that cache and rely on CDN headers instead, so they don't fill it with entries nobody reads twice.
+- **Game pages are incrementally regenerated** (rendered on first visit, refreshed at most every 6 hours) and served from the CDN: **~2 ms** warm, versus 0.75–2 s rendered per view before. The cached page is IGDB data only; prices load in the browser from a small, CDN-cached endpoint, so a page stays fresh without being rebuilt.
 - **Public API responses carry CDN and browser cache headers**, and client lists keep a session cache. Going *back* restores the page instantly at the exact scroll position, including everything loaded by infinite scroll.
+- **Images come straight from IGDB's CDN.** A custom `next/image` loader picks the nearest IGDB preset size (as WebP) for each slot, instead of paying for on-the-fly optimisation. Only presets that scale without cropping are used, so covers and key art keep their shape.
 - **Functions run in Singapore (`sin1`)**, next to the database and the Indian audience.
+
+**Built to survive crawlers on free tiers.** A 300,000-game catalogue is an endless crawl, and on usage-based hosting every page a bot opens costs something.
+- **Rendering a game page never touches the database** (only its share-card image reads prices). The price, view and price-history endpoints skip the database for bot user agents, so crawlers can't keep Postgres awake.
+- **One cache write per new game page**, with the home page regenerated hourly and game pages every 6 hours.
+- **`robots.txt` turns away AI crawlers**, and the Vercel Firewall (Bot Protection, AI bots denied) stops the ones that ignore it before any code runs.
 
 **Price tracking as a pipeline, not page views.**
 - **A GitHub Action runs `scripts/price-sweep.ts` straight against the database every 6 hours**, so it isn't bound by serverless time limits.
@@ -186,10 +193,12 @@ npx tsx --env-file=.env scripts/price-sweep.ts --seed   # first add the popular 
 | `npm run build` | Prisma client + production build |
 | `npm start` | Serve the production build |
 | `npm run lint` | ESLint |
+| `npx tsx scripts/favicon.ts` | Rebuild `app/favicon.ico` after changing the brand mark in `lib/brand-icon.tsx` |
 
 ### Deploying
 1. **Vercel.** Import the repo and add the variables above. Functions are pinned to Singapore in `vercel.json`.
 2. **Price tracker.** In GitHub, add repository secrets `DATABASE_URL`, `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET`. The workflow in `.github/workflows/price-tracker.yml` then runs every 6 hours from the default branch, and can be started by hand from the Actions tab (tick *Seed* for the first run).
+3. **Firewall.** In the Vercel project's Firewall, turn on **Bot Protection** and set **AI Bots** to *Deny*. Both are free, and they keep crawler traffic from eating into usage limits.
 
 <br />
 
@@ -206,10 +215,11 @@ components/
   ui/                design-system primitives (Radix-based) and layout roles
   overdrive/         product components: cards, heroes, sheets, palette…
 lib/                 server: IGDB client + cache, prices, Steam, PS Store,
-                     price catalogue, genres, platforms, developers, accent
+                     price catalogue, genres, platforms, developers, accent,
+                     image loader, brand icon
 utils/               shared helpers, hooks, view transitions, scroll memory
 prisma/              schema and migrations
-scripts/             price sweep (run by GitHub Actions)
+scripts/             price sweep (run by GitHub Actions), favicon builder
 ```
 
 <br />
