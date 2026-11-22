@@ -116,8 +116,11 @@ export function HeroCarousel({ games }: { games: HeroGame[] }) {
             <span aria-hidden className="h-px w-4 bg-ov-teal lg:w-5" />
             {kicker(game)}
           </span>
-          <h2 className="text-[30px] leading-[1.08] font-semibold tracking-[-0.025em] text-balance text-ov-white lg:text-hero lg:leading-none lg:tracking-[-0.03em]">
-            <Link href={`/games/${game.slug}`} className="hover:text-ov-teal-hover">
+          {/* The desktop hero is a fixed 600px: titles stop at two lines and the
+              summary at three, so the stats and buttons always fit. The bottom
+              padding keeps descenders (g, y) clear of the clamp. */}
+          <h2 className="text-[30px] leading-[1.08] font-semibold tracking-[-0.025em] text-balance text-ov-white lg:line-clamp-2 lg:pb-[0.12em] lg:text-hero lg:leading-none lg:tracking-[-0.03em]">
+            <Link href={`/games/${game.slug}`} title={game.name} className="hover:text-ov-teal-hover">
               {game.name}
             </Link>
           </h2>
@@ -127,7 +130,7 @@ export function HeroCarousel({ games }: { games: HeroGame[] }) {
               .join(" · ")}
           </p>
           {game.summary && (
-            <p className="line-clamp-3 hidden font-body text-lead leading-relaxed text-pretty text-ov-text lg:block">
+            <p className="hidden font-body text-lead leading-relaxed text-pretty text-ov-text lg:line-clamp-3">
               {game.summary}
             </p>
           )}
